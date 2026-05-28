@@ -171,6 +171,12 @@ export function scanSourceFormulasFromText(source: string, file = ''): SourceFor
 
     let columnIndex = 0
     while (columnIndex < line.length) {
+      if (line[columnIndex] === '`' && !isEscaped(line, columnIndex)) {
+        const rawClose = findUnescapedBacktick(line, columnIndex + 1)
+        columnIndex = rawClose === -1 ? line.length : rawClose + 1
+        continue
+      }
+
       if (line[columnIndex] !== '$' || isEscaped(line, columnIndex)) {
         columnIndex += 1
         continue
@@ -242,6 +248,13 @@ function findMultilineFormula(
 function findUnescapedDollar(line: string, start: number) {
   for (let index = start; index < line.length; index += 1) {
     if (line[index] === '$' && !isEscaped(line, index)) return index
+  }
+  return -1
+}
+
+function findUnescapedBacktick(line: string, start: number) {
+  for (let index = start; index < line.length; index += 1) {
+    if (line[index] === '`' && !isEscaped(line, index)) return index
   }
   return -1
 }

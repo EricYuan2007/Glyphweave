@@ -7,7 +7,7 @@ describe('Typst math helpers', () => {
       [
         '= Math Demo',
         '',
-        'Inline $q$ and $a + b = c$ with escaped \\$not math\\$.',
+        'Inline $q$ and $a + b = c$ with escaped \\$not math\\$ and raw `$ignored$`.',
         '',
         '$ sum_(i=1)^n x_i^2 $',
         '',
