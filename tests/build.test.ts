@@ -51,4 +51,89 @@ describe('build pipeline', () => {
       'typst 0.14.2',
     )
   })
+
+  it('skips private and archived posts in the content index', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-skip-'))
+
+    async function writePost(slug: string, status: string, visibility: string) {
+      const postDir = path.join(root, 'content/typst-posts', slug)
+      await mkdir(postDir, { recursive: true })
+      await writeFile(path.join(postDir, 'index.typ'), `= ${slug}\n`)
+      await writeFile(
+        path.join(postDir, 'post.yaml'),
+        [
+          `title: "${slug}"`,
+          `slug: "${slug}"`,
+          'description: "A post."',
+          'date: "2026-05-28"',
+          `status: "${status}"`,
+          `visibility: "${visibility}"`,
+        ].join('\n'),
+      )
+    }
+
+    await writePost('public-post', 'published', 'public')
+    await writePost('private-post', 'published', 'private')
+    await writePost('archived-post', 'archived', 'public')
+
+    const result = await buildAll(root, defaultConfig(), {
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      compileHtml: async ({ outputPath }) => {
+        await writeFile(outputPath, '<body><h1>Post</h1></body>')
+        return { outputPath, stdout: '', stderr: '' }
+      },
+      compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
+    })
+
+    const index = JSON.parse(await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'))
+    expect(result.built.map(({ post }) => post.metadata.slug)).toEqual(['public-post'])
+    expect(result.skipped.map((post) => post.metadata.slug).sort()).toEqual([
+      'archived-post',
+      'private-post',
+    ])
+    expect(index.posts.map((post: { slug: string }) => post.slug)).toEqual(['public-post'])
+  })
+
+  it('keeps HTML artifacts when optional PDF generation warns', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-pdf-warn-'))
+    const postDir = path.join(root, 'content/typst-posts/pdf-warn')
+    await mkdir(postDir, { recursive: true })
+    await writeFile(path.join(postDir, 'index.typ'), '= PDF Warn\n')
+    await writeFile(
+      path.join(postDir, 'post.yaml'),
+      [
+        'title: "PDF Warn"',
+        'slug: "pdf-warn"',
+        'description: "A post."',
+        'date: "2026-05-28"',
+        'status: "published"',
+        'visibility: "public"',
+        'pdf: true',
+      ].join('\n'),
+    )
+
+    const config = defaultConfig()
+    config.typst.pdf.failure = 'warn'
+
+    await buildAll(root, config, {
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      compileHtml: async ({ outputPath }) => {
+        await writeFile(outputPath, '<body><h1>PDF Warn</h1></body>')
+        return { outputPath, stdout: '', stderr: '' }
+      },
+      compilePdf: async () => {
+        throw new Error('PDF failed')
+      },
+    })
+
+    const manifest = JSON.parse(
+      await readFile(path.join(root, '.glyphweave/generated/posts/pdf-warn/manifest.json'), 'utf-8'),
+    )
+    const content = await readFile(
+      path.join(root, '.glyphweave/generated/posts/pdf-warn/content.html'),
+      'utf-8',
+    )
+    expect(manifest.pdf.enabled).toBe(false)
+    expect(content).toContain('PDF Warn')
+  })
 })

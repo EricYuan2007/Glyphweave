@@ -12,9 +12,10 @@ program.name('glyphweave').description('Typst-to-web blog artifact pipeline').ve
 program
   .command('build')
   .description('Build Typst posts into Glyphweave artifacts')
+  .option('--root <dir>', 'project root directory', process.cwd())
   .option('-c, --config <path>', 'config file path', 'glyphweave.config.ts')
   .action(async (options) => {
-    const rootDir = process.cwd()
+    const rootDir = path.resolve(options.root)
     const config = await loadConfig(rootDir, options.config)
     const result = await buildAll(rootDir, config)
     console.log(`Glyphweave v${GLYPHWEAVE_VERSION}`)
@@ -27,9 +28,10 @@ program
 program
   .command('clean')
   .description('Remove the Glyphweave output directory')
+  .option('--root <dir>', 'project root directory', process.cwd())
   .option('-c, --config <path>', 'config file path', 'glyphweave.config.ts')
   .action(async (options) => {
-    const rootDir = process.cwd()
+    const rootDir = path.resolve(options.root)
     const config = await loadConfig(rootDir, options.config)
     await clean(rootDir, config)
     console.log(`Removed ${config.output.root}`)
@@ -39,9 +41,10 @@ program
   .command('inspect')
   .description('Inspect a built post')
   .argument('<slug>', 'post slug')
+  .option('--root <dir>', 'project root directory', process.cwd())
   .option('-c, --config <path>', 'config file path', 'glyphweave.config.ts')
   .action(async (slug, options) => {
-    const rootDir = process.cwd()
+    const rootDir = path.resolve(options.root)
     const config = await loadConfig(rootDir, options.config)
     const postOutput = resolvePostOutputDir(rootDir, config, slug)
     const manifestPath = path.join(postOutput, 'manifest.json')
@@ -54,9 +57,10 @@ program
 program
   .command('doctor')
   .description('Check local Glyphweave prerequisites')
+  .option('--root <dir>', 'project root directory', process.cwd())
   .option('-c, --config <path>', 'config file path', 'glyphweave.config.ts')
   .action(async (options) => {
-    const rootDir = process.cwd()
+    const rootDir = path.resolve(options.root)
     const config = await loadConfig(rootDir, options.config)
     const typst = await detectTypst(config.typst.binary)
     await mkdir(path.resolve(rootDir, config.output.root), { recursive: true })
