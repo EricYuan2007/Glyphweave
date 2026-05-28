@@ -4,12 +4,15 @@
 
 .glyphweave-content .gw-math--inline {
   display: inline-flex;
-  align-items: baseline;
-  vertical-align: var(--gw-math-inline-shift, -0.12em);
+  align-items: center;
+  line-height: 0;
+  vertical-align: var(--gw-math-inline-shift, 0.08em);
 }
 
 .glyphweave-content .gw-math--block {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
   padding-block: 0.35rem;
@@ -19,6 +22,15 @@
   max-width: 100%;
   height: auto;
   flex: 0 0 auto;
+}
+
+.glyphweave-content .gw-math--inline svg {
+  display: block;
+}
+
+.glyphweave-content .gw-math--block svg {
+  display: block;
+  margin-inline: auto;
 }
 
 .glyphweave-content .gw-sr-only {

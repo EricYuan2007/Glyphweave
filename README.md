@@ -142,7 +142,7 @@ export default defineConfig({
     strategy: 'hybrid',
     failOnIgnoredEquation: true,
     includeSourceFallback: true,
-    inlineVerticalShift: '-0.12em',
+    inlineVerticalShift: '0.08em',
   },
   capture: {
     strict: true,

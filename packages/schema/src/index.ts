@@ -68,7 +68,7 @@ export const GlyphweaveConfigSchema = z
         strategy: z.enum(['typst-frame', 'hybrid', 'native-only', 'disabled']).default('hybrid'),
         failOnIgnoredEquation: z.boolean().default(true),
         includeSourceFallback: z.boolean().default(true),
-        inlineVerticalShift: z.string().default('-0.12em'),
+        inlineVerticalShift: z.string().default('0.08em'),
       })
       .default({}),
     capture: z

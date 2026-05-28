@@ -223,7 +223,7 @@ describe('HTML adapter', () => {
     })
 
     expect(output.contentHtml).toContain('class="gw-math gw-math--inline"')
-    expect(output.contentHtml).toContain('style="--gw-math-inline-shift: -0.12em"')
+    expect(output.contentHtml).toContain('style="--gw-math-inline-shift: 0.08em"')
     expect(output.contentHtml).toContain('class="gw-math gw-math--block"')
     expect(output.contentHtml).toContain('data-gw-renderer="typst-frame-svg"')
     expect(output.contentHtml).toContain('aria-label="Formula: sum_(i=1)^n x_i^2"')
@@ -233,5 +233,29 @@ describe('HTML adapter', () => {
     expect(output.capture.math.typstFrameSvg).toBe(2)
     expect(output.capture.math.sourceFallbacks).toBe(2)
     expect(output.capture.math.mismatch).toBe(false)
+  })
+
+  it('counts Typst footnote definitions in the capture report', async () => {
+    const fixture = await makePost(`<!doctype html>
+      <html>
+        <body>
+          <p>Text<a id="loc-1" href="#loc-2" role="doc-noteref"><sup>1</sup></a>.</p>
+          <section role="doc-endnotes">
+            <ol>
+              <li id="loc-2"><a href="#loc-1" role="doc-backlink"><sup>1</sup></a>Footnote text.</li>
+            </ol>
+          </section>
+        </body>
+      </html>`)
+
+    const output = await adaptTypstHtml({
+      rawHtmlPath: fixture.rawHtmlPath,
+      post: fixture.post,
+      outputDir: fixture.outputDir,
+      publicBasePath: '/glyphweave',
+      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
+
+    expect(output.capture.content.footnotes).toBe(1)
   })
 })

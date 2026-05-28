@@ -53,7 +53,7 @@ describe('schemas', () => {
     expect(config.math.strategy).toBe('hybrid')
     expect(config.math.failOnIgnoredEquation).toBe(true)
     expect(config.math.includeSourceFallback).toBe(true)
-    expect(config.math.inlineVerticalShift).toBe('-0.12em')
+    expect(config.math.inlineVerticalShift).toBe('0.08em')
     expect(config.capture.strict).toBe(true)
     expect(config.capture.report).toBe(true)
     expect(config.typst.wrapper.injectPrelude).toBe(true)

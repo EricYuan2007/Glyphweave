@@ -330,7 +330,7 @@ function createMathWrapper(
   }
   if (kind === 'inline') {
     properties.style = `--gw-math-inline-shift: ${safeInlineShift(
-      options?.inlineVerticalShift ?? '-0.12em',
+      options?.inlineVerticalShift ?? '0.08em',
     )}`
   }
 
@@ -344,7 +344,7 @@ function createMathWrapper(
 
 function safeInlineShift(value: string) {
   const trimmed = value.trim()
-  return /^[+-]?(?:\d+|\d*\.\d+)(?:em|rem|px|%)$/.test(trimmed) ? trimmed : '-0.12em'
+  return /^[+-]?(?:\d+|\d*\.\d+)(?:em|rem|px|%)$/.test(trimmed) ? trimmed : '0.08em'
 }
 
 function inferMathFrameKind(svg: HastNode, parent: HastNode | undefined): 'inline' | 'block' {
@@ -427,6 +427,9 @@ function createCaptureReport(
     if (node.tagName === 'table') content.tables += 1
     if (node.tagName === 'img') content.images += 1
     if (node.tagName === 'pre' || node.tagName === 'code') content.codeBlocks += 1
+    if (node.tagName === 'section' && node.properties?.role === 'doc-endnotes') {
+      content.footnotes += countListItems(node)
+    }
     if (isTypstFrameSvg(node)) content.frames += 1
     const classes = classList(node)
     if (node.tagName === 'math') {
@@ -449,6 +452,14 @@ function createCaptureReport(
     content,
     math,
   }
+}
+
+function countListItems(node: HastNode): number {
+  let count = 0
+  visit(node as any, 'element', (child: HastNode) => {
+    if (child !== node && child.tagName === 'li') count += 1
+  })
+  return count
 }
 
 function normalizeText(value: string) {
