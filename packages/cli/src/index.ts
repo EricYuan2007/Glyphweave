@@ -21,7 +21,10 @@ program
     console.log(`Glyphweave v${GLYPHWEAVE_VERSION}`)
     console.log(`Built ${result.built.length} post(s), skipped ${result.skipped.length}`)
     for (const built of result.built) {
-      console.log(`✓ ${built.post.metadata.slug}: html compiled, toc generated`)
+      const math = built.manifest.capture.math
+      console.log(
+        `✓ ${built.post.metadata.slug}: html compiled, toc generated, math ${math.typstFrameSvg}/${math.sourceFormulaCount} frame(s)`,
+      )
     }
   })
 

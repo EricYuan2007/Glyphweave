@@ -5,7 +5,14 @@ import rehypeParse from 'rehype-parse'
 import { unified } from 'unified'
 import { visit } from 'unist-util-visit'
 import type { DiscoveredTypstPost } from '@glyphweave/core'
-import type { RewrittenAsset, TocItem } from '@glyphweave/schema'
+import type {
+  GlyphweaveCaptureReport,
+  GlyphweaveConfig,
+  GlyphweaveDiagnostic,
+  RewrittenAsset,
+  TocItem,
+} from '@glyphweave/schema'
+import { scanSourceFormulasFromText, type SourceFormula } from '@glyphweave/typst'
 
 export interface HtmlAdapterOptions {
   sanitize: boolean
@@ -19,6 +26,8 @@ export interface HtmlAdapterInput {
   outputDir: string
   publicBasePath: string
   options: HtmlAdapterOptions
+  math?: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'>
+  diagnostics?: GlyphweaveDiagnostic[]
 }
 
 export interface HtmlAdapterOutput {
@@ -26,6 +35,8 @@ export interface HtmlAdapterOutput {
   toc: TocItem[]
   rewrittenAssets: RewrittenAsset[]
   warnings: string[]
+  capture: GlyphweaveCaptureReport
+  diagnostics: GlyphweaveDiagnostic[]
 }
 
 type HastNode = {
@@ -36,8 +47,18 @@ type HastNode = {
   children?: HastNode[]
 }
 
-const deniedTags = new Set(['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'style'])
-const urlAttributes = new Set(['href', 'src', 'poster'])
+const deniedTags = new Set([
+  'script',
+  'iframe',
+  'object',
+  'embed',
+  'form',
+  'input',
+  'button',
+  'style',
+  'foreignObject',
+])
+const urlAttributes = new Set(['href', 'src', 'poster', 'xlinkhref', 'xlink:href'])
 const resourceAttributes = new Map([
   ['img', ['src', 'srcSet']],
   ['source', ['src', 'srcSet']],
@@ -51,7 +72,10 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
 
   const root = unified().use(rehypeParse, { fragment: false }).parse(raw) as HastNode
   const body = extractBody(root)
-  await restoreIgnoredInlineEquations(body, input.post.sourcePath)
+  const source = await readFile(input.post.sourcePath, 'utf-8')
+  const sourceFormulas = scanSourceFormulasFromText(source, input.post.sourcePath)
+  const mathmlRecovered = await restoreIgnoredInlineEquations(body, source)
+  const mathFrameCapture = normalizeTypstFrameMath(body, sourceFormulas, input.math)
   normalizeHeadingIds(body, input.options.headingIds)
   const toc = extractToc(body)
   const rewrittenAssets = await rewriteAssets(body, input)
@@ -59,6 +83,17 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
   if (input.options.sanitize) {
     sanitize(body)
   }
+  const diagnostics = [
+    ...(input.diagnostics ?? []),
+    ...createCaptureDiagnostics(sourceFormulas, mathFrameCapture.outputMathFrameCount),
+  ]
+  const capture = createCaptureReport(body, {
+    sourceFormulaCount: sourceFormulas.length,
+    mathmlRecovered,
+    typstFrameSvg: mathFrameCapture.outputMathFrameCount,
+    sourceFallbacks: mathFrameCapture.sourceFallbacks,
+    diagnostics,
+  })
 
   const contentHtml = toHtml({ type: 'root', children: body.children ?? [] } as any)
   assertNoLocalAbsolutePaths(contentHtml)
@@ -68,7 +103,11 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
     contentHtml,
     toc,
     rewrittenAssets,
-    warnings: [],
+    warnings: diagnostics
+      .filter((diagnostic) => diagnostic.severity !== 'info')
+      .map((diagnostic) => diagnostic.message),
+    capture,
+    diagnostics,
   }
 }
 
@@ -95,15 +134,15 @@ function extractBody(root: HastNode): HastNode {
   return found ?? root
 }
 
-async function restoreIgnoredInlineEquations(root: HastNode, sourcePath: string) {
-  if (!root.children?.length) return
-  const source = await readFile(sourcePath, 'utf-8')
+async function restoreIgnoredInlineEquations(root: HastNode, source: string) {
+  if (!root.children?.length) return 0
   const mathLines = source
     .split(/\r?\n/)
     .map(splitInlineMath)
     .filter((segments) => segments.some((segment) => segment.kind === 'math'))
 
   let cursor = 0
+  let restored = 0
   for (const segments of mathLines) {
     const textSegments = segments
       .filter((segment) => segment.kind === 'text')
@@ -123,7 +162,9 @@ async function restoreIgnoredInlineEquations(root: HastNode, sourcePath: string)
       ),
     })
     cursor = match.start + 1
+    restored += segments.filter((segment) => segment.kind === 'math').length
   }
+  return restored
 }
 
 type InlineSegment = { kind: 'text' | 'math'; value: string }
@@ -219,6 +260,183 @@ function element(tagName: string, children: HastNode[]): HastNode {
 
 function textToNodes(value: string): HastNode[] {
   return value ? [{ type: 'text', value }] : []
+}
+
+function normalizeTypstFrameMath(
+  root: HastNode,
+  formulas: SourceFormula[],
+  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'> | undefined,
+) {
+  let formulaIndex = 0
+  let outputMathFrameCount = 0
+  let sourceFallbacks = 0
+
+  const visitChildren = (node: HastNode, parent?: HastNode) => {
+    const children = node.children
+    if (!children) return
+
+    for (let index = 0; index < children.length; index += 1) {
+      const child = children[index]!
+      if (isTypstFrameSvg(child)) {
+        const formula = formulas[formulaIndex++]
+        const kind = inferMathFrameKind(child, parent)
+        const wrapper = createMathWrapper(child, kind, formula, options)
+        children[index] = wrapper
+        outputMathFrameCount += 1
+        if (formula && options?.includeSourceFallback !== false) sourceFallbacks += 1
+        continue
+      }
+
+      if (isInlineSvgContainer(child) && child.children?.some(isTypstFrameSvg)) {
+        const svg = child.children.find(isTypstFrameSvg)!
+        const formula = formulas[formulaIndex++]
+        const wrapper = createMathWrapper(svg, 'inline', formula, options)
+        children[index] = wrapper
+        outputMathFrameCount += 1
+        if (formula && options?.includeSourceFallback !== false) sourceFallbacks += 1
+        continue
+      }
+
+      visitChildren(child, node)
+    }
+  }
+
+  visitChildren(root)
+  return { outputMathFrameCount, sourceFallbacks }
+}
+
+function createMathWrapper(
+  svg: HastNode,
+  kind: 'inline' | 'block',
+  formula: SourceFormula | undefined,
+  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'> | undefined,
+): HastNode {
+  const tagName = kind === 'inline' ? 'span' : 'div'
+  const source = formula?.source
+  const children = [svg]
+  if (source && options?.includeSourceFallback !== false) {
+    children.push({
+      type: 'element',
+      tagName: 'span',
+      properties: { className: ['gw-sr-only'] },
+      children: [{ type: 'text', value: `Formula: ${source}` }],
+    })
+  }
+
+  return {
+    type: 'element',
+    tagName,
+    properties: {
+      className: ['gw-math', `gw-math--${kind}`],
+      'data-gw-renderer': 'typst-frame-svg',
+      ...(source ? { ariaLabel: `Formula: ${source}`, 'data-gw-source': source } : {}),
+    },
+    children,
+  }
+}
+
+function inferMathFrameKind(svg: HastNode, parent: HastNode | undefined): 'inline' | 'block' {
+  if (parent?.tagName === 'p') return 'inline'
+  const style = typeof svg.properties?.style === 'string' ? svg.properties.style : ''
+  return /display:\s*inline/i.test(style) ? 'inline' : 'block'
+}
+
+function isInlineSvgContainer(node: HastNode) {
+  return node.type === 'element' && node.tagName === 'span' && node.children?.some(isTypstFrameSvg)
+}
+
+function isTypstFrameSvg(node: HastNode | undefined) {
+  return (
+    node?.type === 'element' &&
+    node.tagName === 'svg' &&
+    classList(node).includes('typst-frame')
+  )
+}
+
+function classList(node: HastNode) {
+  const className = node.properties?.className
+  if (Array.isArray(className)) return className.map(String)
+  if (typeof className === 'string') return className.split(/\s+/)
+  return []
+}
+
+function createCaptureDiagnostics(
+  formulas: SourceFormula[],
+  outputMathFrameCount: number,
+): GlyphweaveDiagnostic[] {
+  if (formulas.length === outputMathFrameCount) return []
+  return [
+    {
+      code: 'glyphweave-math-count-mismatch',
+      severity: 'warning',
+      message: `Source formulas (${formulas.length}) did not match rendered math frames (${outputMathFrameCount})`,
+    },
+  ]
+}
+
+function createCaptureReport(
+  root: HastNode,
+  input: {
+    sourceFormulaCount: number
+    mathmlRecovered: number
+    typstFrameSvg: number
+    sourceFallbacks: number
+    diagnostics: GlyphweaveDiagnostic[]
+  },
+): GlyphweaveCaptureReport {
+  const content = {
+    headings: 0,
+    paragraphs: 0,
+    lists: 0,
+    tables: 0,
+    images: 0,
+    codeBlocks: 0,
+    footnotes: 0,
+    frames: 0,
+  }
+  const math = {
+    sourceFormulaCount: input.sourceFormulaCount,
+    outputMathFrameCount: input.typstFrameSvg,
+    total: 0,
+    inline: 0,
+    block: 0,
+    nativeMathml: 0,
+    mathmlRecovered: input.mathmlRecovered,
+    typstFrameSvg: input.typstFrameSvg,
+    sourceFallbacks: input.sourceFallbacks,
+    failed: 0,
+    mismatch: input.sourceFormulaCount !== input.typstFrameSvg && input.typstFrameSvg > 0,
+  }
+
+  visit(root as any, 'element', (node: HastNode) => {
+    if (isHeading(node)) content.headings += 1
+    if (node.tagName === 'p') content.paragraphs += 1
+    if (node.tagName === 'ul' || node.tagName === 'ol') content.lists += 1
+    if (node.tagName === 'table') content.tables += 1
+    if (node.tagName === 'img') content.images += 1
+    if (node.tagName === 'pre' || node.tagName === 'code') content.codeBlocks += 1
+    if (isTypstFrameSvg(node)) content.frames += 1
+    const classes = classList(node)
+    if (node.tagName === 'math') {
+      math.nativeMathml += 1
+      math.total += 1
+    } else if (classes.includes('gw-math')) {
+      math.total += 1
+      if (classes.includes('gw-math--inline')) math.inline += 1
+      if (classes.includes('gw-math--block')) math.block += 1
+    }
+  })
+
+  math.failed = Math.max(0, input.sourceFormulaCount - math.total)
+  const hasErrors = input.diagnostics.some((diagnostic) => diagnostic.severity === 'error')
+  const hasWarnings =
+    input.diagnostics.some((diagnostic) => diagnostic.severity === 'warning') || math.mismatch
+
+  return {
+    status: hasErrors ? 'failed' : hasWarnings ? 'warning' : 'ok',
+    content,
+    math,
+  }
 }
 
 function normalizeText(value: string) {
@@ -367,7 +585,7 @@ function sanitizeProperties(node: HastNode) {
   for (const key of Object.keys(node.properties)) {
     const lower = key.toLowerCase()
     const value = node.properties[key]
-    if (lower === 'style' || lower.startsWith('on')) {
+    if ((lower === 'style' && node.tagName !== 'svg') || lower.startsWith('on')) {
       delete node.properties[key]
       continue
     }

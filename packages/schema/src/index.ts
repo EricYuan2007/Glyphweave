@@ -43,6 +43,11 @@ export const GlyphweaveConfigSchema = z
       .object({
         binary: z.string().default('typst'),
         htmlFeatures: z.boolean().default(true),
+        wrapper: z
+          .object({
+            injectPrelude: z.boolean().default(true),
+          })
+          .default({}),
         pdf: z
           .object({
             enabledByDefault: z.boolean().default(false),
@@ -56,6 +61,20 @@ export const GlyphweaveConfigSchema = z
         sanitize: z.boolean().default(true),
         headingIds: z.enum(['preserve', 'stable']).default('stable'),
         scopeClass: z.string().default('glyphweave-content'),
+      })
+      .default({}),
+    math: z
+      .object({
+        strategy: z.enum(['typst-frame', 'hybrid', 'native-only', 'disabled']).default('hybrid'),
+        failOnIgnoredEquation: z.boolean().default(true),
+        includeSourceFallback: z.boolean().default(true),
+        inlineVerticalShift: z.string().default('-0.12em'),
+      })
+      .default({}),
+    capture: z
+      .object({
+        strict: z.boolean().default(true),
+        report: z.boolean().default(true),
       })
       .default({}),
     assets: z
@@ -86,11 +105,51 @@ export const RewrittenAssetSchema = z.object({
   publicPath: z.string(),
 })
 
+export const DiagnosticSchema = z.object({
+  code: z.string(),
+  severity: z.enum(['info', 'warning', 'error']),
+  message: z.string(),
+  source: z.string().optional(),
+  line: z.number().int().positive().optional(),
+})
+
+export const CaptureReportSchema = z.object({
+  status: z.enum(['ok', 'warning', 'failed']),
+  content: z.object({
+    headings: z.number().int().nonnegative(),
+    paragraphs: z.number().int().nonnegative(),
+    lists: z.number().int().nonnegative(),
+    tables: z.number().int().nonnegative(),
+    images: z.number().int().nonnegative(),
+    codeBlocks: z.number().int().nonnegative(),
+    footnotes: z.number().int().nonnegative(),
+    frames: z.number().int().nonnegative(),
+  }),
+  math: z.object({
+    sourceFormulaCount: z.number().int().nonnegative(),
+    outputMathFrameCount: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative(),
+    inline: z.number().int().nonnegative(),
+    block: z.number().int().nonnegative(),
+    nativeMathml: z.number().int().nonnegative(),
+    mathmlRecovered: z.number().int().nonnegative(),
+    typstFrameSvg: z.number().int().nonnegative(),
+    sourceFallbacks: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
+    mismatch: z.boolean(),
+  }),
+})
+
 export const ManifestSchema = z.object({
   schemaVersion: z.literal(1),
   generator: z.literal('glyphweave'),
   generatorVersion: z.string(),
   typstVersion: z.string(),
+  typst: z.object({
+    version: z.string(),
+    features: z.array(z.string()),
+    preludeVersion: z.string().nullable(),
+  }),
   slug: z.string(),
   sourcePath: z.string(),
   metadataPath: z.string(),
@@ -106,6 +165,8 @@ export const ManifestSchema = z.object({
     path: z.string().nullable(),
   }),
   assets: z.array(RewrittenAssetSchema),
+  capture: CaptureReportSchema,
+  diagnostics: z.array(DiagnosticSchema),
   createdAt: z.string(),
 })
 
@@ -136,6 +197,8 @@ export type GlyphweaveConfig = z.infer<typeof GlyphweaveConfigSchema>
 export type GlyphweavePostMetadata = z.infer<typeof PostMetadataSchema>
 export type TocItem = z.infer<typeof TocItemSchema>
 export type RewrittenAsset = z.infer<typeof RewrittenAssetSchema>
+export type GlyphweaveDiagnostic = z.infer<typeof DiagnosticSchema>
+export type GlyphweaveCaptureReport = z.infer<typeof CaptureReportSchema>
 export type GlyphweaveManifest = z.infer<typeof ManifestSchema>
 export type GlyphweaveContentIndex = z.infer<typeof ContentIndexSchema>
 

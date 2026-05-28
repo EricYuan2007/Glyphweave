@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { adaptTypstHtml } from '@glyphweave/html-adapter'
 import type { DiscoveredTypstPost } from '@glyphweave/core'
 
-async function makePost(rawHtml: string): Promise<{
+async function makePost(rawHtml: string, source?: string): Promise<{
   root: string
   rawHtmlPath: string
   outputDir: string
@@ -19,15 +19,16 @@ async function makePost(rawHtml: string): Promise<{
   await writeFile(path.join(postDir, 'assets/figure.png'), 'fake image')
   await writeFile(
     path.join(postDir, 'index.typ'),
-    [
-      '= Demo',
-      '',
-      'Inline $q$ after.',
-      '',
-      'Equation $a + b = c$.',
-      '',
-      'Subscript $x_1$ and superscript $n^2$.',
-    ].join('\n'),
+    source ??
+      [
+        '= Demo',
+        '',
+        'Inline $q$ after.',
+        '',
+        'Equation $a + b = c$.',
+        '',
+        'Subscript $x_1$ and superscript $n^2$.',
+      ].join('\n'),
   )
   const rawHtmlPath = path.join(outputDir, 'raw.html')
   await writeFile(rawHtmlPath, rawHtml)
@@ -185,5 +186,51 @@ describe('HTML adapter', () => {
     expect(output.contentHtml).toContain(
       '<msup><mi>n</mi><mn>2</mn></msup>',
     )
+  })
+
+  it('wraps Typst frame SVG math with source fallback and preserves safe SVG attributes', async () => {
+    const fixture = await makePost(
+      `<!doctype html>
+        <html>
+          <body>
+            <p>Inline <span style="display: inline-block"><svg class="typst-frame" viewBox="0 0 10 10" style="overflow: visible; width: 1em; height: 0.8em"><path d="M0 0H10V10Z"></path></svg></span> formula.</p>
+            <svg class="typst-frame" viewBox="0 0 80 20" style="overflow: visible; width: 8em; height: 2em">
+              <foreignObject><script>alert(1)</script></foreignObject>
+              <path d="M0 0H80V20Z"></path>
+            </svg>
+          </body>
+        </html>`,
+      [
+        '= Demo',
+        '',
+        'Inline $sum_(i=1)^n x_i^2$ formula.',
+        '',
+        '$',
+        'cases(',
+        '  x if x > 0,',
+        '  -x otherwise,',
+        ')',
+        '$',
+      ].join('\n'),
+    )
+
+    const output = await adaptTypstHtml({
+      rawHtmlPath: fixture.rawHtmlPath,
+      post: fixture.post,
+      outputDir: fixture.outputDir,
+      publicBasePath: '/glyphweave',
+      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
+
+    expect(output.contentHtml).toContain('class="gw-math gw-math--inline"')
+    expect(output.contentHtml).toContain('class="gw-math gw-math--block"')
+    expect(output.contentHtml).toContain('data-gw-renderer="typst-frame-svg"')
+    expect(output.contentHtml).toContain('aria-label="Formula: sum_(i=1)^n x_i^2"')
+    expect(output.contentHtml).toContain('class="gw-sr-only"')
+    expect(output.contentHtml).toContain('<svg class="typst-frame" viewBox="0 0 10 10" style=')
+    expect(output.contentHtml).not.toContain('<foreignObject')
+    expect(output.capture.math.typstFrameSvg).toBe(2)
+    expect(output.capture.math.sourceFallbacks).toBe(2)
+    expect(output.capture.math.mismatch).toBe(false)
   })
 })

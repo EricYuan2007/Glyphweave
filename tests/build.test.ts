@@ -52,6 +52,66 @@ describe('build pipeline', () => {
     )
   })
 
+  it('writes math capture report and compile diagnostics to the manifest', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-math-'))
+    const postDir = path.join(root, 'content/typst-posts/math-post')
+    await mkdir(postDir, { recursive: true })
+    await writeFile(path.join(postDir, 'index.typ'), 'Inline $sum_(i=1)^n x_i^2$ formula.\n')
+    await writeFile(
+      path.join(postDir, 'post.yaml'),
+      [
+        'title: "Math Post"',
+        'slug: "math-post"',
+        'description: "A math Typst post."',
+        'date: "2026-05-28"',
+        'tags: ["Typst", "Math"]',
+        'status: "published"',
+        'visibility: "public"',
+      ].join('\n'),
+    )
+
+    await buildAll(root, defaultConfig(), {
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      compileHtml: async ({ outputPath }) => {
+        await writeFile(
+          outputPath,
+          '<body><p>Inline <span style="display: inline-block"><svg class="typst-frame" viewBox="0 0 10 10" style="overflow: visible; width: 1em; height: 0.8em"><path d="M0 0H10V10Z"></path></svg></span> formula.</p></body>',
+        )
+        return {
+          outputPath,
+          stdout: '',
+          stderr: 'warning: HTML export is experimental',
+          diagnostics: [
+            {
+              code: 'typst-html-experimental',
+              severity: 'info',
+              message: 'HTML export is experimental',
+            },
+          ],
+        }
+      },
+      compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
+    })
+
+    const manifest = JSON.parse(
+      await readFile(path.join(root, '.glyphweave/generated/posts/math-post/manifest.json'), 'utf-8'),
+    )
+
+    expect(manifest.capture.math.sourceFormulaCount).toBe(1)
+    expect(manifest.capture.math.typstFrameSvg).toBe(1)
+    expect(manifest.capture.math.sourceFallbacks).toBe(1)
+    expect(manifest.capture.math.mismatch).toBe(false)
+    expect(manifest.diagnostics).toEqual([
+      {
+        code: 'typst-html-experimental',
+        severity: 'info',
+        message: 'HTML export is experimental',
+      },
+    ])
+    expect(manifest.typst.features).toContain('html')
+    expect(manifest.typst.preludeVersion).toBe('glyphweave-html-1')
+  })
+
   it('skips private and archived posts in the content index', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-skip-'))
 

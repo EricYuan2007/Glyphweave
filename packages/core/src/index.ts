@@ -10,11 +10,14 @@ import {
   PostMetadataSchema,
   defaultConfig,
   type GlyphweaveConfig,
+  type GlyphweaveCaptureReport,
+  type GlyphweaveDiagnostic,
   type GlyphweaveContentIndex,
   type GlyphweaveManifest,
   type GlyphweavePostMetadata,
 } from '@glyphweave/schema'
 import {
+  GLYPHWEAVE_HTML_PRELUDE_VERSION,
   compileTypstHtml,
   compileTypstPdf,
   detectTypst,
@@ -149,13 +152,19 @@ export async function buildAll(
     const tocPath = path.join(outputDir, 'toc.json')
     const manifestPath = path.join(outputDir, 'manifest.json')
 
-    await deps.compileHtml({
+    const htmlCompile = await deps.compileHtml({
       binary: config.typst.binary,
       inputPath: post.sourcePath,
       outputPath: rawPath,
       cwd: post.postDir,
+      rootPath: post.postDir,
+      wrapper: {
+        injectPrelude: config.typst.wrapper.injectPrelude,
+        mathStrategy: config.math.strategy,
+      },
       logPath: path.join(logDir, `${post.metadata.slug}.html.log`),
     })
+    assertHtmlDiagnostics(config, htmlCompile.diagnostics ?? [])
 
     const adapted = await adaptTypstHtml({
       rawHtmlPath: rawPath,
@@ -163,6 +172,8 @@ export async function buildAll(
       outputDir,
       publicBasePath: config.output.publicBasePath,
       options: config.html,
+      math: config.math,
+      diagnostics: htmlCompile.diagnostics ?? [],
     })
 
     await writeFile(contentPath, adapted.contentHtml)
@@ -186,18 +197,34 @@ export async function buildAll(
       }
     }
 
-    const manifest = createManifest(rootDir, config, post, typst.version, adapted.rewrittenAssets, {
-      rawPath,
-      contentPath,
-      tocPath,
-      pdfPath,
-    })
+    const manifest = createManifest(
+      rootDir,
+      config,
+      post,
+      typst.version,
+      htmlCompile.preludeVersion ?? expectedPreludeVersion(config),
+      adapted.rewrittenAssets,
+      adapted.capture,
+      adapted.diagnostics,
+      {
+        rawPath,
+        contentPath,
+        tocPath,
+        pdfPath,
+      },
+    )
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
     built.push({ post, manifest })
   }
 
   await writeContentIndex(rootDir, config, built)
   return { built, skipped }
+}
+
+function expectedPreludeVersion(config: GlyphweaveConfig) {
+  if (!config.typst.wrapper.injectPrelude) return null
+  if (config.math.strategy === 'disabled' || config.math.strategy === 'native-only') return null
+  return GLYPHWEAVE_HTML_PRELUDE_VERSION
 }
 
 export async function clean(rootDir: string, config = defaultConfig()) {
@@ -217,7 +244,10 @@ function createManifest(
   config: GlyphweaveConfig,
   post: DiscoveredTypstPost,
   typstVersion: string,
+  preludeVersion: string | null,
   assets: GlyphweaveManifest['assets'],
+  capture: GlyphweaveCaptureReport,
+  diagnostics: GlyphweaveDiagnostic[],
   paths: { rawPath: string; contentPath: string; tocPath: string; pdfPath: string | null },
 ): GlyphweaveManifest {
   return {
@@ -225,6 +255,11 @@ function createManifest(
     generator: 'glyphweave',
     generatorVersion: GLYPHWEAVE_VERSION,
     typstVersion,
+    typst: {
+      version: typstVersion,
+      features: config.typst.htmlFeatures ? ['html'] : [],
+      preludeVersion,
+    },
     slug: post.metadata.slug,
     sourcePath: relative(rootDir, post.sourcePath),
     metadataPath: relative(rootDir, post.metadataPath),
@@ -244,7 +279,19 @@ function createManifest(
       output: relative(rootDir, asset.output),
       publicPath: asset.publicPath,
     })),
+    capture,
+    diagnostics,
     createdAt: new Date().toISOString(),
+  }
+}
+
+function assertHtmlDiagnostics(config: GlyphweaveConfig, diagnostics: GlyphweaveDiagnostic[]) {
+  if (!config.math.failOnIgnoredEquation) return
+  const ignoredEquation = diagnostics.find(
+    (diagnostic) => diagnostic.code === 'typst-html-equation-ignored',
+  )
+  if (ignoredEquation) {
+    throw new Error(`Typst HTML export ignored an equation: ${ignoredEquation.message}`)
   }
 }
 
