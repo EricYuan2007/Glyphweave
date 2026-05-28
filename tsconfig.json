@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "@glyphweave/core": ["packages/core/src/index.ts"],
+      "@glyphweave/schema": ["packages/schema/src/index.ts"],
+      "@glyphweave/html-adapter": ["packages/html-adapter/src/index.ts"],
+      "@glyphweave/typst": ["packages/typst/src/index.ts"],
+      "@glyphweave/astro": ["packages/astro/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "tests/**/*.ts",
+    "examples/**/*.ts",
+    "glyphweave.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ],
+  "exclude": ["node_modules", "dist", ".glyphweave", "examples/astro-blog/dist"]
+}

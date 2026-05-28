@@ -1,0 +1,8 @@
+{
+  "name": "@glyphweave/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "glyphweave": "./src/index.ts"
+  }
+}

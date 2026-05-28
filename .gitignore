@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.glyphweave/
+examples/astro-blog/public/glyphweave/
+.npmrc
+.DS_Store
+*.log
