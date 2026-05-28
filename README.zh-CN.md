@@ -162,4 +162,4 @@ export default defineConfig({
 
 ## 许可证
 
-MIT
+[MIT](./LICENSE)。补充授权说明见 [NOTICE.md](./NOTICE.md)。

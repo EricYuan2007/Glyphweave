@@ -2,6 +2,7 @@
   "name": "example-astro-blog",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "glyphweave": "tsx ../../packages/cli/src/index.ts",

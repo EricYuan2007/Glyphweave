@@ -1,6 +1,7 @@
 {
   "name": "@glyphweave/html-adapter",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

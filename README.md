@@ -227,4 +227,4 @@ Chinese:
 
 ## License
 
-MIT
+[MIT](./LICENSE). Additional licensing notes are in [NOTICE.md](./NOTICE.md).
