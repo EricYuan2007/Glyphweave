@@ -39,8 +39,8 @@ type HastNode = {
 const deniedTags = new Set(['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'style'])
 const urlAttributes = new Set(['href', 'src', 'poster'])
 const resourceAttributes = new Map([
-  ['img', ['src', 'srcset']],
-  ['source', ['src', 'srcset']],
+  ['img', ['src', 'srcSet']],
+  ['source', ['src', 'srcSet']],
   ['video', ['src', 'poster']],
   ['audio', ['src']],
 ])
@@ -51,6 +51,7 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
 
   const root = unified().use(rehypeParse, { fragment: false }).parse(raw) as HastNode
   const body = extractBody(root)
+  await restoreIgnoredInlineEquations(body, input.post.sourcePath)
   normalizeHeadingIds(body, input.options.headingIds)
   const toc = extractToc(body)
   const rewrittenAssets = await rewriteAssets(body, input)
@@ -94,6 +95,136 @@ function extractBody(root: HastNode): HastNode {
   return found ?? root
 }
 
+async function restoreIgnoredInlineEquations(root: HastNode, sourcePath: string) {
+  if (!root.children?.length) return
+  const source = await readFile(sourcePath, 'utf-8')
+  const mathLines = source
+    .split(/\r?\n/)
+    .map(splitInlineMath)
+    .filter((segments) => segments.some((segment) => segment.kind === 'math'))
+
+  let cursor = 0
+  for (const segments of mathLines) {
+    const textSegments = segments
+      .filter((segment) => segment.kind === 'text')
+      .map((segment) => normalizeText(segment.value))
+      .filter(Boolean)
+    if (textSegments.length === 0) continue
+
+    const match = findSplitParagraphMatch(root.children, cursor, textSegments)
+    if (!match) continue
+
+    root.children.splice(match.start, match.end - match.start + 1, {
+      type: 'element',
+      tagName: 'p',
+      properties: {},
+      children: segments.flatMap((segment) =>
+        segment.kind === 'math' ? [mathToNode(segment.value)] : textToNodes(segment.value),
+      ),
+    })
+    cursor = match.start + 1
+  }
+}
+
+type InlineSegment = { kind: 'text' | 'math'; value: string }
+
+function splitInlineMath(line: string): InlineSegment[] {
+  const segments: InlineSegment[] = []
+  let cursor = 0
+  const inlineMath = /(?<!\\)\$([^$\n]+?)(?<!\\)\$/g
+  for (const match of line.matchAll(inlineMath)) {
+    const start = match.index ?? 0
+    if (start > cursor) {
+      segments.push({ kind: 'text', value: line.slice(cursor, start) })
+    }
+    segments.push({ kind: 'math', value: match[1]!.trim() })
+    cursor = start + match[0].length
+  }
+  if (cursor < line.length) {
+    segments.push({ kind: 'text', value: line.slice(cursor) })
+  }
+  return segments.length > 0 ? segments : [{ kind: 'text', value: line }]
+}
+
+function findSplitParagraphMatch(
+  children: HastNode[],
+  startAt: number,
+  textSegments: string[],
+): { start: number; end: number } | null {
+  for (let index = startAt; index < children.length; index += 1) {
+    if (!isParagraph(children[index])) continue
+    let childIndex = index
+    let segmentIndex = 0
+    let end = index
+
+    while (childIndex < children.length && segmentIndex < textSegments.length) {
+      const child = children[childIndex]!
+      if (isIgnorableText(child)) {
+        childIndex += 1
+        continue
+      }
+      if (!isParagraph(child)) break
+      if (normalizeText(textContent(child)) !== textSegments[segmentIndex]) break
+      end = childIndex
+      childIndex += 1
+      segmentIndex += 1
+    }
+
+    if (segmentIndex === textSegments.length) {
+      return { start: index, end }
+    }
+  }
+  return null
+}
+
+function mathToNode(expression: string): HastNode {
+  const children = expressionToMathChildren(expression)
+  return {
+    type: 'element',
+    tagName: 'math',
+    properties: {
+      className: ['gw-math'],
+      ariaLabel: expression,
+    },
+    children: children.length === 1 ? children : [element('mrow', children)],
+  }
+}
+
+function expressionToMathChildren(expression: string): HastNode[] {
+  const trimmed = expression.trim()
+  const scripted = trimmed.match(/^([A-Za-z]+)([_^])([A-Za-z0-9]+)$/)
+  if (scripted) {
+    return [
+      element(scripted[2] === '_' ? 'msub' : 'msup', [
+        mathToken(scripted[1]!),
+        mathToken(scripted[3]!),
+      ]),
+    ]
+  }
+
+  const tokens = trimmed.match(/[A-Za-z]+|\d+(?:\.\d+)?|[+\-=×*/()[\]{}]|[^\s]/g) ?? [trimmed]
+  return tokens.map(mathToken)
+}
+
+function mathToken(token: string): HastNode {
+  if (/^\d/.test(token)) return element('mn', [{ type: 'text', value: token }])
+  if (/^[A-Za-z]+$/.test(token)) return element('mi', [{ type: 'text', value: token }])
+  if (/^[+\-=×*/()[\]{}]$/.test(token)) return element('mo', [{ type: 'text', value: token }])
+  return element('mtext', [{ type: 'text', value: token }])
+}
+
+function element(tagName: string, children: HastNode[]): HastNode {
+  return { type: 'element', tagName, properties: {}, children }
+}
+
+function textToNodes(value: string): HastNode[] {
+  return value ? [{ type: 'text', value }] : []
+}
+
+function normalizeText(value: string) {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
 function normalizeHeadingIds(root: HastNode, mode: HtmlAdapterOptions['headingIds']) {
   const seen = new Map<string, number>()
   visit(root as any, 'element', (node: HastNode) => {
@@ -131,7 +262,7 @@ async function rewriteAssets(root: HastNode, input: HtmlAdapterInput): Promise<R
     for (const attr of resourceAttributes.get(node.tagName) ?? []) {
       const value = node.properties[attr]
       if (typeof value !== 'string') continue
-      if (attr === 'srcset') {
+      if (attr === 'srcSet') {
         pending.push(rewriteSrcset(node, attr, value, input, rewritten))
       } else {
         pending.push(rewriteUrlAttribute(node, attr, value, input, rewritten))
@@ -249,6 +380,14 @@ function sanitizeProperties(node: HastNode) {
 function textContent(node: HastNode): string {
   if (node.type === 'text') return node.value ?? ''
   return (node.children ?? []).map(textContent).join('').trim()
+}
+
+function isParagraph(node: HastNode | undefined) {
+  return node?.type === 'element' && node.tagName === 'p'
+}
+
+function isIgnorableText(node: HastNode | undefined) {
+  return node?.type === 'text' && normalizeText(node.value ?? '') === ''
 }
 
 function isHeading(node: HastNode) {

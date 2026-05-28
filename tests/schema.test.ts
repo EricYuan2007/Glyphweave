@@ -38,7 +38,7 @@ describe('schemas', () => {
         date: '2026-05-28',
         status: 'published',
         visibility: 'public',
-        cover: '/Users/eric/private.png',
+        cover: '/Users/example/private.png',
       }),
     ).toThrow()
   })
