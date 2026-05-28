@@ -1,11 +1,11 @@
-title: "HNSW 检索算法笔记"
+title: "Typst 博客语法巡检"
 slug: "basic-post"
-description: "一篇用于验证 Glyphweave Typst 到 Web HTML 管线的技术笔记。"
+description: "一篇覆盖 Typst 博客常用语法的综合渲染 demo。"
 date: "2026-05-28"
 updated: "2026-05-28"
 tags:
   - Typst
-  - Retrieval
+  - Demo
   - Web
 status: "published"
 visibility: "public"

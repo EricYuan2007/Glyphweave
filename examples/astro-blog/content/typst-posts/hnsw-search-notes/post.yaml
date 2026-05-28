@@ -1,12 +1,12 @@
-title: "HNSW 检索算法笔记"
+title: "Typst 博客语法巡检"
 slug: "hnsw-search-notes"
-description: "一篇关于 HNSW 检索过程、分层图结构和近邻搜索策略的技术笔记。"
+description: "一篇覆盖 Typst 博客常用语法的综合渲染 demo。"
 date: "2026-05-28"
 updated: "2026-05-28"
 tags:
-  - HNSW
-  - Retrieval
-  - Algorithm
+  - Typst
+  - Demo
+  - Web
 status: "published"
 visibility: "public"
 language: "zh-CN"
