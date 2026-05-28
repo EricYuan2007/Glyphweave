@@ -1,0 +1,16 @@
+title: "HNSW 检索算法笔记"
+slug: "basic-post"
+description: "一篇用于验证 Glyphweave Typst 到 Web HTML 管线的技术笔记。"
+date: "2026-05-28"
+updated: "2026-05-28"
+tags:
+  - Typst
+  - Retrieval
+  - Web
+status: "published"
+visibility: "public"
+language: "zh-CN"
+pdf: true
+source: "index.typ"
+cover: null
+canonicalUrl: null

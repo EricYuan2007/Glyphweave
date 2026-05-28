@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320" role="img" aria-label="HNSW layered graph">
+  <rect width="640" height="320" fill="#f7f7f2"/>
+  <g fill="none" stroke="#52616b" stroke-width="4">
+    <path d="M80 240 C180 120 310 260 430 110 S560 170 590 80"/>
+    <path d="M90 120 C210 40 330 130 470 60"/>
+  </g>
+  <g fill="#2f6690">
+    <circle cx="80" cy="240" r="14"/>
+    <circle cx="210" cy="155" r="14"/>
+    <circle cx="340" cy="220" r="14"/>
+    <circle cx="470" cy="95" r="14"/>
+    <circle cx="590" cy="80" r="14"/>
+    <circle cx="90" cy="120" r="12"/>
+    <circle cx="250" cy="72" r="12"/>
+    <circle cx="470" cy="60" r="12"/>
+  </g>
+  <text x="32" y="44" font-family="Arial, sans-serif" font-size="24" fill="#1f2933">Layered graph navigation</text>
+</svg>
