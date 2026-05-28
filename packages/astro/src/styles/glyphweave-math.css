@@ -1,0 +1,34 @@
+.glyphweave-content .gw-math {
+  max-width: 100%;
+}
+
+.glyphweave-content .gw-math--inline {
+  display: inline-flex;
+  align-items: baseline;
+  vertical-align: -0.12em;
+}
+
+.glyphweave-content .gw-math--block {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.35rem;
+}
+
+.glyphweave-content .gw-math svg {
+  max-width: 100%;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.glyphweave-content .gw-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

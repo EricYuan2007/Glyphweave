@@ -75,6 +75,9 @@ importers:
 
   examples/astro-blog:
     dependencies:
+      '@glyphweave/astro':
+        specifier: workspace:*
+        version: link:../../packages/astro
       astro:
         specifier: ^5.8.1
         version: 5.18.2(@types/node@24.12.4)(rollup@4.60.4)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)

@@ -12,6 +12,28 @@ HNSW 是一种基于多层图结构的近似最近邻搜索算法。这篇文章
 
 给定查询向量 $q$，算法从入口点开始逐层下降，并在每一层维护候选集合。
 
+简单行内公式也会保留在同一段落里，例如 $a+b=c$、$x_1$、$n^2$，以及 $alpha+beta=gamma$。
+
+复杂行内公式通过 Typst frame 转成 SVG，例如候选集合的平方权重 $sum_(i=1)^n x_i^2$。
+
+块级公式会保留为可横向滚动的 SVG 区块：
+
+$
+integral_0^1 f(x) dif x
+$
+
+$
+frac(a+b, c+d)
+$
+
+$
+mat(1, 2; 3, 4)
+$
+
+$
+cases(x^2, "if " x >= 0, -x, "otherwise")
+$
+
 == Web 输出
 
 Glyphweave 输出正文 HTML、目录 JSON、manifest 和可选 PDF，Astro 只消费这些产物。
