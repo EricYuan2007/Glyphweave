@@ -5,7 +5,7 @@
 .glyphweave-content .gw-math--inline {
   display: inline-flex;
   align-items: baseline;
-  vertical-align: -0.12em;
+  vertical-align: var(--gw-math-inline-shift, -0.12em);
 }
 
 .glyphweave-content .gw-math--block {

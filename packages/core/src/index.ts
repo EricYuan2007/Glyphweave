@@ -175,6 +175,7 @@ export async function buildAll(
       math: config.math,
       diagnostics: htmlCompile.diagnostics ?? [],
     })
+    assertCapture(config, adapted.capture)
 
     await writeFile(contentPath, adapted.contentHtml)
     await writeFile(tocPath, JSON.stringify(adapted.toc, null, 2))
@@ -293,6 +294,14 @@ function assertHtmlDiagnostics(config: GlyphweaveConfig, diagnostics: Glyphweave
   if (ignoredEquation) {
     throw new Error(`Typst HTML export ignored an equation: ${ignoredEquation.message}`)
   }
+}
+
+function assertCapture(config: GlyphweaveConfig, capture: GlyphweaveCaptureReport) {
+  if (!config.capture.strict) return
+  if (capture.math.failed === 0 && !capture.math.mismatch && capture.status !== 'failed') return
+  throw new Error(
+    `Strict capture failed: ${capture.math.failed} formula(s) missing, mismatch=${capture.math.mismatch}`,
+  )
 }
 
 async function writeContentIndex(rootDir: string, config: GlyphweaveConfig, built: BuiltPost[]) {

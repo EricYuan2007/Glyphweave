@@ -196,4 +196,33 @@ describe('build pipeline', () => {
     expect(manifest.pdf.enabled).toBe(false)
     expect(content).toContain('PDF Warn')
   })
+
+  it('fails in strict capture mode when source formulas are not rendered', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-capture-strict-'))
+    const postDir = path.join(root, 'content/typst-posts/missing-math')
+    await mkdir(postDir, { recursive: true })
+    await writeFile(path.join(postDir, 'index.typ'), 'Missing $sum_(i=1)^n x_i^2$ formula.\n')
+    await writeFile(
+      path.join(postDir, 'post.yaml'),
+      [
+        'title: "Missing Math"',
+        'slug: "missing-math"',
+        'description: "A post with missing math."',
+        'date: "2026-05-28"',
+        'status: "published"',
+        'visibility: "public"',
+      ].join('\n'),
+    )
+
+    await expect(
+      buildAll(root, defaultConfig(), {
+        typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+        compileHtml: async ({ outputPath }) => {
+          await writeFile(outputPath, '<body><p>Missing formula.</p></body>')
+          return { outputPath, stdout: '', stderr: '' }
+        },
+        compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
+      }),
+    ).rejects.toThrow('Strict capture failed')
+  })
 })

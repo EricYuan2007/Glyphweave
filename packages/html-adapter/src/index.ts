@@ -26,7 +26,7 @@ export interface HtmlAdapterInput {
   outputDir: string
   publicBasePath: string
   options: HtmlAdapterOptions
-  math?: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'>
+  math?: Pick<GlyphweaveConfig['math'], 'includeSourceFallback' | 'inlineVerticalShift'>
   diagnostics?: GlyphweaveDiagnostic[]
 }
 
@@ -265,7 +265,7 @@ function textToNodes(value: string): HastNode[] {
 function normalizeTypstFrameMath(
   root: HastNode,
   formulas: SourceFormula[],
-  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'> | undefined,
+  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback' | 'inlineVerticalShift'> | undefined,
 ) {
   let formulaIndex = 0
   let outputMathFrameCount = 0
@@ -309,7 +309,7 @@ function createMathWrapper(
   svg: HastNode,
   kind: 'inline' | 'block',
   formula: SourceFormula | undefined,
-  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback'> | undefined,
+  options: Pick<GlyphweaveConfig['math'], 'includeSourceFallback' | 'inlineVerticalShift'> | undefined,
 ): HastNode {
   const tagName = kind === 'inline' ? 'span' : 'div'
   const source = formula?.source
@@ -323,16 +323,28 @@ function createMathWrapper(
     })
   }
 
+  const properties: Record<string, unknown> = {
+    className: ['gw-math', `gw-math--${kind}`],
+    'data-gw-renderer': 'typst-frame-svg',
+    ...(source ? { ariaLabel: `Formula: ${source}`, 'data-gw-source': source } : {}),
+  }
+  if (kind === 'inline') {
+    properties.style = `--gw-math-inline-shift: ${safeInlineShift(
+      options?.inlineVerticalShift ?? '-0.12em',
+    )}`
+  }
+
   return {
     type: 'element',
     tagName,
-    properties: {
-      className: ['gw-math', `gw-math--${kind}`],
-      'data-gw-renderer': 'typst-frame-svg',
-      ...(source ? { ariaLabel: `Formula: ${source}`, 'data-gw-source': source } : {}),
-    },
+    properties,
     children,
   }
+}
+
+function safeInlineShift(value: string) {
+  const trimmed = value.trim()
+  return /^[+-]?(?:\d+|\d*\.\d+)(?:em|rem|px|%)$/.test(trimmed) ? trimmed : '-0.12em'
 }
 
 function inferMathFrameKind(svg: HastNode, parent: HastNode | undefined): 'inline' | 'block' {
@@ -585,7 +597,14 @@ function sanitizeProperties(node: HastNode) {
   for (const key of Object.keys(node.properties)) {
     const lower = key.toLowerCase()
     const value = node.properties[key]
-    if ((lower === 'style' && node.tagName !== 'svg') || lower.startsWith('on')) {
+    if (lower === 'style' && node.tagName !== 'svg') {
+      if (typeof value === 'string' && isSafeMathStyle(node, value)) {
+        continue
+      }
+      delete node.properties[key]
+      continue
+    }
+    if (lower.startsWith('on')) {
       delete node.properties[key]
       continue
     }
@@ -593,6 +612,11 @@ function sanitizeProperties(node: HastNode) {
       delete node.properties[key]
     }
   }
+}
+
+function isSafeMathStyle(node: HastNode, value: string) {
+  if (!classList(node).includes('gw-math--inline')) return false
+  return /^--gw-math-inline-shift:\s*[+-]?(?:\d+|\d*\.\d+)(?:em|rem|px|%)$/.test(value.trim())
 }
 
 function textContent(node: HastNode): string {

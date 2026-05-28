@@ -223,6 +223,7 @@ describe('HTML adapter', () => {
     })
 
     expect(output.contentHtml).toContain('class="gw-math gw-math--inline"')
+    expect(output.contentHtml).toContain('style="--gw-math-inline-shift: -0.12em"')
     expect(output.contentHtml).toContain('class="gw-math gw-math--block"')
     expect(output.contentHtml).toContain('data-gw-renderer="typst-frame-svg"')
     expect(output.contentHtml).toContain('aria-label="Formula: sum_(i=1)^n x_i^2"')
