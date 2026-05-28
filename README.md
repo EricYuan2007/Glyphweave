@@ -42,7 +42,9 @@ Optional PDF output follows the same Typst source:
 - Generate stable heading IDs and `toc.json`.
 - Reject local absolute paths and unsafe URL protocols.
 - Rewrite article-local assets into public deployment paths.
-- Recover simple inline equations ignored by current Typst HTML export into MathML.
+- Inject a Glyphweave HTML prelude and render complex equations through Typst `html.frame` SVG.
+- Keep conservative MathML recovery as a fallback for simple ignored inline equations.
+- Emit math capture statistics and Typst HTML diagnostics in each manifest.
 - Emit per-post `manifest.json` and a site-level `.glyphweave/content-index.json`.
 - Provide an Astro example with homepage, archive, tag pages, post pages, PDF links, and Pagefind indexing.
 
@@ -128,10 +130,23 @@ export default defineConfig({
   },
   typst: {
     binary: 'typst',
+    wrapper: {
+      injectPrelude: true,
+    },
     pdf: {
       enabledByDefault: false,
       failure: 'warn',
     },
+  },
+  math: {
+    strategy: 'hybrid',
+    failOnIgnoredEquation: true,
+    includeSourceFallback: true,
+    inlineVerticalShift: '-0.12em',
+  },
+  capture: {
+    strict: true,
+    report: true,
   },
 })
 ```
@@ -194,6 +209,7 @@ English:
 
 - [Architecture](./docs/architecture.md)
 - [HTML Adapter](./docs/adapter.md)
+- [Math Rendering and Capture](./docs/math-rendering.md)
 - [Astro Integration](./docs/astro-integration.md)
 - [Security](./docs/security.md)
 - [Troubleshooting](./docs/troubleshooting.md)
@@ -204,6 +220,7 @@ Chinese:
 - [架构](./docs/zh-CN/architecture.md)
 - [使用指南](./docs/zh-CN/usage.md)
 - [HTML Adapter](./docs/zh-CN/adapter.md)
+- [复杂公式与内容捕获](./docs/zh-CN/math-rendering.md)
 - [Astro 集成](./docs/zh-CN/astro-integration.md)
 - [安全模型](./docs/zh-CN/security.md)
 - [故障排查](./docs/zh-CN/troubleshooting.md)

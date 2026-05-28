@@ -26,7 +26,9 @@ Expected artifacts:
 Manual checks:
 
 - The article page renders Typst content as HTML, not a PDF iframe.
-- Inline math appears as visible MathML, for example `q` in the demo article.
+- Inline and block math render through `.gw-math` wrappers with `svg.typst-frame`.
+- Complex examples such as `sum_(i=1)^n x_i^2`, `integral_0^1 f(x) dif x`, `frac`, `mat`, and `cases` are visible in the demo article.
+- The manifest contains `capture.math`, `diagnostics`, and `typst.preludeVersion`.
 - The PDF download link points to `/glyphweave/posts/<slug>/article.pdf`.
 - The final HTML contains `data-pagefind-body`.
 - `content.html` does not contain scripts, event attributes, `javascript:` URLs, or local absolute paths.

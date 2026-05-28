@@ -42,7 +42,9 @@ PDF 是补充链路：
 - 生成稳定 heading id 和 `toc.json`。
 - 拒绝本地绝对路径与危险 URL 协议。
 - 复制文章目录内资源并重写为 public path。
-- 将当前 Typst HTML export 忽略的简单行内公式恢复为 MathML。
+- 注入 Glyphweave HTML prelude，用 `html.frame` 将复杂公式渲染为安全 SVG。
+- 保留简单公式的 MathML 恢复作为保守 fallback。
+- 在 manifest 中输出公式捕获统计和 Typst HTML 诊断。
 - 输出每篇文章的 `manifest.json` 和全站 `.glyphweave/content-index.json`。
 - 提供 Astro 示例：首页、归档页、标签页、文章页、PDF 下载和 Pagefind 索引。
 
@@ -122,11 +124,38 @@ pnpm glyphweave doctor
 
 所有 CLI 命令都支持 `--root <dir>`，可以在当前工作目录之外指定项目根目录。
 
+## 复杂公式
+
+默认配置使用 `math.strategy: "hybrid"`。构建 HTML 时，Glyphweave 会为 Typst 注入一个 HTML prelude，把 `math.equation` 通过 `html.frame` 输出为 SVG；HTML Adapter 会把这些 SVG 包装成 `.gw-math` 结构，保留源公式 fallback，并在 `manifest.json` 写入 capture report。
+
+可配置项：
+
+```ts
+export default defineConfig({
+  math: {
+    strategy: 'hybrid',
+    failOnIgnoredEquation: true,
+    includeSourceFallback: true,
+    inlineVerticalShift: '-0.12em',
+  },
+  capture: {
+    strict: true,
+    report: true,
+  },
+  typst: {
+    wrapper: {
+      injectPrelude: true,
+    },
+  },
+})
+```
+
 ## 文档
 
 - [架构](./docs/zh-CN/architecture.md)
 - [使用指南](./docs/zh-CN/usage.md)
 - [HTML Adapter](./docs/zh-CN/adapter.md)
+- [复杂公式与内容捕获](./docs/zh-CN/math-rendering.md)
 - [Astro 集成](./docs/zh-CN/astro-integration.md)
 - [安全模型](./docs/zh-CN/security.md)
 - [故障排查](./docs/zh-CN/troubleshooting.md)

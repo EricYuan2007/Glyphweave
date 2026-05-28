@@ -43,4 +43,4 @@ pnpm glyphweave clean --root /path/to/site
 
 ## Inline formulas disappear
 
-Typst 0.14.x may warn that equations were ignored during HTML export. Glyphweave recovers simple inline equations when the raw HTML split can be matched to one source line. If a complex formula is still missing, check `.glyphweave/logs/<slug>.html.log` for Typst warnings and simplify the formula or wait for broader Typst HTML math support.
+Typst 0.14.x can ignore equations on its native HTML export path. The default config injects the Glyphweave HTML prelude and renders complex formulas with `html.frame` SVG; if Typst still reports `equation was ignored during HTML export`, the build fails. Check `.glyphweave/logs/<slug>.html.log`, confirm `typst.wrapper.injectPrelude` is enabled, and make sure `math.strategy` is not `native-only` or `disabled`.

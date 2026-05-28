@@ -35,7 +35,7 @@ Glyphweave reads the source `.typ` file during adaptation, matches the split par
 <p>Given query <math class="gw-math" aria-label="q"><mi>q</mi></math>, search descends layer by layer.</p>
 ```
 
-The recovery is intentionally conservative. It handles simple inline math on one source line, including identifiers, numbers, common operators, subscripts such as `$x_1$`, and superscripts such as `$n^2$`. More complex formulas should be treated as an area for future Typst HTML improvements or a dedicated math renderer.
+This recovery remains a conservative fallback for simple inline math on one source line, including identifiers, numbers, common operators, subscripts such as `$x_1$`, and superscripts such as `$n^2$`. The default path now injects the Glyphweave HTML prelude and renders complex formulas through Typst `html.frame` SVG; see [Math Rendering and Capture](./math-rendering.md).
 
 ## Sanitization Boundary
 

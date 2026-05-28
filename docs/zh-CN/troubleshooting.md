@@ -42,4 +42,4 @@ pnpm install --fetch-timeout 600000
 
 ## 行内公式消失
 
-Typst 0.14.x HTML export 可能忽略公式。Glyphweave 会恢复可匹配的简单行内公式。如果复杂公式仍缺失，请查看 `.glyphweave/logs/<slug>.html.log` 中的 Typst warning，并考虑简化公式或等待更完整的 Typst HTML math 支持。
+Typst 0.14.x HTML export 原生路径可能忽略公式。默认配置会注入 Glyphweave HTML prelude，用 `html.frame` 把复杂公式输出为 SVG；如果仍出现 `equation was ignored during HTML export`，构建会失败。请检查 `.glyphweave/logs/<slug>.html.log`，确认 `typst.wrapper.injectPrelude` 没有关闭，且 `math.strategy` 不是 `native-only` 或 `disabled`。
