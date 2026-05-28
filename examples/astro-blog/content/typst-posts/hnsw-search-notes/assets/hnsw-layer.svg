@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" role="img" aria-label="HNSW search layers">
+  <rect width="720" height="360" fill="#f4f7f5"/>
+  <g stroke="#566573" stroke-width="4" fill="none">
+    <path d="M92 260 C180 180 260 280 360 210 S540 240 630 130"/>
+    <path d="M120 150 C240 70 370 160 520 80"/>
+    <path d="M170 78 C300 32 430 80 570 44"/>
+  </g>
+  <g fill="#1f7a8c">
+    <circle cx="92" cy="260" r="15"/>
+    <circle cx="235" cy="216" r="15"/>
+    <circle cx="360" cy="210" r="15"/>
+    <circle cx="508" cy="205" r="15"/>
+    <circle cx="630" cy="130" r="15"/>
+    <circle cx="120" cy="150" r="12"/>
+    <circle cx="318" cy="104" r="12"/>
+    <circle cx="520" cy="80" r="12"/>
+    <circle cx="170" cy="78" r="10"/>
+    <circle cx="390" cy="58" r="10"/>
+    <circle cx="570" cy="44" r="10"/>
+  </g>
+  <text x="36" y="46" font-family="Arial, sans-serif" font-size="25" fill="#1f2933">HNSW layers</text>
+  <text x="36" y="318" font-family="Arial, sans-serif" font-size="18" fill="#52616b">Entry point descends from sparse layers to dense neighbors</text>
+</svg>

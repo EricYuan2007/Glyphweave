@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { getGlyphweavePosts } from '../../lib/glyphweave'
+
+export async function getStaticPaths() {
+  const posts = await getGlyphweavePosts()
+  const tags = new Map()
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      const key = tag.toLowerCase()
+      tags.set(key, [...(tags.get(key) ?? []), post])
+    }
+  }
+  return [...tags.entries()].map(([tag, taggedPosts]) => ({
+    params: { tag },
+    props: { tag, taggedPosts },
+  }))
+}
+
+const { tag, taggedPosts } = Astro.props
+---
+
+<BaseLayout title={`Tag: ${tag}`}>
+  <h1>Tag: {tag}</h1>
+  <ul class="post-list">
+    {taggedPosts.map((post) => (
+      <li class="post-card">
+        <h2><a href={`/posts/${post.slug}`}>{post.title}</a></h2>
+        <p>{post.description}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

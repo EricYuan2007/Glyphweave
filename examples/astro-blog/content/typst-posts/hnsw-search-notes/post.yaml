@@ -1,0 +1,16 @@
+title: "HNSW 检索算法笔记"
+slug: "hnsw-search-notes"
+description: "一篇关于 HNSW 检索过程、分层图结构和近邻搜索策略的技术笔记。"
+date: "2026-05-28"
+updated: "2026-05-28"
+tags:
+  - HNSW
+  - Retrieval
+  - Algorithm
+status: "published"
+visibility: "public"
+language: "zh-CN"
+pdf: true
+source: "index.typ"
+cover: null
+canonicalUrl: null
