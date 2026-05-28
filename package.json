@@ -2,14 +2,26 @@
   "name": "glyphweave",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@11.1.1",
+  "description": "Build-time Typst-to-web publishing pipeline for blog-ready HTML, TOC, manifests, and optional PDFs.",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/EricYuan2007/Glyphweave.git"
+  },
+  "homepage": "https://github.com/EricYuan2007/Glyphweave#readme",
+  "keywords": ["typst", "astro", "static-site", "html", "mathml", "pagefind"],
   "scripts": {
     "glyphweave": "tsx packages/cli/src/index.ts",
     "build": "pnpm -r --if-present build",
+    "build:demo": "pnpm --filter example-astro-blog build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
     "lint": "eslint .",
+    "pagefind:demo": "pnpm --filter example-astro-blog pagefind",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:demo": "pnpm glyphweave build && pnpm build:demo && pnpm pagefind:demo"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",

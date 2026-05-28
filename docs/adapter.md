@@ -12,5 +12,39 @@ It performs these steps:
 6. Add `rel="noopener noreferrer"` to external links.
 7. Remove dangerous tags and attributes.
 8. Reject local absolute paths and unsafe URL protocols.
+9. Recover simple inline equations that current Typst HTML export reports as ignored, when the raw output can be matched back to a single source line.
 
 Only `content.html` should be injected into a page. `raw.html` is diagnostic output.
+
+## Equation Recovery
+
+Typst 0.14.x can emit warnings such as `equation was ignored during HTML export`. In that case the raw HTML may split one source line into multiple adjacent paragraphs and omit the equation entirely:
+
+```typst
+Given query $q$, search descends layer by layer.
+```
+
+```html
+<p>Given query</p>
+<p>, search descends layer by layer.</p>
+```
+
+Glyphweave reads the source `.typ` file during adaptation, matches the split paragraphs to the source line, and restores simple inline equations as MathML:
+
+```html
+<p>Given query <math class="gw-math" aria-label="q"><mi>q</mi></math>, search descends layer by layer.</p>
+```
+
+The recovery is intentionally conservative. It handles simple inline math on one source line, including identifiers, numbers, common operators, subscripts such as `$x_1$`, and superscripts such as `$n^2$`. More complex formulas should be treated as an area for future Typst HTML improvements or a dedicated math renderer.
+
+## Sanitization Boundary
+
+The sanitizer removes scriptable or layout-invasive constructs by default:
+
+- `script`, `iframe`, `object`, `embed`, form controls, and style tags.
+- Event attributes such as `onclick` and `onerror`.
+- Inline `style` attributes.
+- `javascript:` and `file:` URLs.
+- Local absolute paths and assets that escape the post `assets/` directory.
+
+The adapter does not attempt to preserve Typst's full page styling. Host sites should style the output through `.glyphweave-content`.
