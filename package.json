@@ -11,7 +11,14 @@
     "url": "git+ssh://git@github.com/EricYuan2007/Glyphweave.git"
   },
   "homepage": "https://github.com/EricYuan2007/Glyphweave#readme",
-  "keywords": ["typst", "astro", "static-site", "html", "mathml", "pagefind"],
+  "keywords": [
+    "typst",
+    "astro",
+    "static-site",
+    "html",
+    "mathml",
+    "pagefind"
+  ],
   "scripts": {
     "glyphweave": "tsx packages/cli/src/index.ts",
     "build": "pnpm -r --if-present build",
@@ -32,6 +39,7 @@
     "hast-util-to-html": "^9.0.5",
     "rehype-parse": "^9.0.1",
     "rehype-sanitize": "^6.0.0",
+    "shiki": "3.23.0",
     "to-vfile": "^8.0.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
@@ -49,6 +57,9 @@
     "vitest": "^3.1.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }

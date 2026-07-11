@@ -267,4 +267,28 @@ describe('HTML adapter', () => {
 
     expect(output.capture.content.footnotes).toBe(1)
   })
+
+  it('highlights fenced code and adds an accessible copy control', async () => {
+    const fixture = await makePost(`<!doctype html>
+      <html>
+        <body>
+          <pre><code data-lang="typ">#let score = 0.93</code></pre>
+        </body>
+      </html>`)
+
+    const output = await adaptTypstHtml({
+      rawHtmlPath: fixture.rawHtmlPath,
+      post: fixture.post,
+      outputDir: fixture.outputDir,
+      publicBasePath: '/glyphweave',
+      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
+
+    expect(output.contentHtml).toContain('class="gw-code-block"')
+    expect(output.contentHtml).toContain('class="shiki')
+    expect(output.contentHtml).toContain('data-code-language="Typst"')
+    expect(output.contentHtml).toContain('data-copy-code')
+    expect(output.contentHtml).toContain('aria-label="Copy code"')
+    expect(output.contentHtml).toContain('#let')
+  })
 })

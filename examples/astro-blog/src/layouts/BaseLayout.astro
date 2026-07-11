@@ -6,6 +6,7 @@ import '../styles/content.css'
 import '../styles/components.css'
 import SiteFooter from '../components/SiteFooter.astro'
 import SiteHeader from '../components/SiteHeader.astro'
+import CodeBlocks from '../components/CodeBlocks.astro'
 
 interface Props {
   title: string
@@ -31,5 +32,6 @@ const pageTitle = title === 'Glyphweave Blog' ? title : `${title} | Glyphweave B
       <slot />
     </main>
     <SiteFooter />
+    <CodeBlocks />
   </body>
 </html>

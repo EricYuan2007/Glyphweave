@@ -111,13 +111,66 @@
   font-size: 0.84em;
 }
 
-.glyphweave-content pre {
+.glyphweave-content .gw-code-block {
+  position: relative;
+  margin-block: 1.4rem;
+  border-block: 1px solid var(--color-rule);
+  background: var(--color-soft);
+}
+
+.glyphweave-content .gw-code-toolbar {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--color-rule);
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  line-height: 1;
+}
+
+.glyphweave-content .gw-code-language {
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.glyphweave-content .gw-code-copy {
+  min-width: 48px;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: right;
+}
+
+.glyphweave-content .gw-code-copy:hover {
+  color: var(--color-ink);
+}
+
+.glyphweave-content pre,
+.glyphweave-content .gw-code-pre {
   overflow-x: auto;
   padding: 1.15rem 1.25rem;
   background: var(--color-soft);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   line-height: 1.65;
+}
+
+.glyphweave-content .gw-code-block pre {
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+.glyphweave-content .gw-code-pre .line {
+  display: inline-block;
+  min-width: 100%;
 }
 
 .glyphweave-content pre code {

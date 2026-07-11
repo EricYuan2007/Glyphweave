@@ -1,0 +1,49 @@
+<script>
+  const resetTimers = new WeakMap<HTMLButtonElement, number>()
+
+  const fallbackCopy = (code: string) => {
+    const textarea = document.createElement('textarea')
+    textarea.value = code
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.append(textarea)
+    textarea.select()
+    const copied = document.execCommand('copy')
+    textarea.remove()
+    return copied
+  }
+
+  const copyCode = async (code: string) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(code)
+        return true
+      } catch {
+        return fallbackCopy(code)
+      }
+    }
+    return fallbackCopy(code)
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-code]').forEach((button) => {
+    button.dataset.copyReady = 'true'
+    button.addEventListener('click', async () => {
+    const block = button.closest<HTMLElement>('.gw-code-block')
+    const code = block?.querySelector('code')?.textContent
+    if (!code) return
+
+    const setState = (label: string, accessibleLabel: string) => {
+      button.textContent = label
+      button.setAttribute('aria-label', accessibleLabel)
+    }
+
+      const copied = await copyCode(code)
+      setState(copied ? 'Copied' : 'Failed', copied ? 'Code copied' : 'Copy failed')
+
+      const previousTimer = resetTimers.get(button)
+      if (previousTimer) window.clearTimeout(previousTimer)
+      resetTimers.set(button, window.setTimeout(() => setState('Copy', 'Copy code'), 1800))
+    })
+  })
+</script>

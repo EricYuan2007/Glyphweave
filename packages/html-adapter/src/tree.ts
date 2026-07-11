@@ -27,6 +27,11 @@ export function textContent(node: HastNode): string {
   return (node.children ?? []).map(textContent).join('').trim()
 }
 
+export function rawTextContent(node: HastNode): string {
+  if (node.type === 'text') return node.value ?? ''
+  return (node.children ?? []).map(rawTextContent).join('')
+}
+
 export function isHeading(node: HastNode) {
   return node.type === 'element' && /^h[1-6]$/.test(node.tagName ?? '')
 }

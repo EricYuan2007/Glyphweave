@@ -5,6 +5,7 @@ import { unified } from 'unified'
 import { scanSourceFormulasFromText } from '@glyphweave/typst'
 import { rewriteAssets } from './assets.js'
 import { createCaptureDiagnostics, createCaptureReport } from './capture.js'
+import { highlightCodeBlocks } from './code.js'
 import { extractToc, normalizeHeadingIds } from './headings.js'
 import { normalizeNativeMathml, normalizeTypstFrameMath } from './math.js'
 import {
@@ -31,6 +32,7 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
   const rewrittenAssets = await rewriteAssets(body, input)
   rewriteLinks(body)
   if (input.options.sanitize) sanitize(body)
+  await highlightCodeBlocks(body)
 
   const diagnostics = [
     ...(input.diagnostics ?? []),
