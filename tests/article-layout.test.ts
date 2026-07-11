@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import {
   buildTocTree,
@@ -6,6 +7,16 @@ import {
 } from '../examples/astro-blog/src/lib/article-layout.js'
 
 describe('article layout helpers', () => {
+  it('keeps nested table-of-contents branches manual by default', async () => {
+    const [treeComponent, tocComponent] = await Promise.all([
+      readFile('examples/astro-blog/src/components/TocTree.astro', 'utf-8'),
+      readFile('examples/astro-blog/src/components/TableOfContents.astro', 'utf-8'),
+    ])
+
+    expect(treeComponent).not.toContain('<details open>')
+    expect(tocComponent).not.toContain('parent.open = true')
+  })
+
   it('selects the latest heading that crossed the activation line', () => {
     expect(
       selectActiveHeading(

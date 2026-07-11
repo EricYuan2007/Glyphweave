@@ -14,7 +14,7 @@ const { nodes, nested = false } = Astro.props
   {nodes.map((node) => (
     <li class={`article-toc__depth-${node.depth}`} data-toc-node>
       {node.children.length > 0 ? (
-        <details open>
+        <details>
           <summary>
             <a href={`#${node.id}`} data-toc-link={node.id}>{node.title}</a>
           </summary>

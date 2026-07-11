@@ -3,7 +3,6 @@
   z-index: 50;
   inset: 0 0 auto;
   height: var(--header-height);
-  border-bottom: 1px solid var(--color-rule);
   background: rgba(255, 255, 255, 0.97);
   font-family: var(--font-sans);
 }
@@ -175,6 +174,8 @@
 }
 
 .article-toc {
+  --toc-marker-center: 8px;
+
   font-size: 0.7rem;
   line-height: 1.4;
 }
@@ -213,20 +214,25 @@
   display: none;
 }
 
+.article-toc summary:focus {
+  outline: none;
+}
+
 .article-toc summary::before {
   position: absolute;
   z-index: 1;
-  top: 10px;
-  left: 3px;
-  width: 6px;
-  height: 6px;
+  top: 50%;
+  left: calc(var(--toc-marker-center) - 2.5px);
+  width: 5px;
+  height: 5px;
   border-right: 1px solid currentColor;
   border-bottom: 1px solid currentColor;
   background: var(--color-paper);
   color: var(--color-muted);
   content: '';
   opacity: 0;
-  transform: rotate(-45deg);
+  box-shadow: 0 0 0 2px var(--color-paper);
+  transform: translateY(-50%) rotate(-45deg);
   transform-origin: center;
   transition:
     opacity 120ms ease,
@@ -234,7 +240,7 @@
 }
 
 .article-toc details[open] > summary::before {
-  transform: translateY(-1px) rotate(45deg);
+  transform: translateY(-65%) rotate(45deg);
 }
 
 .article-toc summary:hover::before,
@@ -245,7 +251,7 @@
 .article-toc a {
   position: relative;
   display: block;
-  padding: 5px 8px 5px 18px;
+  padding: 5px 8px 5px 20px;
   color: var(--color-muted);
   line-height: 1.35;
   text-decoration: none;
@@ -262,13 +268,14 @@
 
 .article-toc a[aria-current='location']::before {
   position: absolute;
-  top: 0.78em;
-  left: 4px;
-  width: 4px;
-  height: 4px;
+  top: 50%;
+  left: calc(var(--toc-marker-center) - 1.75px);
+  width: 3.5px;
+  height: 3.5px;
   border-radius: 50%;
   background: currentColor;
   content: '';
+  transform: translateY(-50%);
 }
 
 .article-rail-meta {
@@ -368,10 +375,6 @@
   .article-stage[data-has-sidenotes='true'] .glyphweave-content [role='doc-endnotes'] {
     display: block;
   }
-}
-
-.site-footer {
-  border-top: 1px solid var(--color-rule);
 }
 
 .site-footer__inner {

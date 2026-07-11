@@ -115,9 +115,9 @@
 
 .glyphweave-content .gw-quote-attribution {
   margin-top: 0.65rem;
-  color: var(--color-ink);
-  font-size: 0.9em;
-  font-style: normal;
+  color: inherit;
+  font-size: inherit;
+  font-style: inherit;
   text-align: right;
 }
 

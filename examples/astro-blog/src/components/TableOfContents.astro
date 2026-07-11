@@ -62,11 +62,6 @@ const tree = buildTocTree(items)
       const active = link.dataset.tocLink === activeId
       if (active) {
         link.setAttribute('aria-current', 'location')
-        let parent = link.closest('details')
-        while (parent) {
-          parent.open = true
-          parent = parent.parentElement?.closest('details') ?? null
-        }
       } else {
         link.removeAttribute('aria-current')
       }
