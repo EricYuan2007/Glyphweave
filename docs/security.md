@@ -12,6 +12,10 @@ Builds fail or sanitize output for:
 
 Astro examples never inject `raw.html`; only adapter-produced `content.html` is used.
 
+Fenced-code highlighting is a narrow trusted post-sanitization transform. Shiki supplies fixed
+token colors, and Glyphweave supplies the copy button without inline handlers. No author-provided
+style or interactive element crosses this boundary.
+
 ## Recommended Deployment Rules
 
 - Commit source posts, examples, tests, and documentation.

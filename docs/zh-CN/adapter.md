@@ -13,6 +13,11 @@ HTML Adapter 是 Typst raw HTML 和博客运行时之间的安全边界。
 7. 删除危险标签和属性。
 8. 拒绝本地绝对路径和危险 URL 协议。
 9. 将 Typst 0.15 MathML 和 Glyphweave 标记的 SVG 公式归一化为稳定结构。
+10. 使用固定 Shiki 主题高亮块级代码，并添加受信任的复制按钮。
+
+代码高亮在清洗完成后运行。清洗后新增的内容仅来自 Glyphweave：固定主题颜色的
+Shiki token span，以及不包含内联事件的复制按钮。作者输入的按钮、style 和事件属性
+仍会被删除。
 
 ## 公式归一化
 
