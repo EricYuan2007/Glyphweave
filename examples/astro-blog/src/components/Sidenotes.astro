@@ -1,0 +1,74 @@
+<aside class="article-sidenotes" aria-label="Annotations" data-sidenotes></aside>
+
+<script>
+  import { positionSidenotes } from '../lib/article-layout'
+
+  const stage = document.querySelector<HTMLElement>('[data-article-stage]')
+  const article = stage?.querySelector<HTMLElement>('.glyphweave-content')
+  const rail = stage?.querySelector<HTMLElement>('[data-sidenotes]')
+  const references = Array.from(
+    article?.querySelectorAll<HTMLElement>('[role="doc-noteref"]') ?? [],
+  )
+
+  const sidenotes = references.flatMap((reference, index) => {
+    const link = reference.matches('a')
+      ? reference as HTMLAnchorElement
+      : reference.querySelector<HTMLAnchorElement>('a[href^="#"]')
+    const targetId = link?.hash.slice(1)
+    const target = targetId ? document.getElementById(targetId) : null
+    if (!link || !target || !rail) return []
+
+    const note = document.createElement('aside')
+    note.className = 'sidenote'
+    note.setAttribute('role', 'note')
+    note.dataset.referenceId = reference.id
+
+    const marker = document.createElement('a')
+    marker.className = 'sidenote__marker'
+    marker.href = reference.id ? `#${reference.id}` : link.href
+    marker.setAttribute('aria-label', `Back to footnote reference ${index + 1}`)
+    marker.textContent = link.textContent?.trim() || String(index + 1)
+
+    const content = document.createElement('span')
+    content.className = 'sidenote__content'
+    content.innerHTML = target.innerHTML
+    content.querySelectorAll('[role="doc-backlink"]').forEach((backlink) => backlink.remove())
+    content.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'))
+
+    note.append(marker, content)
+    rail.append(note)
+    return [{ reference, note }]
+  })
+
+  if (stage && rail && article && sidenotes.length > 0) {
+    stage.dataset.hasSidenotes = 'true'
+
+    let layoutFrame = 0
+    const layout = () => {
+      layoutFrame = 0
+      const articleRect = article.getBoundingClientRect()
+      const measurements = sidenotes.map(({ reference, note }) => ({
+        anchorTop: reference.getBoundingClientRect().top - articleRect.top,
+        height: note.getBoundingClientRect().height,
+      }))
+      const positions = positionSidenotes(measurements, 18)
+      sidenotes.forEach(({ note }, index) => {
+        note.style.top = `${positions[index]}px`
+      })
+      const finalBottom = positions.length
+        ? positions.at(-1)! + measurements.at(-1)!.height
+        : 0
+      rail.style.minHeight = `${Math.max(article.scrollHeight, finalBottom)}px`
+    }
+
+    const requestLayout = () => {
+      if (layoutFrame) return
+      layoutFrame = window.requestAnimationFrame(layout)
+    }
+
+    new ResizeObserver(requestLayout).observe(article)
+    window.addEventListener('resize', requestLayout)
+    document.fonts?.ready.then(requestLayout)
+    requestLayout()
+  }
+</script>

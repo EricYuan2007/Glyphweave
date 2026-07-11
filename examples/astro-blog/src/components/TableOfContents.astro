@@ -9,14 +9,79 @@ const { items } = Astro.props
 ---
 
 {items.length > 0 && (
-  <nav class="article-toc" aria-labelledby="article-toc-heading">
-    <p id="article-toc-heading">Contents</p>
-    <ol>
-      {items.map((item) => (
-        <li class:list={[`article-toc__depth-${item.depth}`]}>
-          <a href={`#${item.id}`}>{item.title}</a>
-        </li>
-      ))}
-    </ol>
-  </nav>
+  <aside class="article-toc-rail" data-article-toc>
+    <button
+      class="article-toc-toggle"
+      type="button"
+      aria-expanded="true"
+      aria-controls="article-toc-navigation"
+      aria-label="Collapse table of contents"
+      data-toc-toggle
+    >
+      <span>Contents</span>
+      <span class="article-toc-toggle__symbol" aria-hidden="true">−</span>
+    </button>
+    <nav id="article-toc-navigation" class="article-toc" aria-label="Table of contents">
+      <ol>
+        {items.map((item) => (
+          <li class:list={[`article-toc__depth-${item.depth}`]}>
+            <a href={`#${item.id}`} data-toc-link={item.id}>{item.title}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  </aside>
 )}
+
+<script>
+  import { selectActiveHeading } from '../lib/article-layout'
+
+  const toc = document.querySelector<HTMLElement>('[data-article-toc]')
+  const toggle = toc?.querySelector<HTMLButtonElement>('[data-toc-toggle]')
+  const links = Array.from(toc?.querySelectorAll<HTMLAnchorElement>('[data-toc-link]') ?? [])
+  const headings = links
+    .map((link) => document.getElementById(link.dataset.tocLink ?? ''))
+    .filter((heading): heading is HTMLElement => Boolean(heading))
+
+  const setCollapsed = (collapsed: boolean) => {
+    if (!toc || !toggle) return
+    toc.dataset.collapsed = String(collapsed)
+    toggle.setAttribute('aria-expanded', String(!collapsed))
+    toggle.setAttribute('aria-label', collapsed ? 'Expand table of contents' : 'Collapse table of contents')
+    const symbol = toggle.querySelector<HTMLElement>('.article-toc-toggle__symbol')
+    if (symbol) symbol.textContent = collapsed ? '+' : '−'
+  }
+
+  toggle?.addEventListener('click', () => setCollapsed(toc?.dataset.collapsed !== 'true'))
+
+  let updateFrame = 0
+  const updateActiveHeading = () => {
+    updateFrame = 0
+    const activationLine = Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--header-height'),
+    ) + 88
+    const activeId = selectActiveHeading(
+      headings.map((heading) => ({ id: heading.id, top: heading.getBoundingClientRect().top })),
+      activationLine,
+    )
+    for (const link of links) {
+      const active = link.dataset.tocLink === activeId
+      if (active) link.setAttribute('aria-current', 'location')
+      else link.removeAttribute('aria-current')
+    }
+  }
+
+  const requestActiveHeadingUpdate = () => {
+    if (updateFrame) return
+    updateFrame = window.requestAnimationFrame(updateActiveHeading)
+  }
+
+  const observer = new IntersectionObserver(requestActiveHeadingUpdate, {
+    rootMargin: '-15% 0px -70% 0px',
+    threshold: [0, 1],
+  })
+  headings.forEach((heading) => observer.observe(heading))
+  window.addEventListener('scroll', requestActiveHeadingUpdate, { passive: true })
+  window.addEventListener('resize', requestActiveHeadingUpdate)
+  updateActiveHeading()
+</script>

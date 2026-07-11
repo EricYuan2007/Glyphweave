@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import ArticleHeader from '../../components/ArticleHeader.astro'
 import TableOfContents from '../../components/TableOfContents.astro'
+import Sidenotes from '../../components/Sidenotes.astro'
 import { getGlyphweavePost, getGlyphweavePosts } from '../../lib/glyphweave'
 
 export async function getStaticPaths() {
@@ -26,9 +27,12 @@ const articleToc = post.toc.filter((item, index) => index !== 0 || item.title !=
       tags={post.tags}
       publicPdfPath={post.publicPdfPath}
     />
-    <TableOfContents items={articleToc} />
-    <article class="glyphweave-content" data-pagefind-body>
-      <Fragment set:html={post.contentHtml} />
-    </article>
+    <div class="article-stage" data-article-stage>
+      <TableOfContents items={articleToc} />
+      <article class="glyphweave-content" data-pagefind-body>
+        <Fragment set:html={post.contentHtml} />
+      </article>
+      <Sidenotes />
+    </div>
   </div>
 </BaseLayout>

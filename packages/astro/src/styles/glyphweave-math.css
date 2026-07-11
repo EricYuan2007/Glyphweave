@@ -16,7 +16,12 @@
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-block: 0.35rem;
+  margin-block: 0.85rem;
+  padding-block: 0.55rem;
+}
+
+.glyphweave-content .gw-math--block + .gw-math--block {
+  margin-top: 1.35rem;
 }
 
 .glyphweave-content .gw-math--block > math {
