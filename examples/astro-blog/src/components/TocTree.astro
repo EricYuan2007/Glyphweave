@@ -1,0 +1,28 @@
+---
+import type { TocTreeNode } from '../lib/article-layout'
+import TocTree from './TocTree.astro'
+
+interface Props {
+  nodes: TocTreeNode[]
+  nested?: boolean
+}
+
+const { nodes, nested = false } = Astro.props
+---
+
+<ol class:list={['article-toc-list', { 'article-toc-list--nested': nested }]}>
+  {nodes.map((node) => (
+    <li class={`article-toc__depth-${node.depth}`} data-toc-node>
+      {node.children.length > 0 ? (
+        <details open>
+          <summary>
+            <a href={`#${node.id}`} data-toc-link={node.id}>{node.title}</a>
+          </summary>
+          <TocTree nodes={node.children} nested />
+        </details>
+      ) : (
+        <a href={`#${node.id}`} data-toc-link={node.id}>{node.title}</a>
+      )}
+    </li>
+  ))}
+</ol>

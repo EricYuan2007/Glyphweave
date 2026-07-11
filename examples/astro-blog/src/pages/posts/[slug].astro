@@ -24,11 +24,13 @@ const articleToc = post.toc.filter((item, index) => index !== 0 || item.title !=
       title={post.title}
       description={post.description}
       date={post.date}
-      tags={post.tags}
-      publicPdfPath={post.publicPdfPath}
     />
     <div class="article-stage" data-article-stage>
-      <TableOfContents items={articleToc} />
+      <TableOfContents
+        items={articleToc}
+        tags={post.tags}
+        publicPdfPath={post.publicPdfPath}
+      />
       <article class="glyphweave-content" data-pagefind-body>
         <Fragment set:html={post.contentHtml} />
       </article>

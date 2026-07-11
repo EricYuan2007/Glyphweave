@@ -8,6 +8,32 @@ export interface SidenoteMeasurement {
   height: number
 }
 
+export interface TocTreeItem {
+  id: string
+  title: string
+  depth: number
+}
+
+export interface TocTreeNode extends TocTreeItem {
+  children: TocTreeNode[]
+}
+
+export function buildTocTree(items: TocTreeItem[]) {
+  const roots: TocTreeNode[] = []
+  const stack: TocTreeNode[] = []
+
+  for (const item of items) {
+    const node: TocTreeNode = { ...item, children: [] }
+    while (stack.length > 0 && stack.at(-1)!.depth >= node.depth) stack.pop()
+    const parent = stack.at(-1)
+    if (parent) parent.children.push(node)
+    else roots.push(node)
+    stack.push(node)
+  }
+
+  return roots
+}
+
 export function selectActiveHeading(headings: HeadingPosition[], activationLine: number) {
   if (headings.length === 0) return null
   let active = headings[0]!.id

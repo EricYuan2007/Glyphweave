@@ -1,58 +1,52 @@
 ---
 import type { TocItem } from '@glyphweave/schema'
+import { buildTocTree } from '../lib/article-layout'
+import TocTree from './TocTree.astro'
 
 interface Props {
   items: TocItem[]
+  tags: string[]
+  publicPdfPath?: string
 }
 
-const { items } = Astro.props
+const { items, tags, publicPdfPath } = Astro.props
+const tree = buildTocTree(items)
 ---
 
-{items.length > 0 && (
-  <aside class="article-toc-rail" data-article-toc>
-    <button
-      class="article-toc-toggle"
-      type="button"
-      aria-expanded="true"
-      aria-controls="article-toc-navigation"
-      aria-label="Collapse table of contents"
-      data-toc-toggle
-    >
-      <span>Contents</span>
-      <span class="article-toc-toggle__symbol" aria-hidden="true">−</span>
-    </button>
-    <nav id="article-toc-navigation" class="article-toc" aria-label="Table of contents">
-      <ol>
-        {items.map((item) => (
-          <li class:list={[`article-toc__depth-${item.depth}`]}>
-            <a href={`#${item.id}`} data-toc-link={item.id}>{item.title}</a>
-          </li>
-        ))}
-      </ol>
+<aside class="article-toc-rail" data-article-toc>
+  {items.length > 0 && (
+    <nav class="article-toc" aria-labelledby="article-toc-heading">
+      <p id="article-toc-heading" class="article-rail-heading">Contents</p>
+      <TocTree nodes={tree} />
     </nav>
-  </aside>
-)}
+  )}
+
+  <div class="article-rail-meta">
+    {tags.length > 0 && (
+      <section aria-labelledby="article-tags-heading">
+        <p id="article-tags-heading" class="article-rail-heading">Tags</p>
+        <ul class="article-rail-tags">
+          {tags.map((tag) => <li><a href={`/tags/${tag.toLowerCase()}`}>{tag}</a></li>)}
+        </ul>
+      </section>
+    )}
+    {publicPdfPath && (
+      <section aria-labelledby="article-document-heading">
+        <p id="article-document-heading" class="article-rail-heading">Document</p>
+        <a class="article-rail-download" href={publicPdfPath} download>Download PDF</a>
+      </section>
+    )}
+  </div>
+</aside>
 
 <script>
   import { selectActiveHeading } from '../lib/article-layout'
 
   const toc = document.querySelector<HTMLElement>('[data-article-toc]')
-  const toggle = toc?.querySelector<HTMLButtonElement>('[data-toc-toggle]')
   const links = Array.from(toc?.querySelectorAll<HTMLAnchorElement>('[data-toc-link]') ?? [])
   const headings = links
     .map((link) => document.getElementById(link.dataset.tocLink ?? ''))
     .filter((heading): heading is HTMLElement => Boolean(heading))
-
-  const setCollapsed = (collapsed: boolean) => {
-    if (!toc || !toggle) return
-    toc.dataset.collapsed = String(collapsed)
-    toggle.setAttribute('aria-expanded', String(!collapsed))
-    toggle.setAttribute('aria-label', collapsed ? 'Expand table of contents' : 'Collapse table of contents')
-    const symbol = toggle.querySelector<HTMLElement>('.article-toc-toggle__symbol')
-    if (symbol) symbol.textContent = collapsed ? '+' : '−'
-  }
-
-  toggle?.addEventListener('click', () => setCollapsed(toc?.dataset.collapsed !== 'true'))
 
   let updateFrame = 0
   const updateActiveHeading = () => {
@@ -66,8 +60,16 @@ const { items } = Astro.props
     )
     for (const link of links) {
       const active = link.dataset.tocLink === activeId
-      if (active) link.setAttribute('aria-current', 'location')
-      else link.removeAttribute('aria-current')
+      if (active) {
+        link.setAttribute('aria-current', 'location')
+        let parent = link.closest('details')
+        while (parent) {
+          parent.open = true
+          parent = parent.parentElement?.closest('details') ?? null
+        }
+      } else {
+        link.removeAttribute('aria-current')
+      }
     }
   }
 

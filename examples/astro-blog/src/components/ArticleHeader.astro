@@ -3,11 +3,9 @@ interface Props {
   title: string
   description: string
   date: string
-  tags: string[]
-  publicPdfPath?: string
 }
 
-const { title, description, date, tags, publicPdfPath } = Astro.props
+const { title, description, date } = Astro.props
 ---
 
 <header class="article-header">
@@ -18,11 +16,5 @@ const { title, description, date, tags, publicPdfPath } = Astro.props
     <time datetime={date}>{date}</time>
     <span aria-hidden="true">/</span>
     <span>Glyphweave</span>
-  </div>
-  <div class="article-header__actions">
-    <ul class="article-tags" aria-label="Tags">
-      {tags.map((tag) => <li><a href={`/tags/${tag.toLowerCase()}`}>{tag}</a></li>)}
-    </ul>
-    {publicPdfPath && <a class="pdf-download" href={publicPdfPath} download>Download PDF</a>}
   </div>
 </header>

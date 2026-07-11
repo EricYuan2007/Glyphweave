@@ -75,6 +75,15 @@
   height: auto;
 }
 
+.glyphweave-content figure > img {
+  cursor: zoom-in;
+}
+
+.glyphweave-content figure > img:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
 .glyphweave-content table {
   width: 100%;
   border-collapse: collapse;
