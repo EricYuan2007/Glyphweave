@@ -1,5 +1,6 @@
 ---
 import type { GlyphweaveContentIndex } from '@glyphweave/schema'
+import { sitePath } from '../lib/site-path'
 
 interface Props {
   posts: GlyphweaveContentIndex['posts']
@@ -7,6 +8,7 @@ interface Props {
 }
 
 const { posts, showDescription = true } = Astro.props
+const basePath = import.meta.env.BASE_URL
 ---
 
 <ol class="post-list">
@@ -14,7 +16,7 @@ const { posts, showDescription = true } = Astro.props
     <li class="post-list__item">
       <time class="post-list__date" datetime={post.date}>{post.date}</time>
       <div class="post-list__entry">
-        <h2><a href={`/posts/${post.slug}`}>{post.title}</a></h2>
+        <h2><a href={sitePath(`/posts/${post.slug}`, basePath)}>{post.title}</a></h2>
         {showDescription && <p class="post-list__description">{post.description}</p>}
         <p class="post-list__byline">Glyphweave</p>
       </div>

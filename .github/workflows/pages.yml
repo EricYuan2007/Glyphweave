@@ -1,5 +1,8 @@
 name: Pages
 
+env:
+  GITHUB_PAGES: 'true'
+
 on:
   push:
     branches: [main]

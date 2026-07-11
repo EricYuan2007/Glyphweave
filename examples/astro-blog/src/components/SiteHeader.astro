@@ -1,9 +1,13 @@
 ---
+import { sitePath, withoutSiteBase } from '../lib/site-path'
+
 interface Props {
   currentPath: string
 }
 
 const { currentPath } = Astro.props
+const basePath = import.meta.env.BASE_URL
+const currentRoute = withoutSiteBase(currentPath, basePath)
 const links = [
   { href: '/', label: 'Articles' },
   { href: '/archive', label: 'Archive' },
@@ -11,15 +15,15 @@ const links = [
 ]
 
 const isActive = (href: string) =>
-  href === '/' ? currentPath === href : currentPath.startsWith(href)
+  href === '/' ? currentRoute === href : currentRoute.startsWith(href)
 ---
 
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
-    <a class="site-wordmark" href="/" aria-label="Glyphweave Blog home">Glyphweave</a>
+    <a class="site-wordmark" href={sitePath('/', basePath)} aria-label="Glyphweave Blog home">Glyphweave</a>
     <nav class="desktop-nav" aria-label="Primary navigation">
       {links.map((link) => (
-        <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+        <a href={sitePath(link.href, basePath)} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
       ))}
     </nav>
     <button
@@ -36,7 +40,7 @@ const isActive = (href: string) =>
   </div>
   <nav id="mobile-navigation" class="mobile-nav" aria-label="Mobile navigation" hidden data-mobile-nav>
     {links.map((link) => (
-      <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+      <a href={sitePath(link.href, basePath)} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
     ))}
   </nav>
 </header>
