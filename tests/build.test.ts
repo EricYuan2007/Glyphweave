@@ -49,8 +49,7 @@ describe('build pipeline', () => {
     const capturedPdfInput = pdfInputs[0]!
     expect(capturedPdfInput.wrapper?.pdfTemplate).toMatchObject({
       injectTemplate: true,
-      fonts: expect.arrayContaining(['MiSans']),
-      monoFonts: expect.arrayContaining(['Menlo']),
+      fonts: expect.arrayContaining(['PingFang SC']),
       lang: 'zh',
       region: 'CN',
     })

@@ -67,10 +67,10 @@ pnpm glyphweave clean --root /path/to/site
 ## PDF 模板与中文字体
 
 启用 PDF 时，Glyphweave 默认会用内置 Typst 模板包裹原文档，再生成
-`article.pdf`。模板会设置 A4 阅读版心、页眉页码、中文语言区域、MiSans 正文、等宽代码块、
+`article.pdf`。模板会设置 A4 阅读版心、页眉页码、中文语言区域、宋体正文、代码块、
 表格、图注和块级公式的独立间距，减少 Typst 默认输出中的字体混杂和版面拥挤。
 
-默认字体栈：
+macOS 默认字体栈：
 
 ```ts
 export default defineConfig({
@@ -78,7 +78,7 @@ export default defineConfig({
     pdf: {
       template: {
         enabled: true,
-        fonts: ['MiSans', 'Songti SC', 'STSong', 'PingFang SC'],
+        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
         monoFonts: ['Menlo'],
         lang: 'zh',
         region: 'CN',
@@ -88,10 +88,8 @@ export default defineConfig({
 })
 ```
 
-MiSans 字体文件不随 Glyphweave 分发，请从
-[官方页面](https://hyperos.mi.com/font/download/) 安装并阅读相应许可。Linux 或 CI
-未安装 MiSans 时会回退到字体栈中的可用字体，也可以把 `fonts` 改成实际安装的中文字体。
-如果需要完全由文章源码控制
+Linux 或 CI 环境应把 `fonts` 改成实际安装的中文字体，例如
+`Noto Serif CJK SC` 或 `Source Han Serif SC`。如果需要完全由文章源码控制
 PDF 排版，可以设置 `typst.pdf.template.enabled: false`。
 
 ## 示例站

@@ -1,13 +1,11 @@
 #let glyphweave-pdf(
   body,
   fonts: (
-    "MiSans",
     "Songti SC",
     "STSong",
     "PingFang SC",
   ),
   heading-fonts: (
-    "MiSans",
     "PingFang SC",
     "Heiti SC",
     "STHeiti",

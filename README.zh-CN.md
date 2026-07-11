@@ -148,7 +148,7 @@ export default defineConfig({
     pdf: {
       template: {
         enabled: true,
-        fonts: ['MiSans', 'Songti SC', 'STSong', 'PingFang SC'],
+        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
         monoFonts: ['Menlo'],
         lang: 'zh',
         region: 'CN',
@@ -158,10 +158,9 @@ export default defineConfig({
 })
 ```
 
-PDF 默认模板优先使用 MiSans，代码继续使用 Menlo。Glyphweave 不分发 MiSans 字体文件；
-请从 [MiSans 官方页面](https://hyperos.mi.com/font/download/) 安装并阅读小米字体许可。
-Linux 或 CI 未安装 MiSans 时会使用配置中的后备中文字体，也可以将
-`typst.pdf.template.fonts` 改成其他已安装字体。
+PDF 默认模板使用 macOS 常见中文字体。Linux 部署时可以把
+`typst.pdf.template.fonts` 改成已安装的 `Noto Serif CJK SC`、`Source Han Serif SC`
+或其他中文字体。
 
 ## 文档
 

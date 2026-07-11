@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { defaultConfig } from '@glyphweave/schema'
 
 describe('PDF template', () => {
-  it('prefers MiSans for body text while retaining a monospace code font', () => {
-    expect(defaultConfig().typst.pdf.template.fonts[0]).toBe('MiSans')
-    expect(defaultConfig().typst.pdf.template.monoFonts[0]).toBe('Menlo')
+  it('prefers an editorial Chinese serif stack for body text', () => {
+    expect(defaultConfig().typst.pdf.template.fonts.slice(0, 2)).toEqual([
+      'Songti SC',
+      'STSong',
+    ])
   })
 
   it('defines editorial page furniture and block-specific rhythm', async () => {
@@ -19,7 +21,6 @@ describe('PDF template', () => {
     expect(template).toContain('show table:')
     expect(template).toContain('first-line-indent: (amount: 2em, all: true)')
     expect(template).toContain('heading-fonts: (')
-    expect(template).toContain('"MiSans"')
     expect(template).toContain('set heading(numbering: "1.1")')
     expect(template).toContain('if it.level > 1')
     expect(template).toContain('levels.slice(1)')

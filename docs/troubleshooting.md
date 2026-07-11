@@ -17,15 +17,14 @@ Set `typst.pdf.failure` to `warn` in `glyphweave.config.ts`. HTML compile failur
 
 ## PDF Chinese text uses poor or missing fonts
 
-Glyphweave wraps PDF builds with a Typst template by default. The default stack prefers MiSans and
-keeps Menlo for code:
+Glyphweave wraps PDF builds with a Typst template by default. The default font stack targets macOS:
 
 ```ts
 typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['MiSans', 'Songti SC', 'STSong', 'PingFang SC'],
+      fonts: ['Songti SC', 'STSong', 'PingFang SC'],
       monoFonts: ['Menlo'],
       lang: 'zh',
       region: 'CN',
@@ -34,11 +33,10 @@ typst: {
 }
 ```
 
-MiSans is not bundled. Install it from the
-[official site](https://hyperos.mi.com/font/en/download/) after reviewing Xiaomi's font license.
-On Linux or CI, Typst falls back to another configured family when MiSans is unavailable. Run
-`typst fonts` to see exact family names. Set `typst.pdf.template.enabled` to `false` if your source
-`.typ` file already applies a full document template.
+On Linux or CI, install a CJK font and set `typst.pdf.template.fonts` to the installed family, for
+example `Noto Serif CJK SC` or `Source Han Serif SC`. Run `typst fonts` to see the exact family
+names available to Typst. Set `typst.pdf.template.enabled` to `false` if your source `.typ` file
+already applies a full document template.
 
 ## Asset paths fail
 

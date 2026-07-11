@@ -12,9 +12,4 @@ web pages.
 
 Third-party dependencies, tools, and runtimes keep their own licenses. This includes packages
 installed through the package manager, external binaries such as Typst and Pagefind, and any system
-fonts embedded into generated PDFs.
-
-The default PDF font stack prefers MiSans for prose and headings while retaining a monospace font
-for code. MiSans is copyright Xiaomi Inc., is not distributed with this repository, and remains
-subject to the MiSans Fonts Intellectual Property License Agreement. Users who install or use
-MiSans are responsible for reviewing and complying with that agreement.
+fonts embedded into generated PDFs, such as macOS Chinese fonts.
