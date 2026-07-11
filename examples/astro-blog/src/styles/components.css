@@ -176,8 +176,8 @@
 .article-stage {
   display: grid;
   width: min(calc(100vw - 48px), 1184px);
-  grid-template-columns: 220px minmax(0, 660px) 220px;
-  gap: 42px;
+  grid-template-columns: minmax(140px, 1fr) 660px minmax(140px, 1fr);
+  gap: clamp(24px, 2.5vw, 42px);
   align-items: start;
   margin-top: 58px;
   margin-left: 50%;
@@ -305,7 +305,7 @@
   display: none;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1049px) {
   .article-stage {
     display: block;
     width: min(100%, var(--reading-width));

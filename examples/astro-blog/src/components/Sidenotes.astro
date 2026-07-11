@@ -67,7 +67,7 @@
       layoutFrame = window.requestAnimationFrame(layout)
     }
 
-    const desktopMedia = window.matchMedia('(min-width: 1181px)')
+    const desktopMedia = window.matchMedia('(min-width: 1050px)')
     const updateReferenceTargets = () => {
       for (const { link, note, originalHref } of sidenotes) {
         link.setAttribute('href', desktopMedia.matches ? `#${note.id}` : originalHref)
