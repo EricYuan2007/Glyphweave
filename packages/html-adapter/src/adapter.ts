@@ -15,6 +15,7 @@ import {
   sanitize,
 } from './security.js'
 import { extractBody } from './tree.js'
+import { normalizeQuoteAttributions } from './typography.js'
 import type { HastNode, HtmlAdapterInput, HtmlAdapterOutput } from './types.js'
 
 export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapterOutput> {
@@ -32,6 +33,7 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
   const rewrittenAssets = await rewriteAssets(body, input)
   rewriteLinks(body)
   if (input.options.sanitize) sanitize(body)
+  normalizeQuoteAttributions(body)
   await highlightCodeBlocks(body)
 
   const diagnostics = [

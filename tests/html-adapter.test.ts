@@ -63,6 +63,29 @@ async function makePost(rawHtml: string, source?: string): Promise<{
 }
 
 describe('HTML adapter', () => {
+  it('keeps Typst quote attributions inside their blockquote', async () => {
+    const fixture = await makePost(`<!doctype html>
+      <html><body>
+        <blockquote>Quoted text.</blockquote>
+        <p>— Glyphweave demo</p>
+        <p>Following paragraph.</p>
+      </body></html>`)
+
+    const output = await adaptTypstHtml({
+      rawHtmlPath: fixture.rawHtmlPath,
+      post: fixture.post,
+      outputDir: fixture.outputDir,
+      publicBasePath: '/glyphweave',
+      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
+
+    expect(output.contentHtml).toContain(
+      '<blockquote>Quoted text.<footer class="gw-quote-attribution">— Glyphweave demo</footer></blockquote>',
+    )
+    expect(output.contentHtml).toContain('<p>Following paragraph.</p>')
+    expect(output.contentHtml).not.toContain('</blockquote><p>— Glyphweave demo</p>')
+  })
+
   it('extracts body, normalizes headings, rewrites assets, and sanitizes HTML', async () => {
     const fixture = await makePost(`<!doctype html>
       <html>

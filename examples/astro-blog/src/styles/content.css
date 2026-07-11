@@ -113,6 +113,14 @@
   font-style: italic;
 }
 
+.glyphweave-content .gw-quote-attribution {
+  margin-top: 0.65rem;
+  color: var(--color-ink);
+  font-size: 0.9em;
+  font-style: normal;
+  text-align: right;
+}
+
 .glyphweave-content :not(pre) > code {
   padding: 0.08rem 0.25rem;
   background: var(--color-soft);

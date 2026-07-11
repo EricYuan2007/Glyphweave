@@ -12,8 +12,14 @@
   const caption = dialog?.querySelector<HTMLElement>('[data-image-lightbox-caption]')
   const closeButton = dialog?.querySelector<HTMLButtonElement>('.image-lightbox__close')
   let trigger: HTMLImageElement | null = null
+  let closeTimer = 0
 
-  const close = () => dialog?.close()
+  const close = () => {
+    if (!dialog?.open || dialog.dataset.state === 'closed') return
+    dialog.dataset.state = 'closed'
+    window.clearTimeout(closeTimer)
+    closeTimer = window.setTimeout(() => dialog.close(), 220)
+  }
 
   if (dialog && preview && caption && closeButton) {
     const images = document.querySelectorAll<HTMLImageElement>('.glyphweave-content figure > img')
@@ -29,7 +35,11 @@
         const captionText = image.closest('figure')?.querySelector('figcaption')?.textContent?.trim() ?? ''
         caption.textContent = captionText
         caption.hidden = !captionText
+        dialog.dataset.state = 'closed'
         dialog.showModal()
+        window.requestAnimationFrame(() => {
+          dialog.dataset.state = 'open'
+        })
       }
 
       image.addEventListener('click', open)
@@ -42,10 +52,16 @@
     }
 
     closeButton.addEventListener('click', close)
+    preview.addEventListener('click', close)
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog) close()
     })
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault()
+      close()
+    })
     dialog.addEventListener('close', () => {
+      window.clearTimeout(closeTimer)
       preview.removeAttribute('src')
       trigger?.focus()
       trigger = null

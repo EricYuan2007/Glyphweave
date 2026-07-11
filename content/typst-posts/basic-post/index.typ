@@ -13,6 +13,10 @@ Typst 的 markup 适合直接写正文：可以使用 *强强调*、_强调_、`
 
 标签和引用适合长文导航。后文中的 @fig-layers 和 @tab-coverage 都来自 Typst label/ref 语法。脚注也应保留在正文上下文里#footnote[脚注用于补充来源、术语或不适合打断主线的说明。]。
 
+=== 分层导航示例
+
+这个更深层标题用于验证长文章中的层级目录、独立展开状态和章节定位效果。
+
 == 列表、术语与引用
 
 无序列表适合记录要点：
@@ -42,7 +46,7 @@ Typst 的 markup 适合直接写正文：可以使用 *强强调*、_强调_、`
 == 图像、表格与交叉引用
 
 #figure(
-  image("assets/layer.svg", width: 70%, alt: "A layered HNSW graph diagram"),
+  image("assets/layer.svg", width: 42%, alt: "A layered HNSW graph diagram"),
   caption: [HNSW 分层图示，用来验证 SVG 图片、figure 和 caption。],
 ) <fig-layers>
 
