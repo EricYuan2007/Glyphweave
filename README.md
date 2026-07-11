@@ -135,7 +135,7 @@ export default defineConfig({
       failure: 'warn',
       template: {
         enabled: true,
-        fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
         monoFonts: ['Menlo'],
         lang: 'zh',
         region: 'CN',
@@ -156,8 +156,9 @@ export default defineConfig({
 })
 ```
 
-PDF builds use a Glyphweave Typst template by default. It sets A4 margins, Chinese language and
-region metadata, and a Chinese font stack for better CJK output. For Linux deployments, set
+PDF builds use a Glyphweave Typst template by default. It adds an editorial A4 layout, page
+furniture, Chinese serif typography, code panels, and dedicated spacing for tables, figures, and
+display equations. For Linux deployments, set
 `typst.pdf.template.fonts` to installed fonts such as `Noto Serif CJK SC` or `Source Han Serif SC`.
 
 ## CLI

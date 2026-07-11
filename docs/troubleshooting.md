@@ -24,7 +24,7 @@ typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+      fonts: ['Songti SC', 'STSong', 'PingFang SC'],
       monoFonts: ['Menlo'],
       lang: 'zh',
       region: 'CN',

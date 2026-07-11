@@ -52,7 +52,11 @@ export const GlyphweaveConfigSchema = z
                 enabled: z.boolean().default(true),
                 fonts: z
                   .array(z.string().min(1))
-                  .default(['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC']),
+                  .default([
+                    'Songti SC',
+                    'STSong',
+                    'PingFang SC',
+                  ]),
                 monoFonts: z.array(z.string().min(1)).default(['Menlo']),
                 lang: z.string().default('zh'),
                 region: z.string().default('CN'),

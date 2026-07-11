@@ -32,6 +32,10 @@ Manual checks:
 - Default builds report all formulas as `nativeMathml`; `svg-frame` builds use Glyphweave-owned markers.
 - PDF-enabled posts record `typst.pdfPreludeVersion` when the Glyphweave PDF template is active.
 - The PDF download link points to `/glyphweave/posts/<slug>/article.pdf`.
+- Desktop articles expose a sticky, collapsible, scroll-aware table of contents to the left of the reading column.
+- Footnotes render as reference-aligned sidenotes on wide screens and fall back to endnotes on narrow screens.
+- Fenced code is syntax highlighted and exposes a keyboard-accessible copy control.
+- Generated PDFs use the editorial template with Chinese serif text, page furniture, code styling, and display-math spacing.
 - The final HTML contains `data-pagefind-body`.
 - `content.html` does not contain scripts, event attributes, `javascript:` URLs, or local absolute paths.
 - Chromium desktop/mobile checks have no page overflow, clipped equations, or baseline regressions.
