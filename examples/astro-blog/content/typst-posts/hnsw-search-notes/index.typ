@@ -1,4 +1,3 @@
-#set text(font: ("PingFang SC", "Hiragino Sans GB", "Heiti SC", "Songti SC"))
 #let demo_version = "Phase 1.5"
 
 = Typst 博客语法巡检
@@ -21,7 +20,7 @@ Typst 的 markup 适合直接写正文：可以使用 *强强调*、_强调_、`
 - 内容源仍然是 `.typ` 文件。
 - HTML 由 Typst 导出后进入 Glyphweave Adapter。
   - 适配器负责清洗 HTML、重写资源路径、生成 TOC。
-  - 复杂公式通过 Typst frame SVG 保留视觉结果。
+  - 复杂公式通过 Typst 0.15 原生 MathML 保留语义结构。
 - Astro 示例只消费生成产物。
 
 有序列表适合表达流程：
@@ -56,7 +55,7 @@ Typst 的 markup 适合直接写正文：可以使用 *强强调*、_强调_、`
     [`= Heading`], [章节结构], [生成稳定 heading id 与 TOC],
     [`- item` / `+ item`], [列表], [缩进、行距和嵌套层级],
     [`#figure(...)`], [图片与表格], [caption、资源路径和响应式宽度],
-    [`$x^2$`], [数学公式], [行内对齐、块级居中和 SVG fallback],
+    [`$x^2$`], [数学公式], [行内对齐、块级居中和 MathML 输出],
     [`@label`], [交叉引用], [链接、文本和 sanitizer],
   ),
   caption: [博客内容语法覆盖矩阵。],
@@ -64,7 +63,7 @@ Typst 的 markup 适合直接写正文：可以使用 *强强调*、_强调_、`
 
 == 代码与原始文本
 
-行内 raw text 适合写命令和 API 名称，比如 `html.frame`、`glyphweave build` 和 `content.html`。
+行内 raw text 适合写命令和 API 名称，比如 `math.equation`、`glyphweave build` 和 `content.html`。
 
 ```typ
 #let score = 0.93
@@ -85,9 +84,9 @@ Inline math: $sum_(i=1)^n x_i^2$
 
 简单行内公式也会保留在同一段落里，例如 $a+b=c$、$x_1$、$n^2$，以及 $alpha+beta=gamma$。
 
-复杂行内公式通过 Typst frame 转成 SVG，例如候选集合的平方权重 $sum_(i=1)^n x_i^2$。
+复杂行内公式由 Typst 直接导出为 MathML，例如候选集合的平方权重 $sum_(i=1)^n x_i^2$。
 
-块级公式会保留为可横向滚动且居中的 SVG 区块：
+块级公式会保留为可横向滚动且居中的 MathML 区块：
 
 $
 integral_0^1 f(x) dif x
@@ -102,7 +101,7 @@ mat(1, 2; 3, 4)
 $
 
 $
-cases(x^2, "if " x >= 0, -x, "otherwise")
+cases(x^2 "if " x >= 0, -x "otherwise")
 $
 
 多行对齐公式也应该保持结构：

@@ -151,20 +151,21 @@ describe('HTML adapter', () => {
     ).rejects.toThrow('Asset escapes post assets directory')
   })
 
-  it('restores inline equations ignored by Typst HTML export as MathML', async () => {
-    const fixture = await makePost(`<!doctype html>
-      <html>
-        <body>
-          <h1>Demo</h1>
-          <p>Inline</p>
-          <p>after.</p>
-          <p>Equation</p>
-          <p>.</p>
-          <p>Subscript</p>
-          <p>and superscript</p>
-          <p>.</p>
-        </body>
-      </html>`)
+  it('normalizes native Typst MathML without duplicating accessible text', async () => {
+    const fixture = await makePost(
+      `<!doctype html>
+        <html>
+          <head><style>math { color: red }</style></head>
+          <body>
+            <p>Inline <math><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup></math> formula.</p>
+            <math display="block" class="multiline-equation aligned">
+              <mtable><mtr><mtd><mi>a</mi></mtd><mtd><mo>=</mo><mi>b</mi></mtd></mtr></mtable>
+              <script>alert(1)</script>
+            </math>
+          </body>
+        </html>`,
+      ['= Demo', '', 'Inline $sum_(i=1)^n$ formula.', '', '$ a &= b $'].join('\n'),
+    )
 
     const output = await adaptTypstHtml({
       rawHtmlPath: fixture.rawHtmlPath,
@@ -175,17 +176,20 @@ describe('HTML adapter', () => {
     })
 
     expect(output.contentHtml).toContain(
-      '<p>Inline <math class="gw-math" aria-label="q"><mi>q</mi></math> after.</p>',
+      'class="gw-math gw-math--inline" data-gw-renderer="native-mathml"',
     )
     expect(output.contentHtml).toContain(
-      '<p>Equation <math class="gw-math" aria-label="a + b = c"><mrow><mi>a</mi><mo>+</mo><mi>b</mi><mo>=</mo><mi>c</mi></mrow></math>.</p>',
+      'class="gw-math gw-math--block" data-gw-renderer="native-mathml"',
     )
-    expect(output.contentHtml).toContain(
-      '<msub><mi>x</mi><mn>1</mn></msub>',
-    )
-    expect(output.contentHtml).toContain(
-      '<msup><mi>n</mi><mn>2</mn></msup>',
-    )
+    expect(output.contentHtml).toContain('<math display="block" class="multiline-equation aligned">')
+    expect(output.contentHtml).toContain('<mtable><mtr><mtd>')
+    expect(output.contentHtml).not.toContain('gw-sr-only')
+    expect(output.contentHtml).not.toContain('<script')
+    expect(output.contentHtml).not.toContain('<style')
+    expect(output.capture.math.renderedCount).toBe(2)
+    expect(output.capture.math.nativeMathml).toBe(2)
+    expect(output.capture.math.typstFrameSvg).toBe(0)
+    expect(output.capture.math.mismatch).toBe(false)
   })
 
   it('wraps Typst frame SVG math with source fallback and preserves safe SVG attributes', async () => {
@@ -193,11 +197,11 @@ describe('HTML adapter', () => {
       `<!doctype html>
         <html>
           <body>
-            <p>Inline <span style="display: inline-block"><svg class="typst-frame" viewBox="0 0 10 10" style="overflow: visible; width: 1em; height: 0.8em"><path d="M0 0H10V10Z"></path></svg></span> formula.</p>
-            <svg class="typst-frame" viewBox="0 0 80 20" style="overflow: visible; width: 8em; height: 2em">
+            <p>Inline <span data-gw-math="inline"><svg viewBox="0 0 10 10" style="overflow: visible; width: 1em; height: 0.8em"><path d="M0 0H10V10Z"></path></svg></span> formula.</p>
+            <div data-gw-math="block"><svg viewBox="0 0 80 20" style="overflow: visible; width: 8em; height: 2em">
               <foreignObject><script>alert(1)</script></foreignObject>
               <path d="M0 0H80V20Z"></path>
-            </svg>
+            </svg></div>
           </body>
         </html>`,
       [
@@ -220,6 +224,10 @@ describe('HTML adapter', () => {
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
       options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      math: {
+        strategy: 'svg-frame',
+        svg: { includeSourceFallback: true, inlineVerticalShift: '0.08em' },
+      },
     })
 
     expect(output.contentHtml).toContain('class="gw-math gw-math--inline"')
@@ -228,8 +236,9 @@ describe('HTML adapter', () => {
     expect(output.contentHtml).toContain('data-gw-renderer="typst-frame-svg"')
     expect(output.contentHtml).toContain('aria-label="Formula: sum_(i=1)^n x_i^2"')
     expect(output.contentHtml).toContain('class="gw-sr-only"')
-    expect(output.contentHtml).toContain('<svg class="typst-frame" viewBox="0 0 10 10" style=')
+    expect(output.contentHtml).toContain('<svg viewBox="0 0 10 10" style=')
     expect(output.contentHtml).not.toContain('<foreignObject')
+    expect(output.capture.math.renderedCount).toBe(2)
     expect(output.capture.math.typstFrameSvg).toBe(2)
     expect(output.capture.math.sourceFallbacks).toBe(2)
     expect(output.capture.math.mismatch).toBe(false)

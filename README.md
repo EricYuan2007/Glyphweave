@@ -4,7 +4,7 @@
 [![Pages](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
 ![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220)
-![Typst](https://img.shields.io/badge/Typst-0.14.x-239dad)
+![Typst](https://img.shields.io/badge/Typst-0.15.x-239dad)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Glyphweave is a build-time publishing pipeline for turning Typst posts into web-native blog artifacts: sanitized HTML fragments, table-of-contents JSON, manifests, a content index, copied assets, and optional PDF downloads.
@@ -42,8 +42,8 @@ Optional PDF output follows the same Typst source:
 - Generate stable heading IDs and `toc.json`.
 - Reject local absolute paths and unsafe URL protocols.
 - Rewrite article-local assets into public deployment paths.
-- Inject a Glyphweave HTML prelude and render complex equations through Typst `html.frame` SVG.
-- Keep conservative MathML recovery as a fallback for simple ignored inline equations.
+- Render equations as native Typst 0.15 MathML by default, with explicit SVG fallback support.
+- Normalize inline and block equations into stable, accessible `.gw-math` wrappers.
 - Emit math capture statistics and Typst HTML diagnostics in each manifest.
 - Emit per-post `manifest.json` and a site-level `.glyphweave/content-index.json`.
 - Provide an Astro example with homepage, archive, tag pages, post pages, PDF links, and Pagefind indexing.
@@ -52,7 +52,7 @@ Optional PDF output follows the same Typst source:
 
 - Node.js 22 or newer.
 - pnpm 11.1.1 or newer.
-- Typst CLI 0.14.x for real Typst compilation.
+- Typst CLI 0.15.0 or newer for real Typst compilation.
 
 Install Typst on macOS:
 
@@ -130,19 +130,24 @@ export default defineConfig({
   },
   typst: {
     binary: 'typst',
-    wrapper: {
-      injectPrelude: true,
-    },
     pdf: {
       enabledByDefault: false,
       failure: 'warn',
+      template: {
+        enabled: true,
+        fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+        monoFonts: ['Menlo'],
+        lang: 'zh',
+        region: 'CN',
+      },
     },
   },
   math: {
-    strategy: 'hybrid',
-    failOnIgnoredEquation: true,
-    includeSourceFallback: true,
-    inlineVerticalShift: '0.08em',
+    strategy: 'mathml',
+    svg: {
+      includeSourceFallback: true,
+      inlineVerticalShift: '0.08em',
+    },
   },
   capture: {
     strict: true,
@@ -150,6 +155,10 @@ export default defineConfig({
   },
 })
 ```
+
+PDF builds use a Glyphweave Typst template by default. It sets A4 margins, Chinese language and
+region metadata, and a Chinese font stack for better CJK output. For Linux deployments, set
+`typst.pdf.template.fonts` to installed fonts such as `Noto Serif CJK SC` or `Source Han Serif SC`.
 
 ## CLI
 

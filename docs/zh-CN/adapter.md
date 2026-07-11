@@ -12,25 +12,8 @@ HTML Adapter 是 Typst raw HTML 和博客运行时之间的安全边界。
 6. 为外部链接添加 `rel="noopener noreferrer"`。
 7. 删除危险标签和属性。
 8. 拒绝本地绝对路径和危险 URL 协议。
-9. 在可安全匹配时，把 Typst HTML export 忽略的简单行内公式恢复为 MathML。
+9. 将 Typst 0.15 MathML 和 Glyphweave 标记的 SVG 公式归一化为稳定结构。
 
-## 公式恢复
+## 公式归一化
 
-Typst 0.14.x 可能输出 `equation was ignored during HTML export`。此时 raw HTML 可能把一行拆成多个 `<p>`，并完全省略公式：
-
-```typst
-给定查询向量 $q$，算法逐层下降。
-```
-
-```html
-<p>给定查询向量</p>
-<p>，算法逐层下降。</p>
-```
-
-Glyphweave 会读取源 `.typ` 文件，把这些拆开的段落匹配回同一行，并恢复为 MathML：
-
-```html
-<p>给定查询向量 <math class="gw-math" aria-label="q"><mi>q</mi></math>，算法逐层下降。</p>
-```
-
-这个恢复逻辑仍然是保守 fallback，适合简单行内公式、下标和上标。默认主路径已改为注入 Glyphweave HTML prelude，并用 Typst `html.frame` 将复杂公式输出为 SVG；详见 [复杂公式与内容捕获](./math-rendering.md)。
+Typst 0.15 会把公式导出为原生 MathML。Adapter 保留完整 MathML 树，并为每个公式添加稳定的 renderer 标记；通过 `display="block"` 判断行间公式，其余公式保持行内。可选 SVG 模式使用 Glyphweave 自有的 `data-gw-math` 属性，不依赖 Typst 内部 SVG class。详见 [复杂公式与内容捕获](./math-rendering.md)。

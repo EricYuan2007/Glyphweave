@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { parseTypstDiagnostics, scanSourceFormulasFromText } from '@glyphweave/typst'
+import {
+  assertSupportedTypst,
+  parseTypstDiagnostics,
+  parseTypstVersion,
+  scanSourceFormulasFromText,
+} from '@glyphweave/typst'
 
 describe('Typst math helpers', () => {
   it('scans inline and block source formulas while skipping raw code blocks', () => {
@@ -71,5 +76,18 @@ describe('Typst math helpers', () => {
         message: 'html export is under active development and incomplete',
       },
     ])
+  })
+
+  it('parses Typst semantic versions and requires Typst 0.15 or newer', () => {
+    expect(parseTypstVersion('typst 0.15.0 (unknown commit)')).toEqual({
+      major: 0,
+      minor: 15,
+      patch: 0,
+    })
+    expect(() => assertSupportedTypst('typst 0.14.2')).toThrow(
+      'Glyphweave requires Typst 0.15.0 or newer',
+    )
+    expect(() => assertSupportedTypst('typst 0.15.0')).not.toThrow()
+    expect(() => assertSupportedTypst('typst 1.0.0')).not.toThrow()
   })
 })

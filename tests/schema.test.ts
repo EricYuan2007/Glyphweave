@@ -50,13 +50,25 @@ describe('schemas', () => {
     expect(config.output.root).toBe('.glyphweave')
     expect(config.output.publicBasePath).toBe('/glyphweave')
     expect(config.html.headingIds).toBe('stable')
-    expect(config.math.strategy).toBe('hybrid')
-    expect(config.math.failOnIgnoredEquation).toBe(true)
-    expect(config.math.includeSourceFallback).toBe(true)
-    expect(config.math.inlineVerticalShift).toBe('0.08em')
+    expect(config.math.strategy).toBe('mathml')
+    expect(config.math.svg.includeSourceFallback).toBe(true)
+    expect(config.math.svg.inlineVerticalShift).toBe('0.08em')
     expect(config.capture.strict).toBe(true)
     expect(config.capture.report).toBe(true)
-    expect(config.typst.wrapper.injectPrelude).toBe(true)
+    expect(config.typst.pdf.template.enabled).toBe(true)
+    expect(config.typst.pdf.template.fonts).toContain('PingFang SC')
+    expect(config.typst.pdf.template.lang).toBe('zh')
+    expect(config.typst.pdf.template.region).toBe('CN')
     expect(config.assets.allowedExtensions).toContain('.png')
+  })
+
+  it('rejects Typst 0.14-era math configuration', () => {
+    expect(() => GlyphweaveConfigSchema.parse({ math: { strategy: 'hybrid' } })).toThrow()
+    expect(() =>
+      GlyphweaveConfigSchema.parse({ typst: { wrapper: { injectPrelude: true } } }),
+    ).toThrow()
+    expect(() =>
+      GlyphweaveConfigSchema.parse({ math: { includeSourceFallback: true } }),
+    ).toThrow()
   })
 })

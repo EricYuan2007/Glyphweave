@@ -23,6 +23,29 @@ typst: {
 
 HTML 编译失败仍然会让构建失败。
 
+## PDF 中文字体效果不好或缺字
+
+Glyphweave 默认会用 Typst 模板包裹 PDF 构建。默认字体栈面向 macOS：
+
+```ts
+typst: {
+  pdf: {
+    template: {
+      enabled: true,
+      fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+      monoFonts: ['Menlo'],
+      lang: 'zh',
+      region: 'CN',
+    },
+  },
+}
+```
+
+Linux 或 CI 环境请先安装中文字体，并把 `typst.pdf.template.fonts` 改成 Typst
+能看到的字体族名，例如 `Noto Serif CJK SC` 或 `Source Han Serif SC`。可以用
+`typst fonts` 查看可用字体。如果文章源码已经套了完整 Typst 模板，可以设置
+`typst.pdf.template.enabled: false`。
+
 ## 资源路径失败
 
 把图片、附件等移动到文章目录的 `assets/` 内，并使用相对路径：
@@ -40,6 +63,15 @@ pnpm config set registry https://registry.npmmirror.com
 pnpm install --fetch-timeout 600000
 ```
 
-## 行内公式消失
+## Typst 版本过低
 
-Typst 0.14.x HTML export 原生路径可能忽略公式。默认配置会注入 Glyphweave HTML prelude，用 `html.frame` 把复杂公式输出为 SVG；如果仍出现 `equation was ignored during HTML export`，构建会失败。请检查 `.glyphweave/logs/<slug>.html.log`，确认 `typst.wrapper.injectPrelude` 没有关闭，且 `math.strategy` 不是 `native-only` 或 `disabled`。
+Glyphweave 要求 Typst 0.15.0 或更高版本，因为原生 HTML 公式依赖 MathML。Homebrew 安装可以这样升级：
+
+```bash
+brew update && brew upgrade typst
+pnpm glyphweave doctor
+```
+
+## 公式缺失或对齐异常
+
+请检查 `.glyphweave/logs/<slug>.html.log` 和 manifest 的 `capture.math`。默认 `mathml` 模式下，`sourceFormulaCount` 应与 `renderedCount` 一致。只有在跨浏览器视觉一致性比公式可选择性和语义更重要时，才使用 `svg-frame`。

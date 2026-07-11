@@ -4,7 +4,7 @@
 [![Pages](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
 ![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220)
-![Typst](https://img.shields.io/badge/Typst-0.14.x-239dad)
+![Typst](https://img.shields.io/badge/Typst-0.15.x-239dad)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Glyphweave 是一个构建期发布管线，用于把 Typst 文章转换成 Web 原生产物：安全清洗后的 HTML 正文片段、目录 JSON、manifest、内容索引、静态资源以及可选 PDF 下载文件。
@@ -30,7 +30,7 @@ Phase 1 主链路：
 PDF 是补充链路：
 
 ```text
-.typ -> typst compile -> article.pdf
+.typ -> Glyphweave PDF template -> typst compile -> article.pdf
 ```
 
 ## 功能
@@ -38,12 +38,13 @@ PDF 是补充链路：
 - 从 `content/typst-posts/*/post.yaml` 扫描文章。
 - 使用 Zod 校验文章元数据。
 - 调用 Typst CLI 编译 HTML 和可选 PDF。
+- 为 PDF 注入 Glyphweave Typst 模板，改善中文字体、语言区域、页边距和正文排版。
 - 在进入 Astro `set:html` 前清洗 raw HTML。
 - 生成稳定 heading id 和 `toc.json`。
 - 拒绝本地绝对路径与危险 URL 协议。
 - 复制文章目录内资源并重写为 public path。
-- 注入 Glyphweave HTML prelude，用 `html.frame` 将复杂公式渲染为安全 SVG。
-- 保留简单公式的 MathML 恢复作为保守 fallback。
+- 默认使用 Typst 0.15 原生 MathML 渲染公式，同时保留显式 SVG 后备模式。
+- 将行内与行间公式归一化为稳定、可访问的 `.gw-math` 结构。
 - 在 manifest 中输出公式捕获统计和 Typst HTML 诊断。
 - 输出每篇文章的 `manifest.json` 和全站 `.glyphweave/content-index.json`。
 - 提供 Astro 示例：首页、归档页、标签页、文章页、PDF 下载和 Pagefind 索引。
@@ -52,7 +53,7 @@ PDF 是补充链路：
 
 - Node.js 22 或更高版本。
 - pnpm 11.1.1 或更高版本。
-- Typst CLI 0.14.x。
+- Typst CLI 0.15.0 或更高版本。
 
 macOS 安装 Typst：
 
@@ -126,29 +127,40 @@ pnpm glyphweave doctor
 
 ## 复杂公式
 
-默认配置使用 `math.strategy: "hybrid"`。构建 HTML 时，Glyphweave 会为 Typst 注入一个 HTML prelude，把 `math.equation` 通过 `html.frame` 输出为 SVG；HTML Adapter 会把这些 SVG 包装成 `.gw-math` 结构，保留源公式 fallback，并在 `manifest.json` 写入 capture report。
+默认配置使用 `math.strategy: "mathml"`。Typst 0.15 会直接输出语义化 MathML，HTML Adapter 将其包装成 `.gw-math` 结构，并在 `manifest.json` 写入 capture report。需要跨浏览器像素级一致性时，可以显式改用 `svg-frame`。
 
 可配置项：
 
 ```ts
 export default defineConfig({
   math: {
-    strategy: 'hybrid',
-    failOnIgnoredEquation: true,
-    includeSourceFallback: true,
-    inlineVerticalShift: '0.08em',
+    strategy: 'mathml',
+    svg: {
+      includeSourceFallback: true,
+      inlineVerticalShift: '0.08em',
+    },
   },
   capture: {
     strict: true,
     report: true,
   },
   typst: {
-    wrapper: {
-      injectPrelude: true,
+    pdf: {
+      template: {
+        enabled: true,
+        fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+        monoFonts: ['Menlo'],
+        lang: 'zh',
+        region: 'CN',
+      },
     },
   },
 })
 ```
+
+PDF 默认模板使用 macOS 常见中文字体。Linux 部署时可以把
+`typst.pdf.template.fonts` 改成已安装的 `Noto Serif CJK SC`、`Source Han Serif SC`
+或其他中文字体。
 
 ## 文档
 

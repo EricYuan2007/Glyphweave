@@ -1,81 +1,61 @@
 # Math Rendering and Capture
 
-Glyphweave uses `math.strategy: "hybrid"` by default:
-
-1. The HTML compiler injects the `glyphweave-html.typ` prelude.
-2. The prelude renders `math.equation` with Typst `html.frame`, so complex formulas become SVG.
-3. The HTML adapter recognizes `svg.typst-frame` and wraps it as `.gw-math.gw-math--inline` or `.gw-math.gw-math--block`.
-4. The adapter adds source-backed `aria-label`, `data-gw-source`, and screen-reader fallback text when the formula can be matched.
-5. `manifest.json` records `capture.math` statistics and `diagnostics`.
-
-Example:
-
-```typst
-Simple formulas $a+b=c$, $x_1$, and $n^2$ stay in the surrounding paragraph.
-
-Complex inline math $sum_(i=1)^n x_i^2$ renders as SVG.
-
-$
-frac(a+b, c+d)
-$
-```
-
-Generated HTML looks like:
+Glyphweave requires Typst 0.15.0 or newer and uses `math.strategy: "mathml"` by default. Typst exports each equation as semantic MathML, and the HTML adapter wraps it as `.gw-math--inline` or `.gw-math--block` without adding duplicate screen-reader text.
 
 ```html
-<span class="gw-math gw-math--inline" data-gw-renderer="typst-frame-svg" aria-label="Formula: sum_(i=1)^n x_i^2">
-  <svg class="typst-frame">...</svg>
-  <span class="gw-sr-only">Formula: sum_(i=1)^n x_i^2</span>
+<span class="gw-math gw-math--inline" data-gw-renderer="native-mathml">
+  <math>...</math>
 </span>
 ```
 
-Block formulas use `.gw-math--block`; the provided Astro CSS makes them horizontally scrollable.
+Native MathML is selectable, resolution-independent, and more accessible than an equation rendered only as SVG. Rendering can vary slightly across browsers, so Glyphweave retains an explicit SVG mode for sites that prioritize visual consistency.
 
 ## Configuration
 
 ```ts
 export default defineConfig({
   math: {
-    strategy: 'hybrid',
-    failOnIgnoredEquation: true,
-    includeSourceFallback: true,
-    inlineVerticalShift: '0.08em',
+    strategy: 'mathml',
+    svg: {
+      includeSourceFallback: true,
+      inlineVerticalShift: '0.08em',
+    },
   },
   capture: {
     strict: true,
     report: true,
   },
-  typst: {
-    wrapper: {
-      injectPrelude: true,
-    },
-  },
 })
 ```
 
-`native-only` and `disabled` skip prelude injection. The default `hybrid` mode prefers Typst SVG frames and keeps conservative MathML recovery as a fallback for simple ignored inline equations.
+Set `strategy: 'svg-frame'` to render equations through Typst `html.frame`. The injected prelude marks each formula with `data-gw-math`, so the adapter does not depend on Typst's internal SVG classes. Source-backed fallback text and `inlineVerticalShift` apply only to this SVG mode.
+
+Configuration from Glyphweave's Typst 0.14 support is intentionally rejected. Replace `hybrid`, `typst-frame`, or `native-only` with `mathml` or `svg-frame`; remove `typst.wrapper.injectPrelude`, `failOnIgnoredEquation`, and top-level SVG options under `math`.
 
 ## Manifest
 
-Each post manifest includes:
+Manifest schema version 2 records the selected renderer and counts MathML and SVG separately:
 
 ```json
 {
+  "schemaVersion": 2,
   "typst": {
-    "features": ["html"],
-    "preludeVersion": "glyphweave-html-1"
+    "features": ["html", "mathml"],
+    "mathRenderer": "mathml",
+    "preludeVersion": null
   },
   "capture": {
     "status": "ok",
     "math": {
       "sourceFormulaCount": 4,
-      "typstFrameSvg": 4,
-      "sourceFallbacks": 4,
+      "renderedCount": 4,
+      "nativeMathml": 4,
+      "typstFrameSvg": 0,
+      "failed": 0,
       "mismatch": false
     }
-  },
-  "diagnostics": []
+  }
 }
 ```
 
-If Typst still reports `equation was ignored during HTML export`, the default config fails the build.
+Strict capture fails when the source formula count differs from the combined MathML and SVG count.

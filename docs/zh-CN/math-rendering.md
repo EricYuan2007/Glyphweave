@@ -1,81 +1,61 @@
 # 复杂公式与内容捕获
 
-Glyphweave 默认使用 `math.strategy: "hybrid"` 处理公式：
-
-1. 编译 HTML 时注入 `glyphweave-html.typ` prelude。
-2. prelude 对 `math.equation` 应用 `html.frame`，让复杂公式由 Typst 渲染为 SVG。
-3. HTML Adapter 识别 `svg.typst-frame`，包装为 `.gw-math.gw-math--inline` 或 `.gw-math.gw-math--block`。
-4. Adapter 为可匹配的源公式写入 `aria-label`、`data-gw-source` 和屏幕阅读器 fallback。
-5. `manifest.json` 记录 `capture.math` 统计和 `diagnostics`。
-
-示例：
-
-```typst
-简单公式 $a+b=c$、$x_1$、$n^2$ 保持在同一段落。
-
-复杂行内公式 $sum_(i=1)^n x_i^2$ 会渲染为 SVG。
-
-$
-frac(a+b, c+d)
-$
-```
-
-生成后的 HTML 结构类似：
+Glyphweave 要求 Typst 0.15.0 或更高版本，默认使用 `math.strategy: "mathml"`。Typst 会把每个公式导出为语义化 MathML，HTML Adapter 再将其包装为 `.gw-math--inline` 或 `.gw-math--block`，不会添加重复的屏幕阅读器文本。
 
 ```html
-<span class="gw-math gw-math--inline" data-gw-renderer="typst-frame-svg" aria-label="Formula: sum_(i=1)^n x_i^2">
-  <svg class="typst-frame">...</svg>
-  <span class="gw-sr-only">Formula: sum_(i=1)^n x_i^2</span>
+<span class="gw-math gw-math--inline" data-gw-renderer="native-mathml">
+  <math>...</math>
 </span>
 ```
 
-块级公式使用 `.gw-math--block`，默认样式会允许横向滚动，避免宽公式挤压正文。
+原生 MathML 可选择、与分辨率无关，辅助功能也优于纯 SVG 公式。不同浏览器的排版可能有轻微差异，因此 Glyphweave 仍保留显式 SVG 模式，供更重视视觉一致性的站点使用。
 
 ## 配置
 
 ```ts
 export default defineConfig({
   math: {
-    strategy: 'hybrid',
-    failOnIgnoredEquation: true,
-    includeSourceFallback: true,
-    inlineVerticalShift: '0.08em',
+    strategy: 'mathml',
+    svg: {
+      includeSourceFallback: true,
+      inlineVerticalShift: '0.08em',
+    },
   },
   capture: {
     strict: true,
     report: true,
   },
-  typst: {
-    wrapper: {
-      injectPrelude: true,
-    },
-  },
 })
 ```
 
-`native-only` 和 `disabled` 不注入 prelude。默认的 `hybrid` 会优先使用 Typst SVG frame，同时保留简单公式 MathML 恢复作为 fallback。
+设置 `strategy: 'svg-frame'` 后，公式会通过 Typst `html.frame` 渲染。注入的 prelude 会用 `data-gw-math` 标记公式，Adapter 不再依赖 Typst 内部 SVG class。源公式 fallback 和 `inlineVerticalShift` 只作用于 SVG 模式。
+
+Typst 0.14 时代的配置会被明确拒绝。请把 `hybrid`、`typst-frame` 或 `native-only` 改成 `mathml` 或 `svg-frame`，删除 `typst.wrapper.injectPrelude`、`failOnIgnoredEquation`，并把 SVG 专属选项移动到 `math.svg`。
 
 ## Manifest
 
-每篇文章的 manifest 包含：
+Manifest schema version 2 会记录最终 renderer，并分别统计 MathML 与 SVG：
 
 ```json
 {
+  "schemaVersion": 2,
   "typst": {
-    "features": ["html"],
-    "preludeVersion": "glyphweave-html-1"
+    "features": ["html", "mathml"],
+    "mathRenderer": "mathml",
+    "preludeVersion": null
   },
   "capture": {
     "status": "ok",
     "math": {
       "sourceFormulaCount": 4,
-      "typstFrameSvg": 4,
-      "sourceFallbacks": 4,
+      "renderedCount": 4,
+      "nativeMathml": 4,
+      "typstFrameSvg": 0,
+      "failed": 0,
       "mismatch": false
     }
-  },
-  "diagnostics": []
+  }
 }
 ```
 
-如果 Typst 仍报告 `equation was ignored during HTML export`，默认配置会让构建失败。
+严格捕获模式会比较源公式数与 MathML、SVG 的合计数量，不一致时构建失败。

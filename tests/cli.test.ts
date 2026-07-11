@@ -11,7 +11,7 @@ describe('CLI', () => {
   it('prints doctor output when configured Typst is available', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-cli-doctor-'))
     const fakeTypst = path.join(root, 'fake-typst')
-    await writeFile(fakeTypst, '#!/usr/bin/env sh\necho "typst 0.14.2"\n')
+    await writeFile(fakeTypst, '#!/usr/bin/env sh\necho "typst 0.15.0"\n')
     await chmod(fakeTypst, 0o755)
     await writeFile(
       path.join(root, 'glyphweave.config.ts'),
@@ -22,7 +22,26 @@ describe('CLI', () => {
 
     expect(result.stdout).toContain('Glyphweave Doctor')
     expect(result.stdout).toContain('Config valid')
-    expect(result.stdout).toContain('typst 0.14.2')
+    expect(result.stdout).toContain('typst 0.15.0')
+    expect(result.stdout).toContain('MathML equations: supported')
+  })
+
+  it('rejects Typst versions older than 0.15', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-cli-old-typst-'))
+    const fakeTypst = path.join(root, 'fake-typst')
+    await writeFile(fakeTypst, '#!/usr/bin/env sh\necho "typst 0.14.2"\n')
+    await chmod(fakeTypst, 0o755)
+    await writeFile(
+      path.join(root, 'glyphweave.config.ts'),
+      `export default { typst: { binary: ${JSON.stringify(fakeTypst)} } }\n`,
+    )
+
+    const result = await execa('pnpm', ['exec', 'tsx', cliPath, 'doctor', '--root', root], {
+      reject: false,
+    })
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('Glyphweave requires Typst 0.15.0 or newer')
   })
 
   it('cleans the configured output directory', async () => {

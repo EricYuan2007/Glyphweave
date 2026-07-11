@@ -1,36 +1,125 @@
+/* MathML rules adapted from Typst 0.15.0: github.com/typst/typst/blob/v0.15.0/crates/typst-html/src/mathml.rs */
 .glyphweave-content .gw-math {
   max-width: 100%;
 }
 
 .glyphweave-content .gw-math--inline {
+  display: inline-block;
+  line-height: normal;
+  vertical-align: baseline;
+}
+
+.glyphweave-content .gw-math--block {
+  display: flex;
+  justify-content: safe center;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.35rem;
+}
+
+.glyphweave-content .gw-math--block > math {
+  flex: 0 0 auto;
+}
+
+.glyphweave-content .gw-math[data-gw-renderer='typst-frame-svg'].gw-math--inline {
   display: inline-flex;
   align-items: center;
   line-height: 0;
   vertical-align: var(--gw-math-inline-shift, 0.08em);
 }
 
-.glyphweave-content .gw-math--block {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-block: 0.35rem;
-}
-
 .glyphweave-content .gw-math svg {
+  display: block;
   max-width: 100%;
   height: auto;
   flex: 0 0 auto;
 }
 
-.glyphweave-content .gw-math--inline svg {
-  display: block;
+.glyphweave-content .gw-math--block svg {
+  margin-inline: auto;
 }
 
-.glyphweave-content .gw-math--block svg {
-  display: block;
-  margin-inline: auto;
+.glyphweave-content mtable.right-align mtd,
+.glyphweave-content mtable mtd.right-align,
+.glyphweave-content mtable.left-align mtd.right-align,
+.glyphweave-content mtable.aligned mtd:nth-child(odd) {
+  justify-items: end;
+  text-align: right;
+}
+
+.glyphweave-content mtable.cases mtd,
+.glyphweave-content mtable.left-align mtd,
+.glyphweave-content mtable mtd.left-align,
+.glyphweave-content mtable.aligned mtd:nth-child(even),
+.glyphweave-content math:is(:not([display])) > mtable.multiline-equation mtd {
+  justify-items: start;
+  text-align: left;
+}
+
+.glyphweave-content mtable.cases mtd,
+.glyphweave-content mtable.aligned mtd,
+.glyphweave-content mtable mtd.flushed,
+.glyphweave-content mtable mtd.left-flush {
+  padding-left: 0;
+}
+
+.glyphweave-content mtable.cases mtd,
+.glyphweave-content mtable.aligned mtd,
+.glyphweave-content mtable mtd.flushed,
+.glyphweave-content mtable mtd.right-flush {
+  padding-right: 0;
+}
+
+.glyphweave-content mtable.cases mtr:not(:last-child) mtd {
+  padding-bottom: 0.24em;
+}
+
+.glyphweave-content mtable {
+  math-style: inherit;
+}
+
+.glyphweave-content mtd {
+  math-depth: auto-add;
+  math-style: compact;
+  math-shift: compact;
+}
+
+.glyphweave-content mtable.multiline-equation mtd {
+  padding: 0;
+  math-depth: inherit;
+  math-style: inherit;
+  math-shift: inherit;
+}
+
+.glyphweave-content math > mtable.multiline-equation mtr:not(:last-child) mtd {
+  padding-bottom: 0.5em;
+}
+
+.glyphweave-content mfrac {
+  padding-inline: 0;
+  margin-inline: 0.1em;
+}
+
+.glyphweave-content mover[accent='true' i] > :first-child {
+  font-feature-settings: 'dtls';
+}
+
+.glyphweave-content mover.dotted[accent='true' i] > :first-child {
+  font-feature-settings: 'dtls' 0;
+}
+
+.glyphweave-content munder > :nth-child(2),
+.glyphweave-content munderover > :nth-child(2) {
+  math-shift: compact;
+}
+
+.glyphweave-content munder[accentunder='true' i] > :not(:first-child),
+.glyphweave-content mover[accent='true' i] > :not(:first-child) {
+  math-depth: inherit;
+  math-style: inherit;
+  math-shift: inherit;
 }
 
 .glyphweave-content .gw-sr-only {

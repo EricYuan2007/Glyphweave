@@ -4,6 +4,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildAll } from '@glyphweave/core'
 import { defaultConfig } from '@glyphweave/schema'
+import type { CompileInput } from '@glyphweave/typst'
 
 describe('build pipeline', () => {
   it('writes content, toc, manifest, and content-index artifacts', async () => {
@@ -25,13 +26,16 @@ describe('build pipeline', () => {
       ].join('\n'),
     )
 
+    const pdfInputs: CompileInput[] = []
     const result = await buildAll(root, defaultConfig(), {
-      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(outputPath, '<body><h1>Basic Post</h1><p>Searchable body.</p></body>')
         return { outputPath, stdout: '', stderr: '' }
       },
-      compilePdf: async ({ outputPath }) => {
+      compilePdf: async (input) => {
+        pdfInputs.push(input)
+        const { outputPath } = input
         await writeFile(outputPath, '%PDF fake')
         return { outputPath, stdout: '', stderr: '' }
       },
@@ -41,6 +45,14 @@ describe('build pipeline', () => {
     const index = JSON.parse(await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'))
     expect(index.posts[0].slug).toBe('basic-post')
     expect(index.posts[0].publicPdfPath).toBe('/glyphweave/posts/basic-post/article.pdf')
+    expect(pdfInputs).toHaveLength(1)
+    const capturedPdfInput = pdfInputs[0]!
+    expect(capturedPdfInput.wrapper?.pdfTemplate).toMatchObject({
+      injectTemplate: true,
+      fonts: expect.arrayContaining(['PingFang SC']),
+      lang: 'zh',
+      region: 'CN',
+    })
     expect(await readFile(path.join(root, '.glyphweave/generated/posts/basic-post/content.html'), 'utf-8')).toContain(
       'Searchable body',
     )
@@ -48,7 +60,7 @@ describe('build pipeline', () => {
       'Basic Post',
     )
     expect(await readFile(path.join(root, '.glyphweave/generated/posts/basic-post/manifest.json'), 'utf-8')).toContain(
-      'typst 0.14.2',
+      'typst 0.15.0',
     )
   })
 
@@ -71,11 +83,11 @@ describe('build pipeline', () => {
     )
 
     await buildAll(root, defaultConfig(), {
-      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(
           outputPath,
-          '<body><p>Inline <span style="display: inline-block"><svg class="typst-frame" viewBox="0 0 10 10" style="overflow: visible; width: 1em; height: 0.8em"><path d="M0 0H10V10Z"></path></svg></span> formula.</p></body>',
+          '<body><p>Inline <math><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><msup><mi>x</mi><mn>2</mn></msup></math> formula.</p></body>',
         )
         return {
           outputPath,
@@ -98,8 +110,11 @@ describe('build pipeline', () => {
     )
 
     expect(manifest.capture.math.sourceFormulaCount).toBe(1)
-    expect(manifest.capture.math.typstFrameSvg).toBe(1)
-    expect(manifest.capture.math.sourceFallbacks).toBe(1)
+    expect(manifest.schemaVersion).toBe(2)
+    expect(manifest.capture.math.renderedCount).toBe(1)
+    expect(manifest.capture.math.nativeMathml).toBe(1)
+    expect(manifest.capture.math.typstFrameSvg).toBe(0)
+    expect(manifest.capture.math.sourceFallbacks).toBe(0)
     expect(manifest.capture.math.mismatch).toBe(false)
     expect(manifest.diagnostics).toEqual([
       {
@@ -109,7 +124,9 @@ describe('build pipeline', () => {
       },
     ])
     expect(manifest.typst.features).toContain('html')
-    expect(manifest.typst.preludeVersion).toBe('glyphweave-html-1')
+    expect(manifest.typst.features).toContain('mathml')
+    expect(manifest.typst.mathRenderer).toBe('mathml')
+    expect(manifest.typst.preludeVersion).toBeNull()
   })
 
   it('skips private and archived posts in the content index', async () => {
@@ -137,7 +154,7 @@ describe('build pipeline', () => {
     await writePost('archived-post', 'archived', 'public')
 
     const result = await buildAll(root, defaultConfig(), {
-      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(outputPath, '<body><h1>Post</h1></body>')
         return { outputPath, stdout: '', stderr: '' }
@@ -176,7 +193,7 @@ describe('build pipeline', () => {
     config.typst.pdf.failure = 'warn'
 
     await buildAll(root, config, {
-      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+      typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(outputPath, '<body><h1>PDF Warn</h1></body>')
         return { outputPath, stdout: '', stderr: '' }
@@ -216,7 +233,7 @@ describe('build pipeline', () => {
 
     await expect(
       buildAll(root, defaultConfig(), {
-        typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+        typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
         compileHtml: async ({ outputPath }) => {
           await writeFile(outputPath, '<body><p>Missing formula.</p></body>')
           return { outputPath, stdout: '', stderr: '' }
@@ -224,5 +241,17 @@ describe('build pipeline', () => {
         compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
       }),
     ).rejects.toThrow('Strict capture failed')
+  })
+
+  it('rejects Typst versions older than 0.15 before compiling posts', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-old-typst-'))
+
+    await expect(
+      buildAll(root, defaultConfig(), {
+        typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
+        compileHtml: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
+        compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
+      }),
+    ).rejects.toThrow('Glyphweave requires Typst 0.15.0 or newer')
   })
 })

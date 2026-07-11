@@ -64,6 +64,34 @@ pnpm glyphweave clean --root /path/to/site
     article.pdf
 ```
 
+## PDF 模板与中文字体
+
+启用 PDF 时，Glyphweave 默认会用内置 Typst 模板包裹原文档，再生成
+`article.pdf`。模板会设置 A4 页边距、中文语言区域、正文行距和中文字体栈，减少
+Typst 默认字体在中文 PDF 中出现的缺字、字体混杂或行距不自然问题。
+
+macOS 默认字体栈：
+
+```ts
+export default defineConfig({
+  typst: {
+    pdf: {
+      template: {
+        enabled: true,
+        fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+        monoFonts: ['Menlo'],
+        lang: 'zh',
+        region: 'CN',
+      },
+    },
+  },
+})
+```
+
+Linux 或 CI 环境应把 `fonts` 改成实际安装的中文字体，例如
+`Noto Serif CJK SC` 或 `Source Han Serif SC`。如果需要完全由文章源码控制
+PDF 排版，可以设置 `typst.pdf.template.enabled: false`。
+
 ## 示例站
 
 ```bash

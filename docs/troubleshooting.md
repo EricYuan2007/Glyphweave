@@ -15,6 +15,29 @@ Install Typst if the command is not found.
 
 Set `typst.pdf.failure` to `warn` in `glyphweave.config.ts`. HTML compile failures still fail the build.
 
+## PDF Chinese text uses poor or missing fonts
+
+Glyphweave wraps PDF builds with a Typst template by default. The default font stack targets macOS:
+
+```ts
+typst: {
+  pdf: {
+    template: {
+      enabled: true,
+      fonts: ['PingFang SC', 'Hiragino Sans GB', 'Heiti SC', 'Songti SC'],
+      monoFonts: ['Menlo'],
+      lang: 'zh',
+      region: 'CN',
+    },
+  },
+}
+```
+
+On Linux or CI, install a CJK font and set `typst.pdf.template.fonts` to the installed family, for
+example `Noto Serif CJK SC` or `Source Han Serif SC`. Run `typst fonts` to see the exact family
+names available to Typst. Set `typst.pdf.template.enabled` to `false` if your source `.typ` file
+already applies a full document template.
+
 ## Asset paths fail
 
 Move local resources into the post's `assets/` directory and reference them relatively, for example:
@@ -41,6 +64,15 @@ pnpm glyphweave build --root /path/to/site
 pnpm glyphweave clean --root /path/to/site
 ```
 
-## Inline formulas disappear
+## Typst is too old
 
-Typst 0.14.x can ignore equations on its native HTML export path. The default config injects the Glyphweave HTML prelude and renders complex formulas with `html.frame` SVG; if Typst still reports `equation was ignored during HTML export`, the build fails. Check `.glyphweave/logs/<slug>.html.log`, confirm `typst.wrapper.injectPrelude` is enabled, and make sure `math.strategy` is not `native-only` or `disabled`.
+Glyphweave requires Typst 0.15.0 or newer because native HTML equations rely on MathML. Homebrew installations can be upgraded with:
+
+```bash
+brew update && brew upgrade typst
+pnpm glyphweave doctor
+```
+
+## Formulas are missing or misaligned
+
+Check `.glyphweave/logs/<slug>.html.log` and the manifest's `capture.math` section. The default `mathml` mode should report matching `sourceFormulaCount` and `renderedCount`. Use `svg-frame` only when cross-browser visual consistency is more important than selectable, semantic formulas.

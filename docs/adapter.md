@@ -12,30 +12,13 @@ It performs these steps:
 6. Add `rel="noopener noreferrer"` to external links.
 7. Remove dangerous tags and attributes.
 8. Reject local absolute paths and unsafe URL protocols.
-9. Recover simple inline equations that current Typst HTML export reports as ignored, when the raw output can be matched back to a single source line.
+9. Normalize Typst 0.15 MathML and Glyphweave-marked SVG equations into stable wrappers.
 
 Only `content.html` should be injected into a page. `raw.html` is diagnostic output.
 
-## Equation Recovery
+## Equation Normalization
 
-Typst 0.14.x can emit warnings such as `equation was ignored during HTML export`. In that case the raw HTML may split one source line into multiple adjacent paragraphs and omit the equation entirely:
-
-```typst
-Given query $q$, search descends layer by layer.
-```
-
-```html
-<p>Given query</p>
-<p>, search descends layer by layer.</p>
-```
-
-Glyphweave reads the source `.typ` file during adaptation, matches the split paragraphs to the source line, and restores simple inline equations as MathML:
-
-```html
-<p>Given query <math class="gw-math" aria-label="q"><mi>q</mi></math>, search descends layer by layer.</p>
-```
-
-This recovery remains a conservative fallback for simple inline math on one source line, including identifiers, numbers, common operators, subscripts such as `$x_1$`, and superscripts such as `$n^2$`. The default path now injects the Glyphweave HTML prelude and renders complex formulas through Typst `html.frame` SVG; see [Math Rendering and Capture](./math-rendering.md).
+Typst 0.15 exports equations as native MathML. The adapter preserves the complete MathML tree and wraps each equation with a stable renderer marker. Block equations are identified through `display="block"`; all other equations remain inline. The optional SVG strategy uses Glyphweave-owned `data-gw-math` attributes rather than Typst's internal SVG classes. See [Math Rendering and Capture](./math-rendering.md).
 
 ## Sanitization Boundary
 
