@@ -18,9 +18,10 @@
     const target = targetId ? document.getElementById(targetId) : null
     if (!link || !target || !rail) return []
 
-    const note = document.createElement('aside')
+    const note = document.createElement('div')
     note.className = 'sidenote'
     note.setAttribute('role', 'note')
+    note.id = `sidenote-${targetId}`
     note.dataset.referenceId = reference.id
 
     const marker = document.createElement('a')
@@ -37,7 +38,7 @@
 
     note.append(marker, content)
     rail.append(note)
-    return [{ reference, note }]
+    return [{ reference, note, link, originalHref: link.getAttribute('href') ?? `#${targetId}` }]
   })
 
   if (stage && rail && article && sidenotes.length > 0) {
@@ -66,9 +67,18 @@
       layoutFrame = window.requestAnimationFrame(layout)
     }
 
+    const desktopMedia = window.matchMedia('(min-width: 1181px)')
+    const updateReferenceTargets = () => {
+      for (const { link, note, originalHref } of sidenotes) {
+        link.setAttribute('href', desktopMedia.matches ? `#${note.id}` : originalHref)
+      }
+    }
+
     new ResizeObserver(requestLayout).observe(article)
     window.addEventListener('resize', requestLayout)
+    desktopMedia.addEventListener('change', updateReferenceTargets)
     document.fonts?.ready.then(requestLayout)
+    updateReferenceTargets()
     requestLayout()
   }
 </script>
