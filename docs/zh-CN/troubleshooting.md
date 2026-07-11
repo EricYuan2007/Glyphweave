@@ -25,14 +25,14 @@ HTML 编译失败仍然会让构建失败。
 
 ## PDF 中文字体效果不好或缺字
 
-Glyphweave 默认会用 Typst 模板包裹 PDF 构建。默认字体栈面向 macOS：
+Glyphweave 默认会用 Typst 模板包裹 PDF 构建。默认优先使用 MiSans，代码保留 Menlo：
 
 ```ts
 typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['Songti SC', 'STSong', 'PingFang SC'],
+      fonts: ['MiSans', 'Songti SC', 'STSong', 'PingFang SC'],
       monoFonts: ['Menlo'],
       lang: 'zh',
       region: 'CN',
@@ -41,9 +41,9 @@ typst: {
 }
 ```
 
-Linux 或 CI 环境请先安装中文字体，并把 `typst.pdf.template.fonts` 改成 Typst
-能看到的字体族名，例如 `Noto Serif CJK SC` 或 `Source Han Serif SC`。可以用
-`typst fonts` 查看可用字体。如果文章源码已经套了完整 Typst 模板，可以设置
+MiSans 不随仓库分发，请从[官方页面](https://hyperos.mi.com/font/download/)安装并阅读
+小米字体许可。Linux 或 CI 未安装 MiSans 时会使用后备字体。可以用 `typst fonts`
+查看可用字体。如果文章源码已经套了完整 Typst 模板，可以设置
 `typst.pdf.template.enabled: false`。
 
 ## 资源路径失败

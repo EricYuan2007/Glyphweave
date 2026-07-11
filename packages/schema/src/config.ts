@@ -53,6 +53,7 @@ export const GlyphweaveConfigSchema = z
                 fonts: z
                   .array(z.string().min(1))
                   .default([
+                    'MiSans',
                     'Songti SC',
                     'STSong',
                     'PingFang SC',

@@ -135,7 +135,7 @@ export default defineConfig({
       failure: 'warn',
       template: {
         enabled: true,
-        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
+        fonts: ['MiSans', 'Songti SC', 'STSong', 'PingFang SC'],
         monoFonts: ['Menlo'],
         lang: 'zh',
         region: 'CN',
@@ -157,9 +157,11 @@ export default defineConfig({
 ```
 
 PDF builds use a Glyphweave Typst template by default. It adds an editorial A4 layout, page
-furniture, Chinese serif typography, code panels, and dedicated spacing for tables, figures, and
-display equations. For Linux deployments, set
-`typst.pdf.template.fonts` to installed fonts such as `Noto Serif CJK SC` or `Source Han Serif SC`.
+furniture, MiSans-first Chinese typography, monospace code panels, and dedicated spacing for
+tables, figures, and display equations. MiSans is not bundled with Glyphweave. Install it from the
+[official MiSans site](https://hyperos.mi.com/font/en/download/) and review Xiaomi's font license;
+otherwise Typst uses the configured fallback fonts. For Linux deployments, set
+`typst.pdf.template.fonts` to another installed CJK family when MiSans is unavailable.
 
 ## CLI
 
