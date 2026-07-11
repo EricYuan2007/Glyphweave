@@ -19,13 +19,14 @@
   let rule = rgb("#d8d7d2")
   let soft = rgb("#f7f7f4")
   let accent = rgb("#245b74")
-  let line-leading = 0.72em
-  let block-spacing = 0.9em
-  let heading-spacing = 0.95em
+  let heading-size = 13.5pt
+  let line-leading = 0.8em
+  let block-spacing = 1em
+  let heading-spacing = 1.05em
 
   set page(
     paper: "a4",
-    margin: (top: 1.85cm, bottom: 1.55cm, left: 2.45cm, right: 2.35cm),
+    margin: (top: 1.6cm, bottom: 1.35cm, left: 2.45cm, right: 2.35cm),
     header: context {
       set text(font: fonts, size: 7.2pt, fill: muted)
       if counter(page).get().first() > 1 [
@@ -65,36 +66,24 @@
   show regex("[A-Za-z0-9]+"): it => box(move(dy: 0.04em, it))
 
   let heading-content(it) = context {
-    counter(heading).display(it.numbering)
-    h(0.5em)
+    if it.level > 1 {
+      let levels = counter(heading).get()
+      numbering("1.1", ..levels.slice(1))
+      h(0.5em)
+    }
     it.body
   }
 
-  show heading.where(level: 1): it => {
-    set text(font: heading-fonts, size: 19.5pt, weight: "semibold", fill: ink)
-    set par(first-line-indent: 0pt, justify: false, leading: 0.52em)
-    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#heading-content(it)]
-  }
-  show heading.where(level: 2): it => {
-    set text(font: heading-fonts, size: 13.5pt, weight: "semibold", fill: ink)
+  show heading: it => {
+    set text(font: heading-fonts, size: heading-size, weight: "semibold", fill: ink)
     set par(first-line-indent: 0pt, justify: false, leading: 0.5em)
-    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#heading-content(it)]
-  }
-  show heading.where(level: 3): it => {
-    set text(font: heading-fonts, size: 11pt, weight: "semibold", fill: ink)
-    set par(first-line-indent: 0pt, justify: false, leading: 0.48em)
-    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#heading-content(it)]
-  }
-  show heading.where(level: 4): it => {
-    set text(font: heading-fonts, size: 10pt, weight: "semibold", fill: ink)
-    set par(first-line-indent: 0pt, justify: false)
     block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#heading-content(it)]
   }
 
   show raw.where(block: true): it => block(
     width: 100%,
-    above: 0.85em,
-    below: 0.85em,
+    above: 1.1em,
+    below: 1.1em,
     inset: (x: 9pt, y: 6pt),
     fill: soft,
     stroke: (left: 0.6pt + rule),
@@ -114,8 +103,8 @@
 
   show math.equation.where(block: true): it => block(
     width: 100%,
-    above: 0.65em,
-    below: 0.65em,
+    above: 0.45em,
+    below: 0.45em,
     breakable: false,
   )[#align(center, it)]
 
