@@ -1,18 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import PostList from '../components/PostList.astro'
 import { getGlyphweavePosts } from '../lib/glyphweave'
 
 const posts = await getGlyphweavePosts()
 ---
 
 <BaseLayout title="Archive">
-  <h1>Archive</h1>
-  <ul class="post-list">
-    {posts.map((post) => (
-      <li class="post-card">
-        <h3><a href={`/posts/${post.slug}`}>{post.title}</a></h3>
-        <p class="post-meta">{post.date}</p>
-      </li>
-    ))}
-  </ul>
+  <section class="page-shell" aria-labelledby="archive-heading">
+    <h1 id="archive-heading" class="page-heading">Archive</h1>
+    <PostList {posts} showDescription={false} />
+  </section>
 </BaseLayout>

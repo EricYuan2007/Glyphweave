@@ -1,22 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import PostList from '../components/PostList.astro'
 import { getGlyphweavePosts } from '../lib/glyphweave'
 
 const posts = await getGlyphweavePosts()
 ---
 
 <BaseLayout title="Glyphweave Blog" description="Typst posts rendered as web-native HTML">
-  <h1>Typst Articles</h1>
-  <ul class="post-list">
-    {posts.map((post) => (
-      <li class="post-card">
-        <h2><a href={`/posts/${post.slug}`}>{post.title}</a></h2>
-        <p>{post.description}</p>
-        <p class="post-meta">{post.date}</p>
-        <ul class="tag-list">
-          {post.tags.map((tag) => <li><a href={`/tags/${tag.toLowerCase()}`}>{tag}</a></li>)}
-        </ul>
-      </li>
-    ))}
-  </ul>
+  <section class="page-shell" aria-labelledby="articles-heading">
+    <h1 id="articles-heading" class="page-heading">Typst Articles</h1>
+    <PostList {posts} />
+  </section>
 </BaseLayout>

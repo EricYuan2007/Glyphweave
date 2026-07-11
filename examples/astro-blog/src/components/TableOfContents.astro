@@ -1,0 +1,22 @@
+---
+import type { TocItem } from '@glyphweave/schema'
+
+interface Props {
+  items: TocItem[]
+}
+
+const { items } = Astro.props
+---
+
+{items.length > 0 && (
+  <nav class="article-toc" aria-labelledby="article-toc-heading">
+    <p id="article-toc-heading">Contents</p>
+    <ol>
+      {items.map((item) => (
+        <li class:list={[`article-toc__depth-${item.depth}`]}>
+          <a href={`#${item.id}`}>{item.title}</a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}

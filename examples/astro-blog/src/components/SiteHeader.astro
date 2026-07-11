@@ -1,0 +1,73 @@
+---
+interface Props {
+  currentPath: string
+}
+
+const { currentPath } = Astro.props
+const links = [
+  { href: '/', label: 'Articles' },
+  { href: '/archive', label: 'Archive' },
+  { href: '/tags/typst', label: 'Typst' },
+]
+
+const isActive = (href: string) =>
+  href === '/' ? currentPath === href : currentPath.startsWith(href)
+---
+
+<header class="site-header" data-site-header>
+  <div class="site-header__inner">
+    <a class="site-wordmark" href="/" aria-label="Glyphweave Blog home">Glyphweave</a>
+    <nav class="desktop-nav" aria-label="Primary navigation">
+      {links.map((link) => (
+        <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+      ))}
+    </nav>
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="mobile-navigation"
+      aria-label="Open navigation"
+      data-menu-toggle
+    >
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <nav id="mobile-navigation" class="mobile-nav" aria-label="Mobile navigation" hidden data-mobile-nav>
+    {links.map((link) => (
+      <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a>
+    ))}
+  </nav>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-header]')
+  const toggle = header?.querySelector<HTMLButtonElement>('[data-menu-toggle]')
+  const navigation = header?.querySelector<HTMLElement>('[data-mobile-nav]')
+
+  const setMenu = (open: boolean) => {
+    if (!toggle || !navigation || !header) return
+    toggle.setAttribute('aria-expanded', String(open))
+    toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation')
+    navigation.hidden = !open
+    header.dataset.menuOpen = String(open)
+    document.body.classList.toggle('menu-is-open', open)
+    if (open) navigation.querySelector<HTMLAnchorElement>('a')?.focus()
+  }
+
+  toggle?.addEventListener('click', () => {
+    setMenu(toggle.getAttribute('aria-expanded') !== 'true')
+  })
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      setMenu(false)
+      toggle.focus()
+    }
+  })
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 720 && toggle?.getAttribute('aria-expanded') === 'true') setMenu(false)
+  })
+</script>

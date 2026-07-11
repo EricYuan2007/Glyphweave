@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import PostList from '../../components/PostList.astro'
 import { getGlyphweavePosts } from '../../lib/glyphweave'
 
 export async function getStaticPaths() {
@@ -21,13 +22,8 @@ const { tag, taggedPosts } = Astro.props
 ---
 
 <BaseLayout title={`Tag: ${tag}`}>
-  <h1>Tag: {tag}</h1>
-  <ul class="post-list">
-    {taggedPosts.map((post) => (
-      <li class="post-card">
-        <h2><a href={`/posts/${post.slug}`}>{post.title}</a></h2>
-        <p>{post.description}</p>
-      </li>
-    ))}
-  </ul>
+  <section class="page-shell" aria-labelledby="tag-heading">
+    <h1 id="tag-heading" class="page-heading">Tag: {tag}</h1>
+    <PostList posts={taggedPosts} />
+  </section>
 </BaseLayout>

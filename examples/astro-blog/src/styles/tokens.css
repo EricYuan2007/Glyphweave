@@ -1,0 +1,21 @@
+:root {
+  --color-paper: #ffffff;
+  --color-ink: #282828;
+  --color-muted: #6f6d68;
+  --color-faint: #9a9892;
+  --color-rule: #d9d7d1;
+  --color-soft: #f4f3ef;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "PingFang SC", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --reading-width: 660px;
+  --page-gutter: 24px;
+  --header-height: 54px;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --page-gutter: 20px;
+    --header-height: 50px;
+  }
+}
