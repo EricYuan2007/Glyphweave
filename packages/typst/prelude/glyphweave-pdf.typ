@@ -14,10 +14,13 @@
   let rule = rgb("#d8d7d2")
   let soft = rgb("#f7f7f4")
   let accent = rgb("#245b74")
+  let line-leading = 0.62em
+  let block-spacing = 0.82em
+  let heading-spacing = 0.68em
 
   set page(
     paper: "a4",
-    margin: (top: 2.25cm, bottom: 2.05cm, left: 2.45cm, right: 2.35cm),
+    margin: (top: 2cm, bottom: 1.75cm, left: 2.45cm, right: 2.35cm),
     header: context {
       set text(font: fonts, size: 7.2pt, fill: muted)
       if counter(page).get().first() > 1 [
@@ -41,37 +44,39 @@
   )
   set par(
     justify: true,
-    first-line-indent: (amount: 2em, all: false),
-    leading: 0.5em,
-    spacing: 0.56em,
+    first-line-indent: 0pt,
+    leading: line-leading,
+    spacing: block-spacing,
     justification-limits: (
       spacing: (min: 85%, max: 120%),
       tracking: (min: -0.01em, max: 0.01em),
     ),
   )
-  set list(indent: 1.55em, body-indent: 0.55em, spacing: 0.24em)
-  set enum(indent: 1.55em, body-indent: 0.55em, spacing: 0.24em)
-  set terms(indent: 1.55em, spacing: 0.28em)
+  set list(indent: 1.55em, body-indent: 0.55em, spacing: line-leading)
+  set enum(indent: 1.55em, body-indent: 0.55em, spacing: line-leading)
+  set terms(indent: 1.55em, spacing: line-leading)
+
+  show regex("[A-Za-z0-9]+"): it => box(move(dy: 0.04em, it))
 
   show heading.where(level: 1): it => {
     set text(size: 21.5pt, weight: "semibold", fill: ink)
     set par(first-line-indent: 0pt, justify: false, leading: 0.48em)
-    block(above: 0.2em, below: 0.9em, breakable: false, sticky: true)[#it.body]
+    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#it.body]
   }
   show heading.where(level: 2): it => {
     set text(size: 14.5pt, weight: "semibold", fill: ink)
     set par(first-line-indent: 0pt, justify: false, leading: 0.46em)
-    block(above: 1.35em, below: 0.5em, breakable: false, sticky: true)[#it.body]
+    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#it.body]
   }
   show heading.where(level: 3): it => {
     set text(size: 11.8pt, weight: "semibold", fill: ink)
     set par(first-line-indent: 0pt, justify: false, leading: 0.44em)
-    block(above: 1.05em, below: 0.38em, breakable: false, sticky: true)[#it.body]
+    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#it.body]
   }
   show heading.where(level: 4): it => {
     set text(size: 10.7pt, weight: "semibold", fill: ink)
     set par(first-line-indent: 0pt, justify: false)
-    block(above: 0.9em, below: 0.3em, breakable: false, sticky: true)[#it.body]
+    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#it.body]
   }
 
   show raw.where(block: true): it => block(
@@ -103,7 +108,7 @@
   )[#align(center, it)]
 
   set table(
-    inset: (x: 6pt, y: 4.5pt),
+    inset: (x: 6pt, y: 6pt),
     align: left + horizon,
     stroke: (x, y) => if y == 0 {
       (bottom: 0.8pt + ink)
@@ -113,7 +118,7 @@
   )
   show table: it => block(width: 100%, above: 0.85em, below: 0.85em)[#it]
   show table.cell: set text(size: 8.8pt)
-  show table.cell: set par(first-line-indent: 0pt, justify: false, leading: 0.4em, spacing: 0pt)
+  show table.cell: set par(first-line-indent: 0pt, justify: false, leading: line-leading, spacing: 0pt)
   show table.cell.where(y: 0): set text(weight: "semibold")
 
   show figure: it => block(
