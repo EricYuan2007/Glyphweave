@@ -23,8 +23,13 @@
   let accent = rgb("#245b74")
   let heading-size = 13.5pt
   let line-leading = 0.8em
+  let list-spacing = 0.95em
   let block-spacing = 1em
   let heading-spacing = 1.05em
+  let list-markers = (
+    text(font: heading-fonts, size: 1em, weight: "bold")[•],
+    text(font: heading-fonts, size: 0.82em, weight: "bold")[•],
+  )
 
   set page(
     paper: "a4",
@@ -60,9 +65,14 @@
       tracking: (min: -0.01em, max: 0.01em),
     ),
   )
-  set list(indent: 1.55em, body-indent: 0.55em, spacing: line-leading)
-  set enum(indent: 1.55em, body-indent: 0.55em, spacing: line-leading)
-  set terms(indent: 1.55em, spacing: line-leading)
+  set list(
+    marker: list-markers,
+    indent: 1.3em,
+    body-indent: 0.38em,
+    spacing: list-spacing,
+  )
+  set enum(indent: 1.3em, body-indent: 0.45em, spacing: list-spacing)
+  set terms(indent: 1.3em, spacing: list-spacing)
   set heading(numbering: "1.1")
 
   show regex("[A-Za-z0-9]+"): it => box(move(dy: 0.04em, it))
@@ -101,7 +111,12 @@
     )
     #it
   ]
-  show raw.where(block: false): set text(font: mono-fonts, size: 0.86em)
+  show raw.where(block: false): it => box(
+    baseline: -0.06em,
+    text(font: mono-fonts, size: 0.86em, it),
+  )
+
+  show math.equation.where(block: false): it => box(baseline: -0.05em, it)
 
   show math.equation.where(block: true): it => block(
     width: 100%,
@@ -111,7 +126,7 @@
   )[#align(center, it)]
 
   set table(
-    inset: (x: 6pt, y: 5.5pt),
+    inset: (x: 8pt, y: 5.5pt),
     align: left + horizon,
     stroke: (x, y) => if y == 0 {
       (bottom: 0.8pt + ink)
