@@ -32,8 +32,8 @@ typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['Songti SC', 'STSong', 'PingFang SC'],
-      monoFonts: ['Menlo'],
+      fonts: ['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC'],
+      monoFonts: ['Menlo', 'DejaVu Sans Mono'],
       lang: 'zh',
       region: 'CN',
     },
@@ -41,10 +41,10 @@ typst: {
 }
 ```
 
-Linux 或 CI 环境请先安装中文字体，并把 `typst.pdf.template.fonts` 改成 Typst
-能看到的字体族名，例如 `Noto Serif CJK SC` 或 `Source Han Serif SC`。可以用
-`typst fonts` 查看可用字体。如果文章源码已经套了完整 Typst 模板，可以设置
-`typst.pdf.template.enabled: false`。
+Linux 或 CI 环境请安装 Noto CJK 与等宽回退字体。Ubuntu 可运行
+`sudo apt-get install fonts-noto-cjk fonts-dejavu-core`，然后用 `typst fonts` 确认
+`Noto Serif CJK SC`、`Noto Sans CJK SC` 和 `DejaVu Sans Mono` 均可用。如果文章源码
+已经套了完整 Typst 模板，可以设置 `typst.pdf.template.enabled: false`。
 
 ## 资源路径失败
 

@@ -56,8 +56,11 @@ export const GlyphweaveConfigSchema = z
                     'Songti SC',
                     'STSong',
                     'PingFang SC',
+                    'Noto Serif CJK SC',
                   ]),
-                monoFonts: z.array(z.string().min(1)).default(['Menlo']),
+                monoFonts: z
+                  .array(z.string().min(1))
+                  .default(['Menlo', 'DejaVu Sans Mono']),
                 lang: z.string().default('zh'),
                 region: z.string().default('CN'),
               })

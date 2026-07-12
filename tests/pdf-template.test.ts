@@ -8,6 +8,8 @@ describe('PDF template', () => {
       'Songti SC',
       'STSong',
     ])
+    expect(defaultConfig().typst.pdf.template.fonts).toContain('Noto Serif CJK SC')
+    expect(defaultConfig().typst.pdf.template.monoFonts).toContain('DejaVu Sans Mono')
   })
 
   it('defines editorial page furniture and block-specific rhythm', async () => {
@@ -21,6 +23,7 @@ describe('PDF template', () => {
     expect(template).toContain('show table:')
     expect(template).toContain('first-line-indent: (amount: 2em, all: true)')
     expect(template).toContain('heading-fonts: (')
+    expect(template).toContain('"Noto Sans CJK SC"')
     expect(template).toContain('set heading(numbering: "1.1")')
     expect(template).toContain('if it.level > 1')
     expect(template).toContain('levels.slice(1)')

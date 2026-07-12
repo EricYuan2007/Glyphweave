@@ -135,8 +135,8 @@ export default defineConfig({
       failure: 'warn',
       template: {
         enabled: true,
-        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
-        monoFonts: ['Menlo'],
+        fonts: ['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC'],
+        monoFonts: ['Menlo', 'DejaVu Sans Mono'],
         lang: 'zh',
         region: 'CN',
       },

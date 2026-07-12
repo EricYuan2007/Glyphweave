@@ -4,13 +4,15 @@
     "Songti SC",
     "STSong",
     "PingFang SC",
+    "Noto Serif CJK SC",
   ),
   heading-fonts: (
     "PingFang SC",
     "Heiti SC",
     "STHeiti",
+    "Noto Sans CJK SC",
   ),
-  mono-fonts: ("Menlo",),
+  mono-fonts: ("Menlo", "DejaVu Sans Mono"),
   lang: "zh",
   region: "CN",
 ) = {

@@ -36,7 +36,24 @@ jobs:
           tar -xf typst.tar.xz
           sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
           typst --version
-      - run: pnpm --filter example-astro-blog build
+      - name: Install PDF fonts and inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes fonts-noto-cjk fonts-dejavu-core poppler-utils
+          typst fonts | grep -F 'Noto Serif CJK SC'
+          typst fonts | grep -F 'Noto Sans CJK SC'
+          typst fonts | grep -F 'DejaVu Sans Mono'
+      - name: Build demo
+        run: pnpm --filter example-astro-blog build
+      - name: Verify generated PDF
+        run: |
+          pdf='examples/astro-blog/dist/glyphweave/posts/hnsw-search-notes/article.pdf'
+          test -s "$pdf"
+          pdfinfo "$pdf" | grep -E '^Pages:[[:space:]]+[1-9][0-9]*$'
+          pdffonts "$pdf" | tee pdf-fonts.txt
+          grep -Eq 'NotoSerifCJK|Noto Serif CJK' pdf-fonts.txt
+          grep -Eq 'NotoSansCJK|Noto Sans CJK' pdf-fonts.txt
+          grep -Eq 'DejaVuSansMono|DejaVu Sans Mono' pdf-fonts.txt
       - run: pnpm --filter example-astro-blog pagefind
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -12,7 +12,7 @@ export default defineConfig({
   },
   typst: {
     pdf: {
-      failure: 'warn',
+      failure: pagesBase ? 'error' : 'warn',
     },
   },
 })

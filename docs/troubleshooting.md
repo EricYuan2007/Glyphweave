@@ -24,8 +24,8 @@ typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['Songti SC', 'STSong', 'PingFang SC'],
-      monoFonts: ['Menlo'],
+      fonts: ['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC'],
+      monoFonts: ['Menlo', 'DejaVu Sans Mono'],
       lang: 'zh',
       region: 'CN',
     },
@@ -33,10 +33,11 @@ typst: {
 }
 ```
 
-On Linux or CI, install a CJK font and set `typst.pdf.template.fonts` to the installed family, for
-example `Noto Serif CJK SC` or `Source Han Serif SC`. Run `typst fonts` to see the exact family
-names available to Typst. Set `typst.pdf.template.enabled` to `false` if your source `.typ` file
-already applies a full document template.
+On Linux or CI, install `Noto Serif CJK SC`, `Noto Sans CJK SC`, and a monospace fallback. On
+Ubuntu, `sudo apt-get install fonts-noto-cjk fonts-dejavu-core` provides the families used by the
+default stack. Run `typst fonts` to verify the exact names available to Typst. Set
+`typst.pdf.template.enabled` to `false` if your source `.typ` file already applies a full document
+template.
 
 ## Asset paths fail
 
