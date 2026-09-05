@@ -40,7 +40,7 @@
     "@astrojs/sitemap": "^3.6.0",
     "astro": "^5.8.1",
     "commander": "^14.0.0",
-    "execa": "^9.5.2",
+    "execa": "^10.0.1",
     "fast-glob": "^3.3.3",
     "hast-util-sanitize": "^5.0.2",
     "hast-util-to-html": "^9.0.5",
