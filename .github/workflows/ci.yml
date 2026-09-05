@@ -52,7 +52,7 @@ jobs:
           grep -Eq 'NotoSerifCJK|Noto Serif CJK' "$RUNNER_TEMP/pdf-fonts.txt"
           grep -Eq 'NotoSansCJK|Noto Sans CJK' "$RUNNER_TEMP/pdf-fonts.txt"
           grep -Eq 'DejaVuSansMono|DejaVu Sans Mono' "$RUNNER_TEMP/pdf-fonts.txt"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: browser-traces
