@@ -14,7 +14,7 @@ describe('schemas', () => {
 
     expect(metadata.tags).toEqual([])
     expect(metadata.language).toBe('zh-CN')
-    expect(metadata.pdf).toBe(false)
+    expect(metadata.pdf).toBeUndefined()
     expect(metadata.source).toBe('index.typ')
   })
 
@@ -49,7 +49,7 @@ describe('schemas', () => {
     expect(config.content.root).toBe('content/typst-posts')
     expect(config.output.root).toBe('.glyphweave')
     expect(config.output.publicBasePath).toBe('/glyphweave')
-    expect(config.html.headingIds).toBe('stable')
+    expect(config.html.headingIds).toBe('preserve')
     expect(config.math.strategy).toBe('mathml')
     expect(config.math.svg.includeSourceFallback).toBe(true)
     expect(config.math.svg.inlineVerticalShift).toBe('0.08em')
@@ -67,8 +67,6 @@ describe('schemas', () => {
     expect(() =>
       GlyphweaveConfigSchema.parse({ typst: { wrapper: { injectPrelude: true } } }),
     ).toThrow()
-    expect(() =>
-      GlyphweaveConfigSchema.parse({ math: { includeSourceFallback: true } }),
-    ).toThrow()
+    expect(() => GlyphweaveConfigSchema.parse({ math: { includeSourceFallback: true } })).toThrow()
   })
 })

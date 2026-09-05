@@ -13,3 +13,5 @@ export type {
   GlyphweavePostMetadata,
   TocItem,
 } from '@glyphweave/schema'
+
+export { ownOutput as prepareOutput } from './output.js'

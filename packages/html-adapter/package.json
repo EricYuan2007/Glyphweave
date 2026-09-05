@@ -4,6 +4,40 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "hast-util-to-html": "^9.0.5",
+    "hast-util-sanitize": "^5.0.2",
+    "rehype-parse": "^9.0.1",
+    "rehype-sanitize": "^6.0.0",
+    "shiki": "3.23.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "@glyphweave/schema": "workspace:*",
+    "@glyphweave/typst": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "files": [
+    "dist",
+    "prelude",
+    "src/styles"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EricYuan2007/Glyphweave.git",
+    "directory": "packages/html-adapter"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "description": "Glyphweave html-adapter: build-time Typst publishing",
+  "publishConfig": {
+    "access": "public"
   }
 }

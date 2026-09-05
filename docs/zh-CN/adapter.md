@@ -22,3 +22,5 @@ Shiki token span，以及不包含内联事件的复制按钮。作者输入的�
 ## 公式归一化
 
 Typst 0.15 会把公式导出为原生 MathML。Adapter 保留完整 MathML 树，并为每个公式添加稳定的 renderer 标记；通过 `display="block"` 判断行间公式，其余公式保持行内。可选 SVG 模式使用 Glyphweave 自有的 `data-gw-math` 属性，不依赖 Typst 内部 SVG class。详见 [复杂公式与内容捕获](./math-rendering.md)。
+
+当前行为及破坏性变更见[迁移说明](migration.md)。

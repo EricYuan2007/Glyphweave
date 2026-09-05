@@ -4,7 +4,33 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./styles/glyphweave-math.css": "./src/styles/glyphweave-math.css"
+  },
+  "dependencies": {
+    "@glyphweave/schema": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "files": [
+    "dist",
+    "prelude",
+    "src/styles"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EricYuan2007/Glyphweave.git",
+    "directory": "packages/astro"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "description": "Glyphweave astro: build-time Typst publishing",
+  "publishConfig": {
+    "access": "public"
   }
 }

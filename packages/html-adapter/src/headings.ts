@@ -1,3 +1,4 @@
+import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
 import type { TocItem } from '@glyphweave/schema'
 import { isHeading, textContent } from './tree.js'
@@ -15,21 +16,42 @@ export function slugifyHeading(text: string): string {
 }
 
 export function normalizeHeadingIds(root: HastNode, mode: HtmlAdapterOptions['headingIds']) {
-  const seen = new Map<string, number>()
-  visit(root as any, 'element', (node: HastNode) => {
-    if (!isHeading(node)) return
-    node.properties ??= {}
-    const existing = typeof node.properties.id === 'string' ? node.properties.id : undefined
-    const base = mode === 'preserve' && existing ? existing : slugifyHeading(textContent(node))
-    const count = seen.get(base) ?? 0
-    seen.set(base, count + 1)
-    node.properties.id = count === 0 ? base : `${base}-${count + 1}`
+  const used = new Set<string>()
+  const redirects = new Map<string, string>()
+  visit(root as Root, 'element', (node: HastNode) => {
+    if (!node.properties) node.properties = {}
+    const old = typeof node.properties.id === 'string' ? node.properties.id : undefined
+    if (!old && !isHeading(node)) return
+    const base =
+      isHeading(node) && (mode === 'stable' || !old) ? slugifyHeading(textContent(node)) : old!
+    let next = base
+    let suffix = 2
+    while (used.has(next)) next = `${base}-${suffix++}`
+    used.add(next)
+    node.properties.id = next
+    if (old && !redirects.has(old)) redirects.set(old, next)
+  })
+  visit(root as Root, 'element', (node: HastNode) => {
+    if (!node.properties) return
+    for (const key of ['href', 'xLinkHref']) {
+      const value = node.properties[key]
+      if (typeof value === 'string' && value.startsWith('#') && redirects.has(value.slice(1)))
+        node.properties[key] = `#${redirects.get(value.slice(1))}`
+    }
+    for (const key of ['ariaLabelledBy', 'ariaDescribedBy', 'headers']) {
+      const value = node.properties[key]
+      if (typeof value === 'string')
+        node.properties[key] = value
+          .split(/\s+/)
+          .map((id) => redirects.get(id) ?? id)
+          .join(' ')
+    }
   })
 }
 
 export function extractToc(root: HastNode): TocItem[] {
   const toc: TocItem[] = []
-  visit(root as any, 'element', (node: HastNode) => {
+  visit(root as Root, 'element', (node: HastNode) => {
     if (!isHeading(node)) return
     const depth = Number(node.tagName?.slice(1))
     if (depth < 1 || depth > 4) return

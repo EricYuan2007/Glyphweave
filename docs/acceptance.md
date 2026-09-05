@@ -1,42 +1,33 @@
 # Acceptance
 
-Verified commands:
+Run these from a clean checkout with Node 22.18+, pnpm 11.1.1 and Typst 0.15.0:
 
-```bash
-pnpm install
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm glyphweave build
-pnpm --filter example-astro-blog build
-pnpm --filter example-astro-blog pagefind
+```sh
+pnpm install --frozen-lockfile
+pnpm check
 pnpm run verify:demo
+pnpm test:integration
+pnpm test:package
+pnpm exec playwright install
+pnpm test:e2e
+pnpm benchmark 100
 ```
 
-Expected artifacts:
+## Gates
 
-- `.glyphweave/content-index.json`
-- `.glyphweave/generated/posts/<slug>/content.html`
-- `.glyphweave/generated/posts/<slug>/toc.json`
-- `.glyphweave/generated/posts/<slug>/manifest.json`
-- optional `.glyphweave/generated/posts/<slug>/article.pdf`
-- `examples/astro-blog/dist/posts/hnsw-search-notes/index.html`
-- `examples/astro-blog/dist/pagefind/`
+- Package compilation, ESLint (including no explicit any), TypeScript and Astro checks pass.
+- Regression tests cover output ownership, bad configuration, failure preservation,
+  publication state transitions, unsafe URLs, symlinks, unique IDs and JSON versions.
+- Real compiler fixtures exercise comments, includes, macros, references, MathML and SVG.
+- Standalone tarball installation runs the CLI and produces HTML/PDF with both renderers.
+- Browser tests cover mathematical content, valid anchors, page overflow, keyboard
+  lightbox dismissal and real search results in Chromium, Firefox, WebKit and mobile.
+- Linux CI inspects PDF pages and embedded CJK/monospace fonts before deployment.
+- The site exports only the current snapshot. No raw HTML or generation directory is deployed.
 
-Manual checks:
+## Manual release checks
 
-- The article page renders Typst content as HTML, not a PDF iframe.
-- Inline and block math render through `.gw-math` wrappers with native MathML by default.
-- Complex examples such as `sum_(i=1)^n x_i^2`, `integral_0^1 f(x) dif x`, `frac`, `mat`, and `cases` are visible in the demo article.
-- The schema v2 manifest contains `capture.math`, `diagnostics`, and `typst.mathRenderer`.
-- Default builds report all formulas as `nativeMathml`; `svg-frame` builds use Glyphweave-owned markers.
-- PDF-enabled posts record `typst.pdfPreludeVersion` when the Glyphweave PDF template is active.
-- The PDF download link points to `/glyphweave/posts/<slug>/article.pdf`.
-- Desktop articles expose a sticky, collapsible, scroll-aware table of contents to the left of the reading column.
-- Footnotes render as reference-aligned sidenotes on wide screens and fall back to endnotes on narrow screens.
-- Fenced code is syntax highlighted and exposes a keyboard-accessible copy control.
-- Generated PDFs use the editorial template with Chinese serif text, page furniture, code styling, and display-math spacing.
-- The final HTML contains `data-pagefind-body`.
-- `content.html` does not contain scripts, event attributes, `javascript:` URLs, or local absolute paths.
-- Chromium desktop/mobile checks have no page overflow, clipped equations, or baseline regressions.
-- Safari and Firefox should be checked manually for MathML alignment before a production release.
+Inspect long equations, multilingual prose, PDF typography, focus order and
+screen-reader output. Automated DOM/browser tests do not certify visual quality
+or assistive-technology behavior. Windows is not currently in the verified matrix.
+There is no promised scale/latency budget; benchmark records characterize their fixture only.

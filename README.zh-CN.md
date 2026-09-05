@@ -51,7 +51,7 @@ PDF 是补充链路：
 
 ## 环境要求
 
-- Node.js 22 或更高版本。
+- Node.js 22.18 或更高版本。
 - pnpm 11.1.1 或更高版本。
 - Typst CLI 0.15.0 或更高版本。
 
@@ -66,6 +66,7 @@ typst --version
 
 ```bash
 pnpm install
+pnpm build
 pnpm glyphweave doctor
 pnpm glyphweave build
 pnpm --filter example-astro-blog build
@@ -101,17 +102,17 @@ content/
 最小 `post.yaml`：
 
 ```yaml
-title: "HNSW 检索算法笔记"
-slug: "hnsw-search-notes"
-description: "一篇关于 HNSW 图搜索的技术笔记。"
-date: "2026-05-28"
+title: 'HNSW 检索算法笔记'
+slug: 'hnsw-search-notes'
+description: '一篇关于 HNSW 图搜索的技术笔记。'
+date: '2026-05-28'
 tags:
   - HNSW
   - Retrieval
-status: "published"
-visibility: "public"
+status: 'published'
+visibility: 'public'
 pdf: true
-source: "index.typ"
+source: 'index.typ'
 ```
 
 ## 常用命令
@@ -175,3 +176,7 @@ PDF 默认模板使用 macOS 常见中文字体。Linux 部署时可以把
 ## 许可证
 
 [MIT](./LICENSE)。补充授权说明见 [NOTICE.md](./NOTICE.md)。
+
+## 项目维护
+
+参见[文档索引](docs/README.md)、[迁移说明](docs/zh-CN/migration.md)、[贡献指南](CONTRIBUTING.md)、[安全政策](SECURITY.md)和[变更记录](CHANGELOG.md)。各包已支持编译并通过本地 tarball 验证，不代表已经发布到 npm。

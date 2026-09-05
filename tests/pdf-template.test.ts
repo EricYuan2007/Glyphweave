@@ -4,10 +4,7 @@ import { defaultConfig } from '@glyphweave/schema'
 
 describe('PDF template', () => {
   it('prefers an editorial Chinese serif stack for body text', () => {
-    expect(defaultConfig().typst.pdf.template.fonts.slice(0, 2)).toEqual([
-      'Songti SC',
-      'STSong',
-    ])
+    expect(defaultConfig().typst.pdf.template.fonts.slice(0, 2)).toEqual(['Songti SC', 'STSong'])
     expect(defaultConfig().typst.pdf.template.fonts).toContain('Noto Serif CJK SC')
     expect(defaultConfig().typst.pdf.template.monoFonts).toContain('DejaVu Sans Mono')
   })

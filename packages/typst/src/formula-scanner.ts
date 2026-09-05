@@ -8,7 +8,7 @@ export async function scanSourceFormulas(sourcePath: string): Promise<SourceForm
 
 export function scanSourceFormulasFromText(source: string, file = ''): SourceFormula[] {
   const formulas: SourceFormula[] = []
-  const lines = source.replace(/\r\n/g, '\n').split('\n')
+  const lines = stripCommentsAndStrings(source).replace(/\r\n/g, '\n').split('\n')
   let inRawFence = false
   let id = 1
 
@@ -116,4 +116,56 @@ function isEscaped(line: string, index: number) {
     slashes += 1
   }
   return slashes % 2 === 1
+}
+
+/** A lexical hint only: includes and evaluated macros can change rendered cardinality. */
+function stripCommentsAndStrings(source: string): string {
+  let result = ''
+  let blockDepth = 0
+  let lineComment = false
+  let quoted = false
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i]
+    const pair = source.slice(i, i + 2)
+    if (char === '\n') {
+      lineComment = false
+      result += char
+      continue
+    }
+    if (lineComment) {
+      result += ' '
+      continue
+    }
+    if (blockDepth) {
+      if (pair === '/*') {
+        blockDepth++
+        result += '  '
+        i++
+      } else if (pair === '*/') {
+        blockDepth--
+        result += '  '
+        i++
+      } else result += ' '
+      continue
+    }
+    if (!quoted && pair === '//') {
+      lineComment = true
+      result += '  '
+      i++
+      continue
+    }
+    if (!quoted && pair === '/*') {
+      blockDepth = 1
+      result += '  '
+      i++
+      continue
+    }
+    if (char === '"' && !isEscaped(source, i)) {
+      quoted = !quoted
+      result += ' '
+      continue
+    }
+    result += quoted ? ' ' : char
+  }
+  return result
 }

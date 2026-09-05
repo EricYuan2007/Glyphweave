@@ -58,4 +58,4 @@ Manifest schema version 2 records the selected renderer and counts MathML and SV
 }
 ```
 
-Strict capture fails when the source formula count differs from the combined MathML and SVG count.
+Strict capture fails on compiler-confirmed content loss. Source formula counts are lexical hints; includes and macros can change rendered cardinality, so count mismatches are warnings.

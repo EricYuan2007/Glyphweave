@@ -1,24 +1,11 @@
 # 安全模型
 
-Phase 1 默认 Typst 作者可信，但仍保护 HTML 注入边界。
+作者及可执行配置必须受信。本项目是本地构建工具，不是服务端沙箱。漏洞请按根目录 [SECURITY.md](../../SECURITY.md) 私下报告。
 
-默认会删除或拒绝：
+适配器规范化 URL 控制字符，并通过允许列表净化 HTML、MathML 和静态 SVG。只保留 Typst 所需的数值布局样式，不保留脚本、事件属性、主动 SVG 和任意作者 CSS。Shiki 与项目自有按钮属于净化后的受信变换。正文/代码中的路径文字可以保留，资源 URL 单独校验。
 
-- `<script>`、`iframe`、`object`、`embed`、表单和 style 标签。
-- `onclick`、`onerror` 等事件属性。
-- `style` 属性。
-- `javascript:` 和 `file:` URL。
-- `/Users/...`、`/home/...`、`~/...` 等本地绝对路径。
-- 越过文章 `assets/` 目录边界的资源引用。
+资源真实路径必须位于文章 assets 内，且扩展名被允许。源码不能越过文章目录。输出必须位于项目内、与内容目录不重叠且不经过符号链接；clean 还要求归属标记及无构建占锁。
 
-块级代码高亮是一个范围受限、受信任的清洗后转换。Shiki 只生成固定 token 颜色，
-Glyphweave 只生成不含内联事件的复制按钮；作者输入的 style 或交互元素不会跨过该边界。
+发布只读取当前索引和 manifest。不能部署 raw.html、日志或历史 generations。unlisted 不是身份验证；重新构建无法追回已经被下载的公开文件。
 
-## 部署建议
-
-- 提交源文章、示例、测试和文档。
-- 不提交 `.glyphweave`、Astro `dist`、Pagefind 输出、本地 `.npmrc` 或复制后的 public 产物。
-- 合并前运行 `pnpm check` 和 `pnpm run verify:demo`。
-- 升级 Typst 时，把 HTML export 变化视为兼容性事件，重新验证 fixture 和示例站。
-
-Phase 1 不是给不可信 Typst 文档使用的服务端沙箱。未来服务端编译需要加入文件系统隔离、时间限制、包控制和产物校验。
+不受信作者或在线并发服务需要额外系统隔离、资源配额及专用部署边界，不能把 realpath 与 HTML 净化当成沙箱。

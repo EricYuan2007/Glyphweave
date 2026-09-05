@@ -11,7 +11,7 @@ export function parseTypstDiagnostics(output: string): GlyphweaveDiagnostic[] {
     if (message === 'equation was ignored during HTML export') {
       diagnostics.push({
         code: 'typst-html-equation-ignored',
-        severity: 'warning',
+        severity: 'error',
         message,
       })
       continue
@@ -20,7 +20,7 @@ export function parseTypstDiagnostics(output: string): GlyphweaveDiagnostic[] {
     if (/^.+ was ignored during HTML export$/.test(message)) {
       diagnostics.push({
         code: 'typst-html-content-ignored',
-        severity: 'warning',
+        severity: 'error',
         message,
       })
       continue

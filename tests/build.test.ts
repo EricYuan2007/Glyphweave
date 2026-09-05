@@ -2,7 +2,7 @@ import { mkdtemp, readFile, mkdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildAll } from '@glyphweave/core'
+import { buildAll, resolvePostOutputDir } from '@glyphweave/core'
 import { defaultConfig } from '@glyphweave/schema'
 import type { CompileInput } from '@glyphweave/typst'
 
@@ -42,7 +42,9 @@ describe('build pipeline', () => {
     })
 
     expect(result.built).toHaveLength(1)
-    const index = JSON.parse(await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'))
+    const index = JSON.parse(
+      await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'),
+    )
     expect(index.posts[0].slug).toBe('basic-post')
     expect(index.posts[0].publicPdfPath).toBe('/glyphweave/posts/basic-post/article.pdf')
     expect(pdfInputs).toHaveLength(1)
@@ -53,15 +55,24 @@ describe('build pipeline', () => {
       lang: 'zh',
       region: 'CN',
     })
-    expect(await readFile(path.join(root, '.glyphweave/generated/posts/basic-post/content.html'), 'utf-8')).toContain(
-      'Searchable body',
-    )
-    expect(await readFile(path.join(root, '.glyphweave/generated/posts/basic-post/toc.json'), 'utf-8')).toContain(
-      'Basic Post',
-    )
-    expect(await readFile(path.join(root, '.glyphweave/generated/posts/basic-post/manifest.json'), 'utf-8')).toContain(
-      'typst 0.15.0',
-    )
+    expect(
+      await readFile(
+        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'content.html'),
+        'utf-8',
+      ),
+    ).toContain('Searchable body')
+    expect(
+      await readFile(
+        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'toc.json'),
+        'utf-8',
+      ),
+    ).toContain('Basic Post')
+    expect(
+      await readFile(
+        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'manifest.json'),
+        'utf-8',
+      ),
+    ).toContain('typst 0.15.0')
   })
 
   it('writes math capture report and compile diagnostics to the manifest', async () => {
@@ -106,7 +117,10 @@ describe('build pipeline', () => {
     })
 
     const manifest = JSON.parse(
-      await readFile(path.join(root, '.glyphweave/generated/posts/math-post/manifest.json'), 'utf-8'),
+      await readFile(
+        path.join(await resolvePostOutputDir(root, defaultConfig(), 'math-post'), 'manifest.json'),
+        'utf-8',
+      ),
     )
 
     expect(manifest.capture.math.sourceFormulaCount).toBe(1)
@@ -162,7 +176,9 @@ describe('build pipeline', () => {
       compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
     })
 
-    const index = JSON.parse(await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'))
+    const index = JSON.parse(
+      await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'),
+    )
     expect(result.built.map(({ post }) => post.metadata.slug)).toEqual(['public-post'])
     expect(result.skipped.map((post) => post.metadata.slug).sort()).toEqual([
       'archived-post',
@@ -204,10 +220,13 @@ describe('build pipeline', () => {
     })
 
     const manifest = JSON.parse(
-      await readFile(path.join(root, '.glyphweave/generated/posts/pdf-warn/manifest.json'), 'utf-8'),
+      await readFile(
+        path.join(await resolvePostOutputDir(root, defaultConfig(), 'pdf-warn'), 'manifest.json'),
+        'utf-8',
+      ),
     )
     const content = await readFile(
-      path.join(root, '.glyphweave/generated/posts/pdf-warn/content.html'),
+      path.join(await resolvePostOutputDir(root, defaultConfig(), 'pdf-warn'), 'content.html'),
       'utf-8',
     )
     expect(manifest.pdf.enabled).toBe(false)
@@ -236,7 +255,18 @@ describe('build pipeline', () => {
         typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
         compileHtml: async ({ outputPath }) => {
           await writeFile(outputPath, '<body><p>Missing formula.</p></body>')
-          return { outputPath, stdout: '', stderr: '' }
+          return {
+            outputPath,
+            stdout: '',
+            stderr: '',
+            diagnostics: [
+              {
+                code: 'typst-html-equation-ignored',
+                severity: 'error' as const,
+                message: 'equation was ignored during HTML export',
+              },
+            ],
+          }
         },
         compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
       }),

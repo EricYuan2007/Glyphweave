@@ -7,7 +7,7 @@ export function registerCleanCommand(program: Command) {
     .command('clean')
     .description('Remove the Glyphweave output directory')
     .option('--root <dir>', 'project root directory', process.cwd())
-    .option('-c, --config <path>', 'config file path', 'glyphweave.config.ts')
+    .option('-c, --config <path>', 'config file path')
     .action(async (options) => {
       const rootDir = path.resolve(options.root)
       const config = await loadConfig(rootDir, options.config)

@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+---
+<BaseLayout title="Search">
+  <section class="page-shell" aria-labelledby="search-title">
+    <h1 id="search-title">Search articles</h1>
+    <form id="article-search" role="search" data-base={base}>
+      <label for="search-query">Search query</label>
+      <input id="search-query" name="q" type="search" required />
+      <button type="submit">Search</button>
+    </form>
+    <p id="search-status" role="status"></p>
+    <ul id="search-results"></ul>
+    <noscript>Search requires JavaScript. Browse the archive instead.</noscript>
+  </section>
+</BaseLayout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('#article-search')!
+  const input = document.querySelector<HTMLInputElement>('#search-query')!
+  const results = document.querySelector<HTMLUListElement>('#search-results')!
+  const status = document.querySelector<HTMLParagraphElement>('#search-status')!
+  let request = 0
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const current = ++request
+    status.textContent = 'Searching…'
+    results.replaceChildren()
+    try {
+      const modulePath = `${form.dataset.base}/pagefind/pagefind.js`
+      const pagefind = await import(/* @vite-ignore */ modulePath)
+      const found = await pagefind.search(input.value)
+      const pages = await Promise.all(found.results.slice(0, 20).map((result: { data: () => Promise<{ url: string; meta: { title?: string } }> }) => result.data()))
+      if (request !== current) return
+      for (const page of pages) {
+        const item = document.createElement('li')
+        const link = document.createElement('a')
+        link.href = page.url
+        link.textContent = page.meta.title ?? page.url
+        item.append(link)
+        results.append(item)
+      }
+      status.textContent = `${found.results.length} result(s)`
+    } catch {
+      if (request === current) status.textContent = 'Search index unavailable. Build the site and run Pagefind first.'
+    }
+  })
+</script>

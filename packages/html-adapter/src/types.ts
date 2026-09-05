@@ -1,4 +1,4 @@
-import type { DiscoveredTypstPost } from '@glyphweave/core'
+import type { Root, RootContent, Properties } from 'hast'
 import type {
   GlyphweaveCaptureReport,
   GlyphweaveConfig,
@@ -15,10 +15,11 @@ export interface HtmlAdapterOptions {
 
 export interface HtmlAdapterInput {
   rawHtmlPath: string
-  post: DiscoveredTypstPost
+  post: { metadata: { slug: string }; sourcePath: string; postDir: string; assetDir?: string }
   outputDir: string
   publicBasePath: string
   options: HtmlAdapterOptions
+  assets?: GlyphweaveConfig['assets']
   math?: GlyphweaveConfig['math']
   diagnostics?: GlyphweaveDiagnostic[]
 }
@@ -32,10 +33,10 @@ export interface HtmlAdapterOutput {
   diagnostics: GlyphweaveDiagnostic[]
 }
 
-export interface HastNode {
-  type: string
+/** HAST union with optional conveniences for recursive, discriminant-checked transforms. */
+export type HastNode = (Root | RootContent) & {
   tagName?: string
   value?: string
-  properties?: Record<string, unknown>
+  properties?: Properties
   children?: HastNode[]
 }

@@ -50,7 +50,7 @@ Optional PDF output follows the same Typst source:
 
 ## Requirements
 
-- Node.js 22 or newer.
+- Node.js 22.18 or newer.
 - pnpm 11.1.1 or newer.
 - Typst CLI 0.15.0 or newer for real Typst compilation.
 
@@ -65,6 +65,7 @@ typst --version
 
 ```bash
 pnpm install
+pnpm build
 pnpm glyphweave doctor
 pnpm glyphweave build
 pnpm --filter example-astro-blog build
@@ -100,17 +101,17 @@ content/
 Minimal `post.yaml`:
 
 ```yaml
-title: "HNSW Search Notes"
-slug: "hnsw-search-notes"
-description: "Technical notes about HNSW graph search."
-date: "2026-05-28"
+title: 'HNSW Search Notes'
+slug: 'hnsw-search-notes'
+description: 'Technical notes about HNSW graph search.'
+date: '2026-05-28'
 tags:
   - HNSW
   - Retrieval
-status: "published"
-visibility: "public"
+status: 'published'
+visibility: 'public'
 pdf: true
-source: "index.typ"
+source: 'index.typ'
 ```
 
 ## Configuration
@@ -238,3 +239,7 @@ Chinese:
 ## License
 
 [MIT](./LICENSE). Additional licensing notes are in [NOTICE.md](./NOTICE.md).
+
+## Project maintenance
+
+See the [documentation index](docs/README.md), [migration guide](docs/migration.md), [contribution guide](CONTRIBUTING.md), [security policy](SECURITY.md), [support](SUPPORT.md), and [changelog](CHANGELOG.md). Compiled packages are tested through local tarballs; this checkout does not imply a published npm release.

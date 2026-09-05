@@ -28,3 +28,5 @@ pnpm astro build
 - Pagefind 索引。
 
 生成资源使用 `/glyphweave/posts/<slug>/...` public path。示例站通过 `scripts/sync-glyphweave-public.mjs` 在 Astro build 前复制 PDF 和资源到 `public/glyphweave`。
+
+当前行为及破坏性变更见[迁移说明](migration.md)。

@@ -1,6 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { GlyphweaveConfig, GlyphweaveContentIndex } from '@glyphweave/schema'
+import {
+  ContentIndexSchema,
+  type GlyphweaveConfig,
+  type GlyphweaveContentIndex,
+} from '@glyphweave/schema'
 import type { BuiltPost } from './build.js'
 
 export async function writeContentIndex(
@@ -21,6 +25,8 @@ export async function writeContentIndex(
       status: post.metadata.status,
       visibility: post.metadata.visibility,
       language: post.metadata.language ?? 'zh-CN',
+      cover: post.metadata.cover,
+      canonicalUrl: post.metadata.canonicalUrl,
       contentHtmlPath: manifest.html.contentPath,
       tocPath: manifest.html.tocPath,
       pdfPath,
@@ -38,5 +44,5 @@ export async function writeContentIndex(
   const index: GlyphweaveContentIndex = { schemaVersion: 1, posts }
   const outputPath = path.resolve(rootDir, config.output.root, 'content-index.json')
   await mkdir(path.dirname(outputPath), { recursive: true })
-  await writeFile(outputPath, JSON.stringify(index, null, 2))
+  await writeFile(outputPath, JSON.stringify(ContentIndexSchema.parse(index), null, 2))
 }

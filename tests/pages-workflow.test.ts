@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest'
 
 describe('Pages workflow', () => {
   it('installs CJK fonts and validates the generated PDF before deployment', async () => {
-    const workflow = await readFile('.github/workflows/pages.yml', 'utf-8')
+    const workflow =
+      (await readFile('.github/workflows/pages.yml', 'utf-8')) +
+      (await readFile('.github/actions/setup-typst/action.yml', 'utf-8'))
 
     expect(workflow).toContain('fonts-noto-cjk')
     expect(workflow).toContain('poppler-utils')
-    expect(workflow).toContain('typst fonts')
+    expect(workflow).toContain('sha256sum --check')
     expect(workflow).toContain('pdffonts')
     expect(workflow).toContain('article.pdf')
   })
