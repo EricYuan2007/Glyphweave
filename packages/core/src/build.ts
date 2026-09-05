@@ -1,43 +1,23 @@
+import { createCompilerIdentity } from '@glyphweave/typst'
+import { hash, implementationIdentity, snapshotTree } from './fingerprint.js'
+import { readCache, reusePost, type BuildCache } from './cache.js'
 import { randomUUID } from 'node:crypto'
-import { ContentIndexSchema, ManifestSchema } from '@glyphweave/schema'
+import { ContentIndexSchema } from '@glyphweave/schema'
 import { lockOutput, ownOutput, OWNER_FILE, validateOutputRoot } from './output.js'
 import { mkdir, rm, writeFile, readFile, rename, realpath } from 'node:fs/promises'
 import path from 'node:path'
-import { adaptTypstHtml } from '@glyphweave/html-adapter'
-import { defaultConfig, type GlyphweaveConfig, type GlyphweaveManifest } from '@glyphweave/schema'
+import { defaultConfig, type GlyphweaveConfig } from '@glyphweave/schema'
 import {
   assertSupportedTypst,
   compileTypstHtml,
   compileTypstPdf,
   detectTypst,
-  type CompileInput,
-  type CompileOutput,
-  type TypstInfo,
 } from '@glyphweave/typst'
 import { writeContentIndex } from './content-index.js'
 import { discoverPosts, type DiscoveredTypstPost } from './discovery.js'
-import {
-  assertCapture,
-  createManifest,
-  expectedPdfPreludeVersion,
-  expectedPreludeVersion,
-} from './manifest.js'
-
-export interface BuildDependencies {
-  typstInfo: (binary: string) => Promise<TypstInfo>
-  compileHtml: (input: CompileInput) => Promise<CompileOutput>
-  compilePdf: (input: CompileInput) => Promise<CompileOutput>
-}
-
-export interface BuildAllResult {
-  built: BuiltPost[]
-  skipped: DiscoveredTypstPost[]
-}
-
-export interface BuiltPost {
-  post: DiscoveredTypstPost
-  manifest: GlyphweaveManifest
-}
+import { buildPost } from './build-post.js'
+import type { BuildDependencies, BuildAllResult, BuiltPost } from './types.js'
+export type { BuildDependencies, BuildAllResult, BuiltPost } from './types.js'
 
 const defaultBuildDependencies: BuildDependencies = {
   typstInfo: detectTypst,
@@ -48,12 +28,23 @@ const defaultBuildDependencies: BuildDependencies = {
 async function buildGeneration(
   rootDir: string,
   config = defaultConfig(),
-  deps: BuildDependencies = defaultBuildDependencies,
+  deps: BuildDependencies,
+  output: string,
+  stableConfig: GlyphweaveConfig,
 ): Promise<BuildAllResult> {
+  await mkdir(path.resolve(rootDir, config.output.root), { recursive: true })
   const posts = await discoverPosts(rootDir, config)
   const outputRoot = path.resolve(rootDir, config.output.root)
   const typst = await deps.typstInfo(config.typst.binary)
   assertSupportedTypst(typst.version)
+  const identify = deps === defaultBuildDependencies ? createCompilerIdentity() : deps.cacheIdentity
+  const enabled = stableConfig.cache.enabled && Boolean(identify)
+  const environment = identify ? await identify(config.typst.binary) : ''
+  const implementation = enabled ? await implementationIdentity(rootDir) : ''
+  const previous = enabled ? await readCache(rootDir, output) : { version: 1 as const, entries: {} }
+  const next: BuildCache = { version: 1, entries: {} }
+  const cache = { reused: 0, compiled: 0, enabled }
+  const snapshots = new Map<string, string>()
   const built: BuiltPost[] = []
   const skipped: DiscoveredTypstPost[] = []
 
@@ -68,87 +59,85 @@ async function buildGeneration(
       'generated/posts',
       post.metadata.slug,
     )
-    const logDir = path.join(outputRoot, 'logs')
-    await mkdir(outputDir, { recursive: true })
-    const rawPath = path.join(outputDir, 'raw.html')
-    const contentPath = path.join(outputDir, 'content.html')
-    const tocPath = path.join(outputDir, 'toc.json')
-    const manifestPath = path.join(outputDir, 'manifest.json')
-
-    const htmlCompile = await deps.compileHtml({
-      binary: config.typst.binary,
-      inputPath: post.sourcePath,
-      outputPath: rawPath,
-      cwd: post.postDir,
-      rootPath: post.postDir,
-      wrapper: { mathStrategy: config.math.strategy },
-      logPath: path.join(logDir, `${post.metadata.slug}.html.log`),
-    })
-    const adapted = await adaptTypstHtml({
-      rawHtmlPath: rawPath,
-      post,
-      outputDir,
-      publicBasePath: config.output.publicBasePath,
-      options: config.html,
-      math: config.math,
-      assets: config.assets,
-      diagnostics: htmlCompile.diagnostics ?? [],
-    })
-    assertCapture(config, adapted.capture)
-    await writeFile(contentPath, adapted.contentHtml)
-    await writeFile(tocPath, JSON.stringify(adapted.toc, null, 2))
-
-    const pdfEnabled = post.metadata.pdf ?? config.typst.pdf.enabledByDefault
-    let pdfPath: string | null = null
-    if (pdfEnabled) {
-      pdfPath = path.join(outputDir, 'article.pdf')
-      try {
-        await deps.compilePdf({
-          binary: config.typst.binary,
-          inputPath: post.sourcePath,
-          outputPath: pdfPath,
-          cwd: post.postDir,
-          logPath: path.join(logDir, `${post.metadata.slug}.pdf.log`),
-          wrapper: {
-            pdfTemplate: {
-              injectTemplate: config.typst.pdf.template.enabled,
-              fonts: config.typst.pdf.template.fonts,
-              monoFonts: config.typst.pdf.template.monoFonts,
-              lang: config.typst.pdf.template.lang,
-              region: config.typst.pdf.template.region,
-            },
-          },
-        })
-      } catch (error) {
-        if (config.typst.pdf.failure === 'error') throw error
-        adapted.diagnostics.push({
-          code: 'glyphweave-pdf-failed',
-          severity: 'warning',
-          message: String(error),
-        })
-        await rm(pdfPath!, { force: true })
-        pdfPath = null
+    const snapshot = hash(JSON.stringify(await snapshotTree(post.postDir)))
+    snapshots.set(post.postDir, snapshot)
+    const epoch = process.env.SOURCE_DATE_EPOCH
+    const creationTimestamp =
+      epoch === undefined
+        ? Math.floor(Date.parse(post.metadata.updated ?? post.metadata.date) / 1000)
+        : Number(epoch)
+    if (!Number.isSafeInteger(creationTimestamp) || creationTimestamp < 0)
+      throw new Error('Invalid build creation timestamp')
+    const key = hash(
+      JSON.stringify({
+        snapshot,
+        source: post.sourcePath,
+        config: { ...stableConfig, cache: undefined },
+        environment,
+        implementation,
+        typst: typst.version,
+        creationTimestamp,
+      }),
+    )
+    const reused = enabled
+      ? await reusePost(rootDir, output, outputDir, previous.entries[post.metadata.slug], key)
+      : undefined
+    if (reused) {
+      cache.reused++
+      built.push({ post, manifest: reused })
+      next.entries[post.metadata.slug] = {
+        key,
+        directory: path.relative(rootDir, outputDir),
+        files: await snapshotTree(outputDir),
       }
+      continue
     }
-
-    const manifest = createManifest(
+    cache.compiled++
+    const manifest = await buildPost(
       rootDir,
       config,
+      deps,
       post,
+      outputDir,
       typst.version,
-      htmlCompile.preludeVersion ?? expectedPreludeVersion(config),
-      expectedPdfPreludeVersion(config),
-      adapted.rewrittenAssets,
-      adapted.capture,
-      adapted.diagnostics,
-      { rawPath, contentPath, tocPath, pdfPath },
+      creationTimestamp,
     )
-    await writeFile(manifestPath, JSON.stringify(ManifestSchema.parse(manifest), null, 2))
     built.push({ post, manifest })
+    if (
+      enabled &&
+      !manifest.diagnostics.some((diagnostic) => diagnostic.code === 'glyphweave-pdf-failed')
+    ) {
+      next.entries[post.metadata.slug] = {
+        key,
+        directory: path.relative(rootDir, outputDir),
+        files: await snapshotTree(outputDir),
+      }
+    }
   }
 
-  await writeContentIndex(rootDir, config, built)
-  return { built, skipped }
+  // Validate inputs again before committing the generation, including changes made during reuse.
+  const rediscovered = await discoverPosts(rootDir, stableConfig)
+  if (JSON.stringify(rediscovered) !== JSON.stringify(posts))
+    throw new Error('Posts changed during build; retry')
+  for (const [directory, snapshot] of snapshots) {
+    if (hash(JSON.stringify(await snapshotTree(directory))) !== snapshot)
+      throw new Error('Article inputs changed during build; retry')
+  }
+  // Never publish a generation assembled from different compiler/font/package environments.
+  if (identify && (await identify(config.typst.binary)) !== environment)
+    throw new Error(
+      'Compiler environment changed during build (possibly a first package download); retry',
+    )
+  if (enabled && (await implementationIdentity(rootDir)) !== implementation)
+    throw new Error('Generator implementation changed during build; retry')
+  await writeFile(path.join(outputRoot, 'cache.json'), JSON.stringify(next, null, 2))
+  await writeContentIndex(
+    rootDir,
+    config,
+    built,
+    path.relative(rootDir, path.join(outputRoot, 'cache.json')),
+  )
+  return { built, skipped, cache }
 }
 
 /** Build an immutable generation and atomically replace the index only after complete success.
@@ -160,6 +149,9 @@ export async function buildAll(
   deps: BuildDependencies = defaultBuildDependencies,
 ): Promise<BuildAllResult> {
   rootDir = await realpath(rootDir)
+  config = structuredClone(config)
+  if (config.typst.binary.includes('/') || config.typst.binary.includes('\\'))
+    config.typst.binary = path.resolve(rootDir, config.typst.binary)
   const output = await ownOutput(rootDir, config)
   const unlock = await lockOutput(output)
   const generation = path.join(output, 'generations', randomUUID())
@@ -170,7 +162,7 @@ export async function buildAll(
       ...config,
       output: { ...config.output, root: path.relative(rootDir, generation) },
     }
-    const result = await buildGeneration(rootDir, generationConfig, deps)
+    const result = await buildGeneration(rootDir, generationConfig, deps, output, config)
     const index = ContentIndexSchema.parse(
       JSON.parse(await readFile(path.join(generation, 'content-index.json'), 'utf8')),
     )

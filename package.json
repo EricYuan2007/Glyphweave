@@ -28,30 +28,13 @@
     "pagefind:demo": "pnpm --filter example-astro-blog pagefind",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify:demo": "pnpm build:packages && pnpm glyphweave build && pnpm build:demo && pnpm pagefind:demo",
+    "verify:demo": "pnpm build:packages && pnpm glyphweave build --root examples/minimal && pnpm build:demo && pnpm pagefind:demo",
     "build:packages": "tsc -b packages/schema packages/typst packages/html-adapter packages/core packages/astro packages/cli",
     "check:astro": "pnpm --filter example-astro-blog exec astro check",
     "test:e2e": "playwright test",
     "test:package": "pnpm build:packages && node scripts/verify-packages.mjs",
     "test:integration": "pnpm build:packages && node scripts/verify-integration.mjs",
     "benchmark": "pnpm build:packages && node scripts/benchmark.mjs"
-  },
-  "dependencies": {
-    "@astrojs/sitemap": "^3.6.0",
-    "astro": "^5.8.1",
-    "commander": "^14.0.0",
-    "execa": "^9.5.2",
-    "fast-glob": "^3.3.3",
-    "hast-util-sanitize": "^5.0.2",
-    "hast-util-to-html": "^9.0.5",
-    "rehype-parse": "^9.0.1",
-    "rehype-sanitize": "^6.0.0",
-    "shiki": "3.23.0",
-    "to-vfile": "^8.0.0",
-    "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0",
-    "yaml": "^2.7.0",
-    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
@@ -64,7 +47,8 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.0",
-    "vitest": "^3.1.4"
+    "vitest": "^3.1.4",
+    "execa": "^9.5.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

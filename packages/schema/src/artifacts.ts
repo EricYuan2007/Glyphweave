@@ -81,6 +81,7 @@ export const ManifestSchema = z.object({
 
 export const ContentIndexSchema = z.object({
   schemaVersion: z.literal(1),
+  cachePath: z.string().optional(),
   posts: z.array(
     z.object({
       id: z.string(),

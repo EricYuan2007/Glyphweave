@@ -20,18 +20,31 @@ for (let i = 0; i < count; i++) {
   )
 }
 const runs = []
+const config = defaultConfig()
+config.typst.pdf.enabledByDefault = process.argv.includes('--pdf')
 let expected
-for (let run = 0; run < 2; run++) {
+for (const mode of ['cold', 'warm', 'single-change', 'forced']) {
+  if (mode === 'single-change')
+    await writeFile(
+      path.join(root, 'content/typst-posts/post-0/extra.typ'),
+      '// changed dependency\n',
+    )
+  if (mode === 'forced') config.cache.enabled = false
   const start = performance.now()
-  const result = await buildAll(root, defaultConfig())
+  const result = await buildAll(root, config)
   const contents = await Promise.all(
     result.built.map((post) => readFile(path.join(root, post.manifest.html.contentPath), 'utf8')),
   )
   if (expected && JSON.stringify(contents) !== JSON.stringify(expected))
     throw new Error('Non-equivalent rebuild')
   expected = contents
+  const expectedCompiled = mode === 'warm' ? 0 : mode === 'single-change' ? 1 : count
+  if (result.cache.compiled !== expectedCompiled)
+    throw new Error(`Unexpected cache behavior: ${mode}`)
   runs.push({
+    mode,
     milliseconds: Math.round(performance.now() - start),
+    ...result.cache,
     posts: result.built.length,
     htmlBytes: contents.reduce((sum, value) => sum + Buffer.byteLength(value), 0),
   })
@@ -42,8 +55,7 @@ console.log(
       node: process.version,
       platform: process.platform,
       arch: process.arch,
-      fixture: '2 formulas per post; no PDF/assets',
-      cache: false,
+      fixture: `2 formulas per post; PDF=${config.typst.pdf.enabledByDefault}; environment and font hashing included`,
       runs,
       parentPeakRssBytes: process.resourceUsage().maxRSS * 1024,
     },

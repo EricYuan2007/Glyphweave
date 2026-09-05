@@ -147,7 +147,6 @@ describe('engineering contracts', () => {
 
   it('rejects unsupported toggles rather than pretending to honor them', () => {
     for (const input of [
-      { cache: { enabled: true } },
       { assets: { copy: false } },
       { capture: { report: false } },
       { html: { sanitize: false } },

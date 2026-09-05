@@ -34,6 +34,7 @@ await writeFile('content/typst-posts/demo/index.typ', '= Demo\\nInline $x + y$.\
 for (const strategy of ['mathml', 'svg-frame']) {
   const config = defaultConfig(); config.math.strategy = strategy;
   await buildAll(process.cwd(), config);
+  if ((await buildAll(process.cwd(), config)).cache.reused !== 1) throw new Error('Installed cache did not hit');
   const index = await readGlyphweaveContentIndex(process.cwd());
   if (index.posts.length !== 1 || !index.posts[0].pdfPath) throw new Error('Incomplete artifacts');
   await exportGlyphweaveAssets(process.cwd(), 'public/glyphweave/posts');
@@ -41,4 +42,13 @@ for (const strategy of ['mathml', 'svg-frame']) {
 `,
 )
 execFileSync(process.execPath, ['smoke.mjs'], { cwd: work, stdio: 'inherit' })
+execFileSync(binary, ['build', '--json'], { cwd: work, stdio: 'pipe' })
+const cached = JSON.parse(
+  execFileSync(binary, ['build', '--json'], { cwd: work, encoding: 'utf8' }),
+)
+if (cached.cache.reused !== 1) throw new Error('Cross-process cache miss')
+const forced = JSON.parse(
+  execFileSync(binary, ['build', '--no-cache', '--json'], { cwd: work, encoding: 'utf8' }),
+)
+if (forced.cache.compiled !== 1) throw new Error('CLI did not force rebuild')
 console.log(`Standalone package smoke passed: ${work}`)

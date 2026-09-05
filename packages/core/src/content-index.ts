@@ -11,6 +11,7 @@ export async function writeContentIndex(
   rootDir: string,
   config: GlyphweaveConfig,
   built: BuiltPost[],
+  cachePath?: string,
 ) {
   const posts: GlyphweaveContentIndex['posts'] = built.map(({ post, manifest }) => {
     const pdfPath = manifest.pdf.path
@@ -41,7 +42,7 @@ export async function writeContentIndex(
       ),
     }
   })
-  const index: GlyphweaveContentIndex = { schemaVersion: 1, posts }
+  const index: GlyphweaveContentIndex = { schemaVersion: 1, posts, cachePath }
   const outputPath = path.resolve(rootDir, config.output.root, 'content-index.json')
   await mkdir(path.dirname(outputPath), { recursive: true })
   await writeFile(outputPath, JSON.stringify(ContentIndexSchema.parse(index), null, 2))

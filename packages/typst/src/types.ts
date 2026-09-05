@@ -10,6 +10,7 @@ export interface CompileInput {
   inputPath: string
   outputPath: string
   cwd: string
+  creationTimestamp?: number
   timeoutMs?: number
   logPath?: string
   rootPath?: string

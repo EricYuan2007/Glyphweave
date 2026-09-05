@@ -19,6 +19,7 @@ export default tseslint.config(
       globals: {
         console: 'readonly',
         process: 'readonly',
+        structuredClone: 'readonly',
       },
     },
   },
@@ -28,6 +29,7 @@ export default tseslint.config(
       globals: {
         console: 'readonly',
         process: 'readonly',
+        structuredClone: 'readonly',
         URL: 'readonly',
       },
       parserOptions: {

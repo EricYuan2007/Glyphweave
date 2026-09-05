@@ -1,6 +1,4 @@
-import { defineConfig } from '@glyphweave/core'
-
-export default defineConfig({
+export default {
   content: {
     root: 'content/typst-posts',
   },
@@ -13,4 +11,4 @@ export default defineConfig({
       failure: 'warn',
     },
   },
-})
+}

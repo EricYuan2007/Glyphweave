@@ -56,5 +56,14 @@ Lexical formula counts are hints, not proofs of content loss; strict capture fai
 compiler-confirmed loss. See [security](security.md), [math](math-rendering.md) and
 [ADR 0001](decisions/0001-build-and-publication-contract.md).
 
-Cache is explicitly unsupported and disabled. Measure before adding bounded
-parallelism/caching; source hashes alone omit includes, fonts and resources.
+Core separates build transactions (`build.ts`), one-article compilation (`build-post.ts`),
+cache restoration (`cache.ts`), input/implementation fingerprints (`fingerprint.ts`),
+and output ownership (`output.ts`). `typst/environment.ts` fingerprints compiler,
+fonts and packages. Both compiler wrappers share one staging/cleanup implementation.
+See [incremental caching](cache.md) for invalidation and reproducibility contracts.
+
+Repository source is in `packages/`, runnable samples in `examples/minimal` and
+`examples/astro-blog`, automated contracts in `tests/`, verification/benchmark
+programs in `scripts/`, and maintained guidance in `docs/`. Historical reviews live
+in Git history and PR discussions rather than competing with current documentation.
+Root dependencies are development tools; runtime dependencies belong to their packages.

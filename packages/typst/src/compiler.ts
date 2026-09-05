@@ -1,7 +1,6 @@
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { parseTypstDiagnostics } from './diagnostics.js'
 import type {
@@ -16,14 +15,14 @@ export const GLYPHWEAVE_PDF_PRELUDE_VERSION = 'glyphweave-pdf-1'
 
 export async function compileTypstHtml(input: CompileInput): Promise<CompileOutput> {
   if (shouldUseHtmlWrapper(input.wrapper)) {
-    return runTypstHtmlWrapper(input)
+    return runTypstWrapper(input, 'html')
   }
   return runTypst(input, ['compile', '--features', 'html', '--format', 'html'])
 }
 
 export async function compileTypstPdf(input: CompileInput): Promise<CompileOutput> {
   if (shouldUsePdfWrapper(input.wrapper?.pdfTemplate)) {
-    return runTypstPdfWrapper(input)
+    return runTypstWrapper(input, 'pdf')
   }
   return runTypst(input, ['compile'])
 }
@@ -39,7 +38,12 @@ async function runTypstProcess(
   preludeVersion: string | null,
 ): Promise<CompileOutput> {
   await mkdir(path.dirname(input.outputPath), { recursive: true })
-  const rootArgs = input.rootPath ? ['--root', input.rootPath] : []
+  const rootArgs = [
+    ...(input.rootPath ? ['--root', input.rootPath] : []),
+    ...(input.creationTimestamp !== undefined
+      ? ['--creation-timestamp', String(input.creationTimestamp)]
+      : []),
+  ]
   const result = await execa(input.binary, [...args.slice(0, 1), ...rootArgs, ...args.slice(1)], {
     cwd,
     timeout: input.timeoutMs ?? 30_000,
@@ -68,81 +72,42 @@ async function runTypstProcess(
   }
 }
 
-async function runTypstHtmlWrapper(input: CompileInput): Promise<CompileOutput> {
-  const workspace = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-typst-html-'))
+async function runTypstWrapper(
+  input: CompileInput,
+  format: 'html' | 'pdf',
+): Promise<CompileOutput> {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), `glyphweave-typst-${format}-`))
   try {
     const sourceDir = path.join(workspace, 'source')
     await cp(input.cwd, sourceDir, { recursive: true, verbatimSymlinks: true })
-
     const wrapperDir = path.join(sourceDir, '__glyphweave__')
     await mkdir(wrapperDir, { recursive: true })
-
-    const preludeSourcePath = path.resolve(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '../prelude/glyphweave-html.typ',
-    )
-    const prelude = await readFile(preludeSourcePath, 'utf-8')
-    await writeFile(path.join(wrapperDir, 'glyphweave-html.typ'), prelude)
-
+    const name = `glyphweave-${format}`
+    const prelude = await readFile(new URL(`../prelude/${name}.typ`, import.meta.url), 'utf8')
+    await writeFile(path.join(wrapperDir, `${name}.typ`), prelude)
     const relativeSource = path.relative(input.cwd, input.inputPath).replace(/\\/g, '/')
-    const includePath = `../${relativeSource}`
-    const wrapperPath = path.join(wrapperDir, 'main.html.typ')
+    const wrapperPath = path.join(wrapperDir, `main.${format}.typ`)
+    const show =
+      format === 'html' ? name : `${name}.with(${pdfTemplateArguments(input.wrapper?.pdfTemplate)})`
     await writeFile(
       wrapperPath,
       [
-        '#import "glyphweave-html.typ": glyphweave-html',
-        '#show: glyphweave-html',
-        `#include ${JSON.stringify(includePath)}`,
+        `#import "${name}.typ": ${name}`,
+        `#show: ${show}`,
+        `#include ${JSON.stringify(`../${relativeSource}`)}`,
         '',
       ].join('\n'),
     )
-
     return await runTypstProcess(
       { ...input, rootPath: sourceDir },
-      ['compile', '--features', 'html', '--format', 'html', wrapperPath, input.outputPath],
-      sourceDir,
-      GLYPHWEAVE_HTML_PRELUDE_VERSION,
-    )
-  } finally {
-    await rm(workspace, { recursive: true, force: true })
-  }
-}
-
-async function runTypstPdfWrapper(input: CompileInput): Promise<CompileOutput> {
-  const workspace = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-typst-pdf-'))
-  try {
-    const sourceDir = path.join(workspace, 'source')
-    await cp(input.cwd, sourceDir, { recursive: true, verbatimSymlinks: true })
-
-    const wrapperDir = path.join(sourceDir, '__glyphweave__')
-    await mkdir(wrapperDir, { recursive: true })
-
-    const preludeSourcePath = path.resolve(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '../prelude/glyphweave-pdf.typ',
-    )
-    const prelude = await readFile(preludeSourcePath, 'utf-8')
-    await writeFile(path.join(wrapperDir, 'glyphweave-pdf.typ'), prelude)
-
-    const template = input.wrapper?.pdfTemplate
-    const relativeSource = path.relative(input.cwd, input.inputPath).replace(/\\/g, '/')
-    const includePath = `../${relativeSource}`
-    const wrapperPath = path.join(wrapperDir, 'main.pdf.typ')
-    await writeFile(
-      wrapperPath,
       [
-        '#import "glyphweave-pdf.typ": glyphweave-pdf',
-        `#show: glyphweave-pdf.with(${pdfTemplateArguments(template)})`,
-        `#include ${JSON.stringify(includePath)}`,
-        '',
-      ].join('\n'),
-    )
-
-    return await runTypstProcess(
-      { ...input, rootPath: sourceDir },
-      ['compile', wrapperPath, input.outputPath],
+        'compile',
+        ...(format === 'html' ? ['--features', 'html', '--format', 'html'] : []),
+        wrapperPath,
+        input.outputPath,
+      ],
       sourceDir,
-      GLYPHWEAVE_PDF_PRELUDE_VERSION,
+      format === 'html' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : GLYPHWEAVE_PDF_PRELUDE_VERSION,
     )
   } finally {
     await rm(workspace, { recursive: true, force: true })

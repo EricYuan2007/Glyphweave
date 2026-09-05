@@ -22,7 +22,7 @@ roots, reserved code directories and symlinks are rejected.
 - `html.headingIds` defaults to `preserve`; `stable` rewrites IDs and local links.
 - `html.scopeClass` is applied to the fragment wrapper.
 - `assets.allowedExtensions` is enforced; resource real paths must stay in assets/.
-- `cache.enabled` currently only accepts false; there is no incremental cache.
+- `cache.enabled` defaults to true; `build --no-cache` forces compilation. See [cache](cache.md).
 - `html.sanitize`, `assets.copy`, `capture.report`, `typst.htmlFeatures` only accept true.
 - Unknown top-level options and invalid dates are rejected.
 - A missing implicit default config is allowed. An explicit missing config, broken
@@ -36,3 +36,9 @@ omits failed PDF output, and records a warning in the manifest and CLI summary.
 
 TypeScript config requires a runtime supporting it (Node 22.18+); the workspace CLI
 also runs through tsx. Plain `.mjs` config works through `--config` in installed tools.
+
+The repository starter content/config now lives in `examples/minimal`; use
+`pnpm glyphweave build --root examples/minimal`. The full site is in `examples/astro-blog`.
+Typst creation time is pinned to the post updated/date (UTC), or `SOURCE_DATE_EPOCH`.
+This makes `datetime.today()` and PDF metadata reproducible; update the date explicitly
+when the article should render a new date.

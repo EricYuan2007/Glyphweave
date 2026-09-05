@@ -17,3 +17,5 @@ export type {
   TypstVersion,
   TypstWrapperOptions,
 } from './types.js'
+
+export { createCompilerIdentity } from './environment.js'

@@ -18,6 +18,8 @@ pnpm benchmark 100
 - Package compilation, ESLint (including no explicit any), TypeScript and Astro checks pass.
 - Regression tests cover output ownership, bad configuration, failure preservation,
   publication state transitions, unsafe URLs, symlinks, unique IDs and JSON versions.
+- Incremental tests verify per-article invalidation, configuration/toolchain/font/package changes,
+  artifact corruption recovery, failed PDF retries, input races and cached/full byte equivalence.
 - Real compiler fixtures exercise comments, includes, macros, references, MathML and SVG.
 - Standalone tarball installation runs the CLI and produces HTML/PDF with both renderers.
 - Browser tests cover mathematical content, valid anchors, page overflow, keyboard

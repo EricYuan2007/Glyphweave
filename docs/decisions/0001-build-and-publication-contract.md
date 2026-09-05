@@ -34,10 +34,11 @@ verified through local tarballs; this does not imply an npm release has occurred
 
 ## Consequences
 
-Builds use additional disk space; old generations are not a cache. Cache=true and
-other unsupported toggles fail validation rather than silently doing nothing.
-Future caching must fingerprint includes/assets/config/compiler/prelude/fonts and
-prove equivalence to full builds. The local publisher replaces a staging directory
+Builds use additional disk space. Only the cache referenced by the committed index
+is eligible for reuse; every reused artifact is verified and copied to the next generation.
+Cache keys include article trees, configuration, implementation/preludes, compiler,
+fonts and package bytes. Real compiler tests compare cached/full HTML and PDF bytes.
+Other unsupported toggles fail validation rather than silently doing nothing. The local publisher replaces a staging directory
 with rollback; it is not an online server deployment primitive.
 
 Revisit this ADR for hostile-author compilation, online concurrent publication,

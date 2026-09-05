@@ -67,8 +67,8 @@ typst --version
 ```bash
 pnpm install
 pnpm build
-pnpm glyphweave doctor
-pnpm glyphweave build
+pnpm glyphweave doctor --root examples/astro-blog
+pnpm glyphweave build --root examples/astro-blog
 pnpm --filter example-astro-blog build
 pnpm --filter example-astro-blog pagefind
 ```
@@ -118,10 +118,10 @@ source: 'index.typ'
 ## 常用命令
 
 ```bash
-pnpm glyphweave build
-pnpm glyphweave clean
-pnpm glyphweave inspect hnsw-search-notes
-pnpm glyphweave doctor
+pnpm glyphweave build --root examples/astro-blog
+pnpm glyphweave clean --root examples/astro-blog
+pnpm glyphweave inspect hnsw-search-notes --root examples/astro-blog
+pnpm glyphweave doctor --root examples/astro-blog
 ```
 
 所有 CLI 命令都支持 `--root <dir>`，可以在当前工作目录之外指定项目根目录。

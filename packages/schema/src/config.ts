@@ -110,7 +110,7 @@ export const GlyphweaveConfigSchema = z
       .default({}),
     cache: z
       .object({
-        enabled: z.literal(false).default(false),
+        enabled: z.boolean().default(true),
       })
       .strict()
       .default({}),

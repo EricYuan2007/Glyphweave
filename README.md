@@ -66,8 +66,8 @@ typst --version
 ```bash
 pnpm install
 pnpm build
-pnpm glyphweave doctor
-pnpm glyphweave build
+pnpm glyphweave doctor --root examples/astro-blog
+pnpm glyphweave build --root examples/astro-blog
 pnpm --filter example-astro-blog build
 pnpm --filter example-astro-blog pagefind
 ```
@@ -165,10 +165,10 @@ display equations. For Linux deployments, set
 ## CLI
 
 ```bash
-pnpm glyphweave build
-pnpm glyphweave clean
-pnpm glyphweave inspect hnsw-search-notes
-pnpm glyphweave doctor
+pnpm glyphweave build --root examples/astro-blog
+pnpm glyphweave clean --root examples/astro-blog
+pnpm glyphweave inspect hnsw-search-notes --root examples/astro-blog
+pnpm glyphweave doctor --root examples/astro-blog
 ```
 
 All CLI commands accept `--root <dir>` for operating on a project directory other than the current working directory.

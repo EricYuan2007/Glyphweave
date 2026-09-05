@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Enable content-based incremental caching with verified artifact reuse, atomic cache/index
+  publication, environment invalidation and `build --no-cache`.
+- Pin Typst creation timestamps for reproducible HTML/PDF; report compiled/reused counts.
+- Split core compilation, transaction and cache modules; share HTML/PDF wrapper staging.
+- Move the minimal starter into `examples/minimal`, remove duplicate root runtime dependencies
+  and superseded audit documents, and maintain cache/acceptance guidance.
+- Add cache corruption, input race, font/package/compiler and cross-process package tests.
+
+
+## Unreleased
+
 ### Fixed
 
 - Guard output ownership and reject dangerous or symlinked clean/build paths.
