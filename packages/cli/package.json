@@ -7,7 +7,7 @@
     "glyphweave": "./dist/index.js"
   },
   "dependencies": {
-    "commander": "^14.0.0",
+    "commander": "^15.0.0",
     "@glyphweave/core": "workspace:*",
     "@glyphweave/schema": "workspace:*",
     "@glyphweave/typst": "workspace:*",
