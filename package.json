@@ -39,7 +39,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",
     "astro": "^5.8.1",
-    "commander": "^14.0.0",
+    "commander": "^15.0.0",
     "execa": "^9.5.2",
     "fast-glob": "^3.3.3",
     "hast-util-sanitize": "^5.0.2",
