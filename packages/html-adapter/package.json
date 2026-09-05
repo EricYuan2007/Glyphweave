@@ -11,15 +11,15 @@
     }
   },
   "dependencies": {
-    "hast-util-to-html": "^9.0.5",
+    "@glyphweave/schema": "workspace:*",
+    "@glyphweave/typst": "workspace:*",
     "hast-util-sanitize": "^5.0.2",
+    "hast-util-to-html": "^9.0.5",
     "rehype-parse": "^9.0.1",
     "rehype-sanitize": "^6.0.0",
     "shiki": "3.23.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0",
-    "@glyphweave/schema": "workspace:*",
-    "@glyphweave/typst": "workspace:*"
+    "unist-util-visit": "^5.1.0"
   },
   "engines": {
     "node": ">=22.18"

@@ -34,21 +34,22 @@
     "test:e2e": "playwright test",
     "test:package": "pnpm build:packages && node scripts/verify-packages.mjs",
     "test:integration": "pnpm build:packages && node scripts/verify-integration.mjs",
-    "benchmark": "pnpm build:packages && node scripts/benchmark.mjs"
+    "benchmark": "pnpm build:packages && node scripts/benchmark.mjs",
+    "audit": "pnpm audit --registry=https://registry.npmjs.org"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@eslint/js": "^9.28.0",
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.62.1",
     "@types/hast": "^3.0.5",
-    "@types/node": "^22.15.24",
-    "eslint": "^9.28.0",
-    "prettier": "^3.5.3",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.0",
-    "vitest": "^3.1.4",
-    "execa": "^10.0.1"
+    "@types/node": "^22.20.1",
+    "eslint": "^9.39.5",
+    "execa": "^10.0.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^3.2.7"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

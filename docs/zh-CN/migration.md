@@ -15,3 +15,5 @@
 安装后的 TypeScript 配置需要 Node 22.18+；也可用 `--config` 指定 .mjs。工作区通过 tsx 运行 CLI。
 
 仓库中的基础示例已移至 examples/minimal；使用 `pnpm glyphweave build --root examples/minimal`。完整站点位于 examples/astro-blog。Typst 时间固定为文章 updated/date 的 UTC 日期，可由 SOURCE_DATE_EPOCH 覆盖。
+
+示例固定使用 Astro 7.2.10。Pagefind 在 Astro 构建后生成，其加载器位于 public/scripts/search.js，避免动态导入被打包器改写后留下未替换的占位符。`pnpm run audit` 使用官方 npm 服务审计依赖。

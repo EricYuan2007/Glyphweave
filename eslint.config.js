@@ -24,6 +24,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['examples/astro-blog/public/scripts/*.js'],
+    languageOptions: { globals: { document: 'readonly' } },
+  },
+  {
     files: ['**/*.ts'],
     languageOptions: {
       globals: {

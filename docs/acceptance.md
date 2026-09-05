@@ -5,6 +5,7 @@ Run these from a clean checkout with Node 22.18+, pnpm 11.1.1 and Typst 0.15.0:
 ```sh
 pnpm install --frozen-lockfile
 pnpm check
+pnpm run audit
 pnpm run verify:demo
 pnpm test:integration
 pnpm test:package

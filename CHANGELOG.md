@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Upgrade the example to Astro 7.2.10 and refresh compatible dependency patches; move
+  post-build Pagefind imports into a static module to avoid unresolved Vite preload markers.
+- Add the official npm vulnerability audit to CI. Integrate reviewed Actions, Execa
+  and Commander upgrades while retaining compatible TypeScript/Zod major versions.
+
 - Enable content-based incremental caching with verified artifact reuse, atomic cache/index
   publication, environment invalidation and `build --no-cache`.
 - Pin Typst creation timestamps for reproducible HTML/PDF; report compiled/reused counts.

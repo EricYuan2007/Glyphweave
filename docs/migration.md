@@ -42,3 +42,8 @@ The repository starter content/config now lives in `examples/minimal`; use
 Typst creation time is pinned to the post updated/date (UTC), or `SOURCE_DATE_EPOCH`.
 This makes `datetime.today()` and PDF metadata reproducible; update the date explicitly
 when the article should render a new date.
+
+The example now pins Astro 7.2.10. Its Pagefind loader lives in public/scripts/search.js
+because Pagefind is generated after the Astro bundle; bundling its runtime dynamic
+import left an unresolved Vite preload marker. See the [Astro upgrade guide](https://docs.astro.build/en/guides/upgrade-to/v7/)
+when adapting other integrations. Run `pnpm run audit` against the official npm registry.
