@@ -1,17 +1,17 @@
 import path from 'node:path'
+import { readFileSync } from 'node:fs'
 import type {
   GlyphweaveCaptureReport,
   GlyphweaveConfig,
   GlyphweaveDiagnostic,
   GlyphweaveManifest,
 } from '@glyphweave/schema'
-import {
-  GLYPHWEAVE_HTML_PRELUDE_VERSION,
-  GLYPHWEAVE_PDF_PRELUDE_VERSION,
-} from '@glyphweave/typst'
+import { GLYPHWEAVE_HTML_PRELUDE_VERSION, GLYPHWEAVE_PDF_PRELUDE_VERSION } from '@glyphweave/typst'
 import type { DiscoveredTypstPost } from './discovery.js'
 
-export const GLYPHWEAVE_VERSION = '0.1.0'
+export const GLYPHWEAVE_VERSION: string = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version
 
 export function expectedPreludeVersion(config: GlyphweaveConfig) {
   return config.math.strategy === 'svg-frame' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : null
@@ -41,7 +41,9 @@ export function createManifest(
     typst: {
       version: typstVersion,
       features: config.typst.htmlFeatures
-        ? config.math.strategy === 'mathml' ? ['html', 'mathml'] : ['html']
+        ? config.math.strategy === 'mathml'
+          ? ['html', 'mathml']
+          : ['html']
         : [],
       mathRenderer: config.math.strategy,
       preludeVersion,
@@ -57,7 +59,10 @@ export function createManifest(
       contentPath: relative(rootDir, paths.contentPath),
       tocPath: relative(rootDir, paths.tocPath),
     },
-    pdf: { enabled: paths.pdfPath !== null, path: paths.pdfPath ? relative(rootDir, paths.pdfPath) : null },
+    pdf: {
+      enabled: paths.pdfPath !== null,
+      path: paths.pdfPath ? relative(rootDir, paths.pdfPath) : null,
+    },
     assets: assets.map((asset) => ({
       source: relative(rootDir, asset.source),
       output: relative(rootDir, asset.output),
@@ -71,7 +76,7 @@ export function createManifest(
 
 export function assertCapture(config: GlyphweaveConfig, capture: GlyphweaveCaptureReport) {
   if (!config.capture.strict) return
-  if (capture.math.failed === 0 && !capture.math.mismatch && capture.status !== 'failed') return
+  if (capture.status !== 'failed') return
   throw new Error(
     `Strict capture failed: ${capture.math.failed} formula(s) missing, mismatch=${capture.math.mismatch}`,
   )

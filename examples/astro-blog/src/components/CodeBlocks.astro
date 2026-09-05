@@ -1,29 +1,12 @@
 <script>
   const resetTimers = new WeakMap<HTMLButtonElement, number>()
 
-  const fallbackCopy = (code: string) => {
-    const textarea = document.createElement('textarea')
-    textarea.value = code
-    textarea.setAttribute('readonly', '')
-    textarea.style.position = 'fixed'
-    textarea.style.opacity = '0'
-    document.body.append(textarea)
-    textarea.select()
-    const copied = document.execCommand('copy')
-    textarea.remove()
-    return copied
-  }
-
   const copyCode = async (code: string) => {
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(code)
-        return true
-      } catch {
-        return fallbackCopy(code)
-      }
-    }
-    return fallbackCopy(code)
+    try {
+      if (!navigator.clipboard?.writeText) return false
+      await navigator.clipboard.writeText(code)
+      return true
+    } catch { return false }
   }
 
   document.querySelectorAll<HTMLButtonElement>('[data-copy-code]').forEach((button) => {

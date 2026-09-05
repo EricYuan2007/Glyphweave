@@ -45,7 +45,9 @@ async function runTypstProcess(
     timeout: input.timeoutMs ?? 30_000,
     reject: false,
   })
-  const diagnostics = parseTypstDiagnostics([result.stdout, result.stderr].filter(Boolean).join('\n'))
+  const diagnostics = parseTypstDiagnostics(
+    [result.stdout, result.stderr].filter(Boolean).join('\n'),
+  )
 
   if (input.logPath) {
     await mkdir(path.dirname(input.logPath), { recursive: true })

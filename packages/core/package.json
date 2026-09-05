@@ -4,6 +4,36 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "yaml": "^2.7.0",
+    "@glyphweave/schema": "workspace:*",
+    "@glyphweave/typst": "workspace:*",
+    "@glyphweave/html-adapter": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "files": [
+    "dist",
+    "prelude",
+    "src/styles"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EricYuan2007/Glyphweave.git",
+    "directory": "packages/core"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "description": "Glyphweave core: build-time Typst publishing",
+  "publishConfig": {
+    "access": "public"
   }
 }

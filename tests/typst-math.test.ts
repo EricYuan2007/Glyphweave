@@ -30,13 +30,15 @@ describe('Typst math helpers', () => {
       'index.typ',
     )
 
-    expect(formulas.map(({ id, kind, source, startLine, endLine }) => ({
-      id,
-      kind,
-      source,
-      startLine,
-      endLine,
-    }))).toEqual([
+    expect(
+      formulas.map(({ id, kind, source, startLine, endLine }) => ({
+        id,
+        kind,
+        source,
+        startLine,
+        endLine,
+      })),
+    ).toEqual([
       { id: 'math-1', kind: 'inline', source: 'q', startLine: 3, endLine: 3 },
       { id: 'math-2', kind: 'inline', source: 'a + b = c', startLine: 3, endLine: 3 },
       { id: 'math-3', kind: 'block', source: 'sum_(i=1)^n x_i^2', startLine: 5, endLine: 5 },
@@ -59,23 +61,25 @@ describe('Typst math helpers', () => {
       ].join('\n'),
     )
 
-    expect(diagnostics.map(({ code, severity, message }) => ({ code, severity, message }))).toEqual([
-      {
-        code: 'typst-html-equation-ignored',
-        severity: 'warning',
-        message: 'equation was ignored during HTML export',
-      },
-      {
-        code: 'typst-html-content-ignored',
-        severity: 'warning',
-        message: 'image was ignored during HTML export',
-      },
-      {
-        code: 'typst-html-experimental',
-        severity: 'info',
-        message: 'html export is under active development and incomplete',
-      },
-    ])
+    expect(diagnostics.map(({ code, severity, message }) => ({ code, severity, message }))).toEqual(
+      [
+        {
+          code: 'typst-html-equation-ignored',
+          severity: 'error',
+          message: 'equation was ignored during HTML export',
+        },
+        {
+          code: 'typst-html-content-ignored',
+          severity: 'error',
+          message: 'image was ignored during HTML export',
+        },
+        {
+          code: 'typst-html-experimental',
+          severity: 'info',
+          message: 'html export is under active development and incomplete',
+        },
+      ],
+    )
   })
 
   it('parses Typst semantic versions and requires Typst 0.15 or newer', () => {
@@ -88,6 +92,6 @@ describe('Typst math helpers', () => {
       'Glyphweave requires Typst 0.15.0 or newer',
     )
     expect(() => assertSupportedTypst('typst 0.15.0')).not.toThrow()
-    expect(() => assertSupportedTypst('typst 1.0.0')).not.toThrow()
+    expect(() => assertSupportedTypst('typst 1.0.0')).toThrow('Untested Typst version')
   })
 })

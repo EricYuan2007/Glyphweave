@@ -13,12 +13,16 @@
   const closeButton = dialog?.querySelector<HTMLButtonElement>('.image-lightbox__close')
   let trigger: HTMLImageElement | null = null
   let closeTimer = 0
+  let openFrame = 0
+  let closing = false
 
   const close = () => {
-    if (!dialog?.open || dialog.dataset.state === 'closed') return
+    if (!dialog?.open || closing) return
+    closing = true
+    window.cancelAnimationFrame(openFrame)
     dialog.dataset.state = 'closed'
     window.clearTimeout(closeTimer)
-    closeTimer = window.setTimeout(() => dialog.close(), 220)
+    closeTimer = window.setTimeout(() => dialog.close(), window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220)
   }
 
   if (dialog && preview && caption && closeButton) {
@@ -29,6 +33,8 @@
       image.setAttribute('aria-label', image.alt ? `View larger image: ${image.alt}` : 'View larger image')
 
       const open = () => {
+        if (dialog.open) return
+        closing = false
         trigger = image
         preview.src = image.currentSrc || image.src
         preview.alt = image.alt
@@ -37,8 +43,8 @@
         caption.hidden = !captionText
         dialog.dataset.state = 'closed'
         dialog.showModal()
-        window.requestAnimationFrame(() => {
-          dialog.dataset.state = 'open'
+        openFrame = window.requestAnimationFrame(() => {
+          if (dialog.open && !closing) dialog.dataset.state = 'open'
         })
       }
 

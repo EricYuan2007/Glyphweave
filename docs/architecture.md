@@ -1,53 +1,60 @@
 # Architecture
 
-Glyphweave Phase 1 is a build-time pipeline:
+Glyphweave is a build-time publishing pipeline for trusted Typst authors. It emits
+sanitized HTML, a TOC, manifests, an index and optional PDFs; the site does not run
+the compiler at request time.
 
-1. Discover `content/typst-posts/*/post.yaml`.
-2. Validate metadata with Zod.
-3. Compile `index.typ` to `raw.html` through Typst CLI.
-4. Adapt raw HTML into a safe blog fragment.
-5. Write `content.html`, `toc.json`, `manifest.json`, optional `article.pdf`, and `.glyphweave/content-index.json`.
-6. Let Astro or another SSG consume the generated artifacts.
+## Packages and dependency direction
 
-The package boundaries are intentionally narrow:
+| Package      | Responsibility                                     | Internal dependencies       |
+| ------------ | -------------------------------------------------- | --------------------------- |
+| schema       | Input and artifact runtime schemas, inferred types | none                        |
+| typst        | CLI process, diagnostics, temporary wrappers       | schema                      |
+| html-adapter | HTML/MathML/SVG normalization, constrained assets  | schema, typst               |
+| core         | Discovery, generation, validation and commit       | schema, typst, html-adapter |
+| cli          | Commands and user-facing diagnostics               | core, schema, typst, astro  |
+| astro        | Validated readers and current-artifact export      | schema                      |
 
-- `@glyphweave/schema`: config, metadata, manifest, and content-index schemas.
-- `@glyphweave/core`: discovery, hashing, build orchestration, artifact writing.
-- `@glyphweave/typst`: Typst CLI detection and compile wrappers.
-- `@glyphweave/html-adapter`: body extraction, heading IDs, TOC, resource/link rewriting, and sanitization.
-- `@glyphweave/cli`: local commands.
-- `@glyphweave/astro`: small Astro-facing helpers.
+The adapter accepts a minimal post context and does not import core. Each package
+has compiled JavaScript/declarations and declares its dependencies. Tests inject
+compiler operations through `BuildDependencies`; real compiler tests validate the
+boundary separately. Public API comments describe path bases and side effects.
 
-## Data Flow
+## Data flow and commit
 
 ```text
-post.yaml + index.typ
-  -> discoverPosts()
-  -> compileTypstHtml()
-  -> adaptTypstHtml()
-  -> content.html + toc.json + manifest.json
-  -> content-index.json
-  -> Astro static pages
+post.yaml + index.typ + includes/assets
+  -> discover and validate
+  -> acquire output lock
+  -> immutable generations/<id>/generated/posts/<slug>/
+  -> compile HTML -> sanitize/normalize -> TOC and resources
+  -> optional PDF -> schema-validated manifest
+  -> schema-validated generation index
+  -> atomic replacement of content-index.json
+  -> snapshot reader -> manifest-selected export -> static site
 ```
 
-`@glyphweave/core` coordinates this flow, but the expensive or risky boundaries are isolated:
+An error before index replacement leaves the previous snapshot intact. Old
+generations remain readable until explicit clean. Only the index is authoritative;
+consumers must not enumerate generations or construct artifact paths. Concurrent
+writers fail with a lock diagnostic. Clean requires a safe project-local owned
+directory and is intended for use while no readers/builds run.
 
-- Typst execution is contained in `@glyphweave/typst`.
-- Raw HTML mutation is contained in `@glyphweave/html-adapter`.
-- Runtime consumers read generated artifacts instead of invoking Typst directly.
+## Publication policy
 
-## Trust Boundaries
+Published public content enters routes, listings and search. Published unlisted
+content gets a direct route but no listing/search entry. Private, draft and archived
+content never enters production export. PDF failures configured as warnings keep
+HTML, omit the PDF and emit a diagnostic. Export copies only current manifest files.
 
-`raw.html` is not trusted for direct rendering. It is useful for diagnostics, but only `content.html` is intended to be injected into an Astro page. The adapter validates URLs, strips unsafe nodes and attributes, and fails on local absolute paths before writing the final fragment.
+## Transform and trust boundaries
 
-## Output Contract
+The HTML adapter uses a constrained allowlist for HTML/MathML/static SVG and a
+numeric style policy. Shiki plus Glyphweave-owned controls are a trusted subsequent
+transform. Raw HTML and logs are diagnostic artifacts and are not deployed.
+Lexical formula counts are hints, not proofs of content loss; strict capture fails
+compiler-confirmed loss. See [security](security.md), [math](math-rendering.md) and
+[ADR 0001](decisions/0001-build-and-publication-contract.md).
 
-Every built post produces:
-
-- `raw.html`: Typst's original HTML export.
-- `content.html`: sanitized fragment for page injection.
-- `toc.json`: heading list from `h1` through `h4`.
-- `manifest.json`: compiler, hash, path, PDF, and asset metadata.
-- `article.pdf`: optional PDF artifact when enabled.
-
-The site-level `.glyphweave/content-index.json` is the entry point for Astro or another static site generator.
+Cache is explicitly unsupported and disabled. Measure before adding bounded
+parallelism/caching; source hashes alone omit includes, fonts and resources.

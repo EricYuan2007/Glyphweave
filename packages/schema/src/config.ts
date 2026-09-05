@@ -4,15 +4,18 @@ const localAbsolutePathPattern = /^(?:\/Users\/|\/home\/|~\/|file:\/\/|[A-Za-z]:
 
 export const PostMetadataSchema = z.object({
   title: z.string().min(1),
-  slug: z.string().min(1).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   description: z.string().min(1),
-  date: z.string().min(1),
-  updated: z.string().optional(),
+  date: z.string().date(),
+  updated: z.string().date().optional(),
   tags: z.array(z.string()).default([]),
   status: z.enum(['draft', 'published', 'archived']),
   visibility: z.enum(['public', 'unlisted', 'private']),
   language: z.string().default('zh-CN'),
-  pdf: z.boolean().default(false),
+  pdf: z.boolean().optional(),
   source: z.string().default('index.typ'),
   cover: z
     .string()
@@ -32,17 +35,19 @@ export const GlyphweaveConfigSchema = z
         root: z.string().default('content/typst-posts'),
         pattern: z.string().default('*/post.yaml'),
       })
+      .strict()
       .default({}),
     output: z
       .object({
         root: z.string().default('.glyphweave'),
         publicBasePath: z.string().default('/glyphweave'),
       })
+      .strict()
       .default({}),
     typst: z
       .object({
         binary: z.string().default('typst'),
-        htmlFeatures: z.boolean().default(true),
+        htmlFeatures: z.literal(true).default(true),
         pdf: z
           .object({
             enabledByDefault: z.boolean().default(false),
@@ -52,15 +57,8 @@ export const GlyphweaveConfigSchema = z
                 enabled: z.boolean().default(true),
                 fonts: z
                   .array(z.string().min(1))
-                  .default([
-                    'Songti SC',
-                    'STSong',
-                    'PingFang SC',
-                    'Noto Serif CJK SC',
-                  ]),
-                monoFonts: z
-                  .array(z.string().min(1))
-                  .default(['Menlo', 'DejaVu Sans Mono']),
+                  .default(['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC']),
+                monoFonts: z.array(z.string().min(1)).default(['Menlo', 'DejaVu Sans Mono']),
                 lang: z.string().default('zh'),
                 region: z.string().default('CN'),
               })
@@ -72,10 +70,14 @@ export const GlyphweaveConfigSchema = z
       .default({}),
     html: z
       .object({
-        sanitize: z.boolean().default(true),
-        headingIds: z.enum(['preserve', 'stable']).default('stable'),
-        scopeClass: z.string().default('glyphweave-content'),
+        sanitize: z.literal(true).default(true),
+        headingIds: z.enum(['preserve', 'stable']).default('preserve'),
+        scopeClass: z
+          .string()
+          .regex(/^[a-zA-Z_][a-zA-Z0-9_-]*$/)
+          .default('glyphweave-content'),
       })
+      .strict()
       .default({}),
     math: z
       .object({
@@ -93,23 +95,27 @@ export const GlyphweaveConfigSchema = z
     capture: z
       .object({
         strict: z.boolean().default(true),
-        report: z.boolean().default(true),
+        report: z.literal(true).default(true),
       })
+      .strict()
       .default({}),
     assets: z
       .object({
-        copy: z.boolean().default(true),
+        copy: z.literal(true).default(true),
         allowedExtensions: z
           .array(z.string())
           .default(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.pdf']),
       })
+      .strict()
       .default({}),
     cache: z
       .object({
-        enabled: z.boolean().default(true),
+        enabled: z.literal(false).default(false),
       })
+      .strict()
       .default({}),
   })
+  .strict()
   .default({})
 
 export type GlyphweaveConfig = z.infer<typeof GlyphweaveConfigSchema>
@@ -119,6 +125,6 @@ export function defaultConfig(): GlyphweaveConfig {
   return GlyphweaveConfigSchema.parse({})
 }
 
-export function defineConfig(config: unknown): GlyphweaveConfig {
+export function defineConfig(config: z.input<typeof GlyphweaveConfigSchema>): GlyphweaveConfig {
   return GlyphweaveConfigSchema.parse(config)
 }

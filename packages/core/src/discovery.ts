@@ -1,9 +1,13 @@
 import { createHash } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { readFile, realpath } from 'node:fs/promises'
 import path from 'node:path'
 import fastGlob from 'fast-glob'
 import YAML from 'yaml'
-import { PostMetadataSchema, type GlyphweaveConfig, type GlyphweavePostMetadata } from '@glyphweave/schema'
+import {
+  PostMetadataSchema,
+  type GlyphweaveConfig,
+  type GlyphweavePostMetadata,
+} from '@glyphweave/schema'
 
 export interface DiscoveredTypstPost {
   metadata: GlyphweavePostMetadata
@@ -31,6 +35,11 @@ export async function discoverPosts(
       const metadata = PostMetadataSchema.parse(YAML.parse(rawMetadata))
       const postDir = path.dirname(metadataPath)
       const sourcePath = path.resolve(postDir, metadata.source ?? 'index.typ')
+      const actualSource = await realpath(sourcePath)
+      const actualPost = await realpath(postDir)
+      const relativeSource = path.relative(actualPost, actualSource)
+      if (relativeSource.startsWith('..') || path.isAbsolute(relativeSource))
+        throw new Error(`Source escapes post directory: ${metadata.source}`)
       const source = await readFile(sourcePath, 'utf-8')
       return {
         metadata,

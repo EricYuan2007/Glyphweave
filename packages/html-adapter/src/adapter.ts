@@ -1,3 +1,4 @@
+import type { Root } from 'hast'
 import { readFile } from 'node:fs/promises'
 import { toHtml } from 'hast-util-to-html'
 import rehypeParse from 'rehype-parse'
@@ -8,19 +9,13 @@ import { createCaptureDiagnostics, createCaptureReport } from './capture.js'
 import { highlightCodeBlocks } from './code.js'
 import { extractToc, normalizeHeadingIds } from './headings.js'
 import { normalizeNativeMathml, normalizeTypstFrameMath } from './math.js'
-import {
-  assertNoLocalAbsolutePaths,
-  assertNoUnsafeProtocols,
-  rewriteLinks,
-  sanitize,
-} from './security.js'
+import { rewriteLinks, sanitize } from './security.js'
 import { extractBody } from './tree.js'
 import { normalizeQuoteAttributions } from './typography.js'
 import type { HastNode, HtmlAdapterInput, HtmlAdapterOutput } from './types.js'
 
 export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapterOutput> {
   const raw = await readFile(input.rawHtmlPath, 'utf-8')
-  assertNoLocalAbsolutePaths(raw)
 
   const root = unified().use(rehypeParse, { fragment: false }).parse(raw) as HastNode
   const body = extractBody(root)
@@ -28,11 +23,11 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
   const sourceFormulas = scanSourceFormulasFromText(source, input.post.sourcePath)
   const nativeMathml = normalizeNativeMathml(body)
   const mathFrameCapture = normalizeTypstFrameMath(body, sourceFormulas, input.math)
-  normalizeHeadingIds(body, input.options.headingIds)
-  const toc = extractToc(body)
   const rewrittenAssets = await rewriteAssets(body, input)
   rewriteLinks(body)
-  if (input.options.sanitize) sanitize(body)
+  sanitize(body)
+  normalizeHeadingIds(body, input.options.headingIds)
+  const toc = extractToc(body)
   normalizeQuoteAttributions(body)
   await highlightCodeBlocks(body)
 
@@ -47,12 +42,11 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
     sourceFallbacks: mathFrameCapture.sourceFallbacks,
     diagnostics,
   })
-  const contentHtml = toHtml({ type: 'root', children: body.children ?? [] } as any)
-  assertNoLocalAbsolutePaths(contentHtml)
-  assertNoUnsafeProtocols(contentHtml)
+  // Code highlighting is a trusted transform: only fixed Shiki colors and owned controls.
+  const contentHtml = toHtml({ type: 'root', children: body.children ?? [] } as Root)
 
   return {
-    contentHtml,
+    contentHtml: `<div class="${input.options.scopeClass}">${contentHtml}</div>`,
     toc,
     rewrittenAssets,
     warnings: diagnostics

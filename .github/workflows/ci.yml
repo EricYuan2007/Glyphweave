@@ -1,13 +1,19 @@
 name: CI
-
 on:
   pull_request:
   push:
-    branches: [main]
-
+    branches: [main, dev]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -15,11 +21,10 @@ jobs:
           version: 11.1.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-
   integration:
     runs-on: ubuntu-latest
     steps:
@@ -32,19 +37,23 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Install Typst
-        run: |
-          curl -L https://github.com/typst/typst/releases/download/v0.15.0/typst-x86_64-unknown-linux-musl.tar.xz -o typst.tar.xz
-          tar -xf typst.tar.xz
-          sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
-          typst --version
-      - run: pnpm glyphweave doctor
+      - uses: ./.github/actions/setup-typst
       - run: pnpm run verify:demo
-      - name: Verify cases equation structure
+      - run: pnpm test:integration
+      - run: pnpm test:package
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:e2e
+      - name: Verify PDF fonts and pages
         run: |
-          node -e 'const fs = require("node:fs"); const html = fs.readFileSync(".glyphweave/generated/posts/basic-post/content.html", "utf8"); const cases = html.match(/<mtable class="cases">([\s\S]*?)<\/mtable>/); if (!cases || (cases[1].match(/<mtr>/g) || []).length !== 2) process.exit(1)'
-      - name: Verify SVG math fallback
-        run: |
-          printf "%s\n" "export default { math: { strategy: 'svg-frame' } }" > /tmp/glyphweave-svg.config.ts
-          pnpm glyphweave build --config /tmp/glyphweave-svg.config.ts
-          test "$(grep -o 'data-gw-renderer=\"typst-frame-svg\"' .glyphweave/generated/posts/basic-post/content.html | wc -l | tr -d ' ')" = "11"
+          set -euo pipefail
+          pdf=examples/astro-blog/dist/glyphweave/posts/hnsw-search-notes/article.pdf
+          pdfinfo "$pdf" | grep -E '^Pages:[[:space:]]+[1-9][0-9]*$'
+          pdffonts "$pdf" > "$RUNNER_TEMP/pdf-fonts.txt"
+          grep -Eq 'NotoSerifCJK|Noto Serif CJK' "$RUNNER_TEMP/pdf-fonts.txt"
+          grep -Eq 'NotoSansCJK|Noto Sans CJK' "$RUNNER_TEMP/pdf-fonts.txt"
+          grep -Eq 'DejaVuSansMono|DejaVu Sans Mono' "$RUNNER_TEMP/pdf-fonts.txt"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-traces
+          path: test-results/

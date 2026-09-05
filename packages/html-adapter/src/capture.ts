@@ -1,3 +1,4 @@
+import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
 import type { GlyphweaveCaptureReport, GlyphweaveDiagnostic } from '@glyphweave/schema'
 import type { SourceFormula } from '@glyphweave/typst'
@@ -9,11 +10,13 @@ export function createCaptureDiagnostics(
   renderedCount: number,
 ): GlyphweaveDiagnostic[] {
   if (formulas.length === renderedCount) return []
-  return [{
-    code: 'glyphweave-math-count-mismatch',
-    severity: 'warning',
-    message: `Source formulas (${formulas.length}) did not match rendered math elements (${renderedCount})`,
-  }]
+  return [
+    {
+      code: 'glyphweave-math-count-mismatch',
+      severity: 'warning',
+      message: `Source formulas (${formulas.length}) did not match rendered math elements (${renderedCount})`,
+    },
+  ]
 }
 
 export function createCaptureReport(
@@ -27,27 +30,35 @@ export function createCaptureReport(
   },
 ): GlyphweaveCaptureReport {
   const content = {
-    headings: 0, paragraphs: 0, lists: 0, tables: 0, images: 0,
-    codeBlocks: 0, footnotes: 0, frames: 0,
+    headings: 0,
+    paragraphs: 0,
+    lists: 0,
+    tables: 0,
+    images: 0,
+    codeBlocks: 0,
+    footnotes: 0,
+    frames: 0,
   }
   const math = {
+    sourceCountMethod: 'lexical-hint' as const,
     sourceFormulaCount: input.sourceFormulaCount,
     renderedCount: input.nativeMathml + input.typstFrameSvg,
     total: input.nativeMathml + input.typstFrameSvg,
-    inline: 0, block: 0,
+    inline: 0,
+    block: 0,
     nativeMathml: input.nativeMathml,
     typstFrameSvg: input.typstFrameSvg,
     sourceFallbacks: input.sourceFallbacks,
     failed: 0,
     mismatch: input.sourceFormulaCount !== input.nativeMathml + input.typstFrameSvg,
   }
-  visit(root as any, 'element', (node: HastNode) => {
+  visit(root as Root, 'element', (node: HastNode) => {
     if (isHeading(node)) content.headings += 1
     if (node.tagName === 'p') content.paragraphs += 1
     if (node.tagName === 'ul' || node.tagName === 'ol') content.lists += 1
     if (node.tagName === 'table') content.tables += 1
     if (node.tagName === 'img') content.images += 1
-    if (node.tagName === 'pre' || node.tagName === 'code') content.codeBlocks += 1
+    if (node.tagName === 'pre') content.codeBlocks += 1
     if (node.tagName === 'section' && node.properties?.role === 'doc-endnotes') {
       content.footnotes += countListItems(node)
     }
@@ -58,7 +69,10 @@ export function createCaptureReport(
       if (propertyValue(node, 'data-gw-renderer') === 'typst-frame-svg') content.frames += 1
     }
   })
-  math.failed = Math.max(0, input.sourceFormulaCount - math.total)
+  // Lexical counts cannot prove a lost equation (macros/includes can change cardinality).
+  math.failed = input.diagnostics.filter(
+    (item) => item.code === 'typst-html-equation-ignored',
+  ).length
   const hasErrors = input.diagnostics.some((diagnostic) => diagnostic.severity === 'error')
   const hasWarnings =
     input.diagnostics.some((diagnostic) => diagnostic.severity === 'warning') || math.mismatch
@@ -67,7 +81,7 @@ export function createCaptureReport(
 
 function countListItems(node: HastNode): number {
   let count = 0
-  visit(node as any, 'element', (child: HastNode) => {
+  visit(node as Root, 'element', (child: HastNode) => {
     if (child !== node && child.tagName === 'li') count += 1
   })
   return count

@@ -92,7 +92,7 @@ function createCodeBlock(pre: HastNode, label: string): HastNode {
           },
         ],
       },
-      pre,
+      pre as import('hast').Element,
     ],
   }
 }

@@ -40,3 +40,5 @@ pnpm --filter example-astro-blog exec astro preview --host 127.0.0.1 --port 4321
 ## Asset Publishing
 
 Glyphweave emits public paths using `output.publicBasePath`, but static frameworks still need the files in their public directory. The example handles this with `scripts/sync-glyphweave-public.mjs`, which copies generated assets and PDFs into `public/glyphweave` before `astro build`.
+
+See [migration notes](migration.md) for current output and configuration contracts.

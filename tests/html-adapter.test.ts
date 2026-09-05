@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest'
 import { adaptTypstHtml } from '@glyphweave/html-adapter'
 import type { DiscoveredTypstPost } from '@glyphweave/core'
 
-async function makePost(rawHtml: string, source?: string): Promise<{
+async function makePost(
+  rawHtml: string,
+  source?: string,
+): Promise<{
   root: string
   rawHtmlPath: string
   outputDir: string
@@ -204,7 +207,9 @@ describe('HTML adapter', () => {
     expect(output.contentHtml).toContain(
       'class="gw-math gw-math--block" data-gw-renderer="native-mathml"',
     )
-    expect(output.contentHtml).toContain('<math display="block" class="multiline-equation aligned">')
+    expect(output.contentHtml).toContain(
+      '<math display="block" class="multiline-equation aligned">',
+    )
     expect(output.contentHtml).toContain('<mtable><mtr><mtd>')
     expect(output.contentHtml).not.toContain('gw-sr-only')
     expect(output.contentHtml).not.toContain('<script')

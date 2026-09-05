@@ -6,3 +6,10 @@ examples/astro-blog/public/glyphweave/
 .npmrc
 .DS_Store
 *.log
+
+*.tsbuildinfo
+playwright-report/
+test-results/
+**/content/**/index.pdf
+
+.pnpm-store/

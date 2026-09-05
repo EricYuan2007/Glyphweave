@@ -46,7 +46,10 @@ export function normalizeTypstFrameMath(
       const kind = glyphweaveMathKind(child)
       const svg = kind ? child.children?.find(isSvg) : undefined
       if (kind && svg) {
-        const formula = formulas[formulaIndex++]
+        const captured = propertyValue(child, 'data-gw-source')
+        const formula = captured
+          ? ({ source: captured } as SourceFormula)
+          : formulas[formulaIndex++]
         children[index] = createMathWrapper(svg, kind, formula, options?.svg)
         typstFrameSvg += 1
         if (formula && options?.svg.includeSourceFallback !== false) sourceFallbacks += 1
@@ -67,7 +70,7 @@ function createMathWrapper(
 ): HastNode {
   const tagName = kind === 'inline' ? 'span' : 'div'
   const source = formula?.source
-  const children = [svg]
+  const children: import('hast').ElementContent[] = [svg as import('hast').Element]
   if (source && options?.includeSourceFallback !== false) {
     children.push({
       type: 'element',
@@ -77,7 +80,7 @@ function createMathWrapper(
     })
   }
 
-  const properties: Record<string, unknown> = {
+  const properties: import('hast').Properties = {
     className: ['gw-math', `gw-math--${kind}`],
     'data-gw-renderer': 'typst-frame-svg',
     ...(source ? { ariaLabel: `Formula: ${source}`, 'data-gw-source': source } : {}),

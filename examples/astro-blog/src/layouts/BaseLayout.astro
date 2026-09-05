@@ -12,19 +12,24 @@ import ImageLightbox from '../components/ImageLightbox.astro'
 interface Props {
   title: string
   description?: string
+  language?: string
+  canonicalUrl?: string | null
+  unlisted?: boolean
 }
 
-const { title, description = 'Glyphweave Astro example' } = Astro.props
+const { title, description = 'Glyphweave Astro example', language = 'zh-CN', canonicalUrl, unlisted = false } = Astro.props
 const pageTitle = title === 'Glyphweave Blog' ? title : `${title} | Glyphweave Blog`
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={language}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#ffffff" />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {unlisted && <meta name="robots" content="noindex, nofollow" />}
     <title>{pageTitle}</title>
   </head>
   <body>

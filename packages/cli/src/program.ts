@@ -10,6 +10,7 @@ export function createProgram() {
     .name('glyphweave')
     .description('Typst-to-web blog artifact pipeline')
     .version(GLYPHWEAVE_VERSION)
+    .option('--verbose', 'include error causes and stack traces')
   registerBuildCommand(program)
   registerCleanCommand(program)
   registerInspectCommand(program)

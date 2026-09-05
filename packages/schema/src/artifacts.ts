@@ -33,6 +33,7 @@ export const CaptureReportSchema = z.object({
     frames: z.number().int().nonnegative(),
   }),
   math: z.object({
+    sourceCountMethod: z.literal('lexical-hint').default('lexical-hint'),
     sourceFormulaCount: z.number().int().nonnegative(),
     renderedCount: z.number().int().nonnegative(),
     total: z.number().int().nonnegative(),
@@ -92,6 +93,8 @@ export const ContentIndexSchema = z.object({
       status: z.enum(['draft', 'published', 'archived']),
       visibility: z.enum(['public', 'unlisted', 'private']),
       language: z.string(),
+      cover: z.string().nullable().default(null),
+      canonicalUrl: z.string().url().nullable().default(null),
       contentHtmlPath: z.string(),
       tocPath: z.string(),
       pdfPath: z.string().nullable(),

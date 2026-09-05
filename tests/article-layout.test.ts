@@ -63,9 +63,7 @@ describe('article layout helpers', () => {
             id: 'loss',
             title: 'Loss function',
             depth: 3,
-            children: [
-              { id: 'details', title: 'Details', depth: 4, children: [] },
-            ],
+            children: [{ id: 'details', title: 'Details', depth: 4, children: [] }],
           },
         ],
       },

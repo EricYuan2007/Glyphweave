@@ -1,28 +1,23 @@
-# Security
+# Security model
 
-Phase 1 assumes trusted Typst authors, but it still guards the generated HTML boundary.
+Authors and executable configuration are trusted. This local build tool is not a
+server sandbox. See the root [security policy](../SECURITY.md) for private reporting.
 
-Builds fail or sanitize output for:
+The adapter validates URL protocols after removing ASCII controls and uses an
+allowlist for HTML, MathML and static SVG. Only numeric Typst layout styles survive.
+Scripts, event handlers, active SVG content and arbitrary author CSS do not pass.
+Shiki highlighting and owned buttons run afterward as trusted transforms. Literal
+paths in prose/code are allowed; resource URL paths are validated separately.
 
-- `<script>`, `<iframe>`, `<object>`, `<embed>`, forms, inputs, buttons, and style tags.
-- Event attributes such as `onclick` and `onerror`.
-- `javascript:` and `file:` URLs.
-- Local absolute paths such as `/Users/...`, `/home/...`, `~/...`, and Windows user paths.
-- Assets outside the post `assets/` directory.
+Asset real paths must remain inside the article assets directory and extensions
+must be allowed. Source paths must remain inside their article. Output directories
+must be project-local, non-overlapping with content and free of symlink aliases.
+Clean additionally requires a matching ownership marker and an available build lock.
 
-Astro examples never inject `raw.html`; only adapter-produced `content.html` is used.
+Public export follows the current index/manifests. Never deploy raw HTML, logs or
+historical generations. Unlisted means undiscoverable through site listings, not
+private. Previously downloaded public files cannot be recalled by rebuilding.
 
-Fenced-code highlighting is a narrow trusted post-sanitization transform. Shiki supplies fixed
-token colors, and Glyphweave supplies the copy button without inline handlers. No author-provided
-style or interactive element crosses this boundary.
-
-## Recommended Deployment Rules
-
-- Commit source posts, examples, tests, and documentation.
-- Do not commit `.glyphweave`, Astro `dist`, generated Pagefind output, local `.npmrc`, or copied public artifacts.
-- Run `pnpm check` and `pnpm run verify:demo` before merging changes.
-- Treat Typst HTML export upgrades as compatibility events and rerun fixture builds before publishing.
-
-## Current Limitations
-
-Phase 1 assumes trusted authors. It still protects the page injection boundary, but it is not a server-side sandbox for untrusted Typst documents. Future server compilation should add filesystem isolation, time limits, package controls, and storage-level artifact validation.
+For hostile authors or online concurrent publication, add operating-system isolation,
+resource quotas and a dedicated storage/deployment boundary. Realpath checks and
+HTML sanitization do not provide that isolation.

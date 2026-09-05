@@ -30,19 +30,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Install Typst
-        run: |
-          curl -L https://github.com/typst/typst/releases/download/v0.15.0/typst-x86_64-unknown-linux-musl.tar.xz -o typst.tar.xz
-          tar -xf typst.tar.xz
-          sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
-          typst --version
-      - name: Install PDF fonts and inspection tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes fonts-noto-cjk fonts-dejavu-core poppler-utils
-          typst fonts | grep -F 'Noto Serif CJK SC'
-          typst fonts | grep -F 'Noto Sans CJK SC'
-          typst fonts | grep -F 'DejaVu Sans Mono'
+      - uses: ./.github/actions/setup-typst
+      - run: pnpm check
+      - run: pnpm test:integration
       - name: Build demo
         run: pnpm --filter example-astro-blog build
       - name: Verify generated PDF

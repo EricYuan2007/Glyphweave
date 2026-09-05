@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { chmod, realpath, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
@@ -23,7 +23,7 @@ describe('CLI', () => {
     expect(result.stdout).toContain('Glyphweave Doctor')
     expect(result.stdout).toContain('Config valid')
     expect(result.stdout).toContain('typst 0.15.0')
-    expect(result.stdout).toContain('MathML equations: supported')
+    expect(result.stdout).toContain('MathML: requires a successful build')
   })
 
   it('rejects Typst versions older than 0.15', async () => {
@@ -48,6 +48,10 @@ describe('CLI', () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-cli-'))
     await mkdir(path.join(root, '.glyphweave'), { recursive: true })
     await writeFile(path.join(root, '.glyphweave/marker.txt'), 'generated')
+    await writeFile(
+      path.join(root, '.glyphweave/.glyphweave-owner.json'),
+      JSON.stringify({ generator: 'glyphweave', root: await realpath(root) }),
+    )
 
     const result = await execa('pnpm', ['exec', 'tsx', cliPath, 'clean', '--root', root], {
       cwd: repoRoot,

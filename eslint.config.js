@@ -7,7 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       'node_modules/**',
-      'dist/**',
+      '**/dist/**',
       '.glyphweave/**',
       'examples/astro-blog/dist/**',
       'examples/astro-blog/.astro/**',
@@ -36,7 +36,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
 )

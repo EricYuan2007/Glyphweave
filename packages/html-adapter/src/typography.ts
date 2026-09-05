@@ -18,7 +18,9 @@ export function normalizeQuoteAttributions(root: HastNode): void {
 
     const attribution = children[attributionIndex]
     if (attribution?.tagName !== 'p') continue
-    const firstText = attribution.children?.find((child) => child.type === 'text')?.value?.trimStart()
+    const firstText = attribution.children
+      ?.find((child) => child.type === 'text')
+      ?.value?.trimStart()
     if (!firstText?.startsWith('—')) continue
 
     quote.children ??= []
@@ -26,7 +28,7 @@ export function normalizeQuoteAttributions(root: HastNode): void {
       type: 'element',
       tagName: 'footer',
       properties: { className: ['gw-quote-attribution'] },
-      children: attribution.children ?? [],
+      children: (attribution.children ?? []) as import('hast').ElementContent[],
     })
     children.splice(attributionIndex, 1)
   }

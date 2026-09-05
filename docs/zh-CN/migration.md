@@ -1,0 +1,15 @@
+# 迁移与配置
+
+升级后先运行 `pnpm install --frozen-lockfile && pnpm build`。
+
+- 从 `.glyphweave/content-index.json` 读取产物路径，不能再拼接固定的 generated/posts 路径。新产物位于独立 generations 目录。
+- 旧版本保留到 clean，不能把整个 .glyphweave 上传。clean 拒绝无归属标记的目录；旧项目先成功构建一次再 clean。输出必须是专用的项目内目录。
+- 文章省略 pdf 时继承全局 enabledByDefault，显式 false 关闭。PDF warn 会记录诊断。
+- headingIds 默认 preserve；stable 同步重写 ID 和本地引用。scopeClass 应用于片段容器。
+- allowedExtensions 实际执行，资源真实路径不能越过 assets。
+- cache.enabled 仅接受 false，目前没有增量缓存。sanitize、assets.copy、capture.report、htmlFeatures 仅接受 true；不支持的值会报错。
+- 未知顶层字段、错误日期、显式配置文件缺失或依赖加载失败会报错。只有隐式默认配置文件不存在时回退。
+- 严格捕获依据编译器确认的内容丢失；词法数量差异仅警告，因为 include 和宏会改变渲染数量。
+- published/unlisted 可直接访问但不进入列表和搜索；draft/private/archived 不导出。
+
+安装后的 TypeScript 配置需要 Node 22.18+；也可用 `--config` 指定 .mjs。工作区通过 tsx 运行 CLI。

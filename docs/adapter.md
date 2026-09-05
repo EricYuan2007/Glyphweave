@@ -36,3 +36,5 @@ Glyphweave itself: Shiki token spans with fixed theme colors and a button withou
 handlers. Author-provided buttons, styles, and event attributes remain prohibited.
 
 The adapter does not attempt to preserve Typst's full page styling. Host sites should style the output through `.glyphweave-content`.
+
+See [migration notes](migration.md) for current output and configuration contracts.

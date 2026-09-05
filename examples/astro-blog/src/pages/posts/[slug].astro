@@ -6,7 +6,7 @@ import Sidenotes from '../../components/Sidenotes.astro'
 import { getGlyphweavePost, getGlyphweavePosts } from '../../lib/glyphweave'
 
 export async function getStaticPaths() {
-  const posts = await getGlyphweavePosts()
+  const posts = await getGlyphweavePosts(false)
   return posts.map((post) => ({
     params: { slug: post.slug },
     props: { slug: post.slug },
@@ -18,7 +18,7 @@ const post = await getGlyphweavePost(slug)
 const articleToc = post.toc.filter((item, index) => index !== 0 || item.title !== post.title)
 ---
 
-<BaseLayout title={post.title} description={post.description}>
+<BaseLayout title={post.title} description={post.description} language={post.language} canonicalUrl={post.canonicalUrl} unlisted={post.visibility === 'unlisted'}>
   <div class="article-shell">
     <ArticleHeader
       title={post.title}
@@ -29,9 +29,9 @@ const articleToc = post.toc.filter((item, index) => index !== 0 || item.title !=
       <TableOfContents
         items={articleToc}
         tags={post.tags}
-        publicPdfPath={post.publicPdfPath}
+        publicPdfPath={post.publicPdfPath ?? undefined}
       />
-      <article class="glyphweave-content" data-pagefind-body>
+      <article class="glyphweave-content" data-pagefind-body={post.visibility === 'public' ? '' : undefined} data-pagefind-ignore={post.visibility === 'unlisted' ? '' : undefined}>
         <Fragment set:html={post.contentHtml} />
       </article>
       <Sidenotes />

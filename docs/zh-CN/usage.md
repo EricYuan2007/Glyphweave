@@ -4,6 +4,7 @@
 
 ```bash
 pnpm install
+pnpm build
 typst --version
 pnpm glyphweave doctor
 ```
@@ -25,17 +26,17 @@ content/
 `post.yaml` 示例：
 
 ```yaml
-title: "HNSW 检索算法笔记"
-slug: "hnsw-search-notes"
-description: "一篇关于 HNSW 图搜索的技术笔记。"
-date: "2026-05-28"
+title: 'HNSW 检索算法笔记'
+slug: 'hnsw-search-notes'
+description: '一篇关于 HNSW 图搜索的技术笔记。'
+date: '2026-05-28'
 tags:
   - HNSW
   - Retrieval
-status: "published"
-visibility: "public"
+status: 'published'
+visibility: 'public'
 pdf: true
-source: "index.typ"
+source: 'index.typ'
 ```
 
 ## 构建
@@ -56,7 +57,7 @@ pnpm glyphweave clean --root /path/to/site
 ```text
 .glyphweave/
   content-index.json
-  generated/posts/<slug>/
+  generations/<id>/generated/posts/<slug>/
     raw.html
     content.html
     toc.json
@@ -112,3 +113,5 @@ http://127.0.0.1:4321/posts/hnsw-search-notes/
 pnpm check
 pnpm run verify:demo
 ```
+
+升级前请阅读[迁移说明](migration.md)，产物路径必须从索引读取。

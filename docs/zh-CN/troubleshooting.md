@@ -75,3 +75,5 @@ pnpm glyphweave doctor
 ## 公式缺失或对齐异常
 
 请检查 `.glyphweave/logs/<slug>.html.log` 和 manifest 的 `capture.math`。默认 `mathml` 模式下，`sourceFormulaCount` 应与 `renderedCount` 一致。只有在跨浏览器视觉一致性比公式可选择性和语义更重要时，才使用 `svg-frame`。
+
+当前行为及破坏性变更见[迁移说明](migration.md)。
