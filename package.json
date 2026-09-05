@@ -43,7 +43,7 @@
     "@playwright/test": "^1.62.1",
     "@types/hast": "^3.0.5",
     "@types/node": "^22.20.1",
-    "eslint": "^9.39.5",
+    "eslint": "^10.9.1",
     "execa": "^10.0.1",
     "prettier": "^3.9.6",
     "tsx": "^4.23.13",
