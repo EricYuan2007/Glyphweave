@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@glyphweave/astro": "workspace:*",
-    "astro": "^5.8.1",
+    "astro": "^7.2.10",
     "pagefind": "1.3.0",
     "@glyphweave/schema": "workspace:*",
     "@glyphweave/core": "workspace:*"
