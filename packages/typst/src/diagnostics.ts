@@ -7,6 +7,14 @@ export function parseTypstDiagnostics(output: string): GlyphweaveDiagnostic[] {
     const warning = line.match(/^warning:\s*(.+)$/i)
     const message = warning?.[1]?.trim()
     if (!message) continue
+    if (/^unknown font family:/i.test(message)) {
+      if (
+        !diagnostics.some((item) => item.code === 'typst-font-missing' && item.message === message)
+      ) {
+        diagnostics.push({ code: 'typst-font-missing', severity: 'warning', message })
+      }
+      continue
+    }
 
     if (message === 'equation was ignored during HTML export') {
       diagnostics.push({

@@ -1,0 +1,30 @@
+{
+  "compiler": "typst 0.15.0 (unknown commit)",
+  "template_sha256": "d54f50b2340af274ecc731ebc8a1c56aa16fd2b41aab2c4a432dd069f0d228ea",
+  "variants": {
+    "baseline": [
+      {
+        "mixed_width_pt": 59.32,
+        "spaced_width_pt": 64.32000000000001,
+        "separate_width_pt": 59.32,
+        "formula_width_pt": 40.56
+      }
+    ],
+    "text-baseline": [
+      {
+        "mixed_width_pt": 64.32000000000001,
+        "spaced_width_pt": 64.32000000000001,
+        "separate_width_pt": 59.32,
+        "formula_width_pt": 39.85999999999999
+      }
+    ],
+    "native": [
+      {
+        "mixed_width_pt": 64.32000000000001,
+        "spaced_width_pt": 64.32000000000001,
+        "separate_width_pt": 59.32,
+        "formula_width_pt": 39.85999999999999
+      }
+    ]
+  }
+}

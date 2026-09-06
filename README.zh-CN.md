@@ -149,8 +149,8 @@ export default defineConfig({
     pdf: {
       template: {
         enabled: true,
-        fonts: ['Songti SC', 'STSong', 'PingFang SC'],
-        monoFonts: ['Menlo'],
+        profile: 'editorial',
+        fontSize: 10.5,
         lang: 'zh',
         region: 'CN',
       },
@@ -159,9 +159,10 @@ export default defineConfig({
 })
 ```
 
-PDF 默认模板使用 macOS 常见中文字体。Linux 部署时可以把
-`typst.pdf.template.fonts` 改成已安装的 `Noto Serif CJK SC`、`Source Han Serif SC`
-或其他中文字体。
+PDF 默认使用 10.5pt 宋体正文与 Libertinus Serif 英文，按字体校准普通正文约 1.6 倍行高，
+保留原生断词与数学斜体，支持长表跨页。Linux 部署时安装 Noto CJK，并设置
+`typst.pdf.template.profile: 'portable'`。显式 `fonts`、`latinFonts`、`headingFonts`、
+`monoFonts` 会覆盖 profile 的对应默认值。详见 [PDF 使用指南](docs/zh-CN/usage.md#pdf-模板与中文字体)。
 
 ## 文档
 

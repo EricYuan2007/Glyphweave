@@ -32,8 +32,8 @@ typst: {
   pdf: {
     template: {
       enabled: true,
-      fonts: ['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC'],
-      monoFonts: ['Menlo', 'DejaVu Sans Mono'],
+      profile: 'editorial',
+      fontSize: 10.5,
       lang: 'zh',
       region: 'CN',
     },
@@ -45,6 +45,15 @@ Linux 或 CI 环境请安装 Noto CJK 与等宽回退字体。Ubuntu 可运行
 `sudo apt-get install fonts-noto-cjk fonts-dejavu-core`，然后用 `typst fonts` 确认
 `Noto Serif CJK SC`、`Noto Sans CJK SC` 和 `DejaVu Sans Mono` 均可用。如果文章源码
 已经套了完整 Typst 模板，可以设置 `typst.pdf.template.enabled: false`。
+
+Linux 可设置 `profile: 'portable'`，选择上述 Noto/DejaVu 字体；任何配置字体未安装时会使
+PDF 编译失败，再按 `pdf.failure` 决定是否中止整站构建。`editorial` 则保留后备字体并报告
+`typst-font-missing`，缺失后备字体不一定等于缺字。字体警告会写入 manifest。
+两个 profile 均不会自动下载字体。
+
+`fontSize` 默认 10.5pt，范围 8–14；`fonts`、`latinFonts`、`headingFonts`、`monoFonts`
+可独立指定。英文默认使用 Libertinus Serif，设 `latinFonts: []` 可改用正文栈的拉丁字形。
+具体样式与字体配置见 [PDF 使用指南](usage.md#pdf-模板与中文字体)。
 
 ## 资源路径失败
 

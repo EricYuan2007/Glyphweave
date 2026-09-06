@@ -1,46 +1,54 @@
-import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
-import { defaultConfig } from '@glyphweave/schema'
+import { parseTypstDiagnostics } from '@glyphweave/typst'
+import { defaultConfig, PdfTemplateSchema } from '@glyphweave/schema'
 
-describe('PDF template', () => {
-  it('prefers an editorial Chinese serif stack for body text', () => {
-    expect(defaultConfig().typst.pdf.template.fonts.slice(0, 2)).toEqual(['Songti SC', 'STSong'])
-    expect(defaultConfig().typst.pdf.template.fonts).toContain('Noto Serif CJK SC')
-    expect(defaultConfig().typst.pdf.template.monoFonts).toContain('DejaVu Sans Mono')
+describe('PDF typography configuration', () => {
+  it('keeps CJK and Latin roles separate, with readable defaults', () => {
+    const template = defaultConfig().typst.pdf.template
+    expect(template.profile).toBe('editorial')
+    expect(template.fonts[0]).toBe('Songti SC')
+    expect(template.latinFonts).toEqual(['Libertinus Serif'])
+    expect(template.headingFonts).toContain('Noto Sans CJK SC')
+    expect(template.fontSize).toBe(10.5)
   })
 
-  it('defines editorial page furniture and block-specific rhythm', async () => {
-    const template = await readFile('packages/typst/prelude/glyphweave-pdf.typ', 'utf-8')
+  it('resolves portable defaults without overriding explicit font choices', () => {
+    const portable = PdfTemplateSchema.parse({ profile: 'portable' })
+    expect(portable.fonts).toEqual(['Noto Serif CJK SC'])
+    expect(portable.headingFonts).toEqual(['Noto Sans CJK SC'])
+    expect(portable.monoFonts).toEqual(['DejaVu Sans Mono'])
+    const custom = PdfTemplateSchema.parse({
+      profile: 'portable',
+      fonts: ['Source Han Serif SC'],
+      latinFonts: [],
+      headingFonts: ['Source Han Sans SC'],
+      monoFonts: ['Custom Mono'],
+      fontSize: 11,
+    })
+    expect(custom.fonts).toEqual(['Source Han Serif SC'])
+    expect(custom.latinFonts).toEqual([])
+    expect(custom.headingFonts).toEqual(['Source Han Sans SC'])
+    expect(custom.monoFonts).toEqual(['Custom Mono'])
+    expect(custom.fontSize).toBe(11)
+    expect(PdfTemplateSchema.parse(custom)).toEqual(custom)
+  })
 
-    expect(template).toContain('header: context')
-    expect(template).toContain('footer: context')
-    expect(template).toContain('show raw.where(block: true)')
-    expect(template).toContain('show raw.line:')
-    expect(template).toContain('show math.equation.where(block: true)')
-    expect(template).toContain('show table:')
-    expect(template).toContain('first-line-indent: (amount: 2em, all: true)')
-    expect(template).toContain('heading-fonts: (')
-    expect(template).toContain('"Noto Sans CJK SC"')
-    expect(template).toContain('set heading(numbering: "1.1")')
-    expect(template).toContain('if it.level > 1')
-    expect(template).toContain('levels.slice(1)')
-    expect(template).toContain('let heading-size = 13.5pt')
-    expect(template).toContain('let line-leading = 0.8em')
-    expect(template).toContain('let list-spacing = 0.95em')
-    expect(template).toContain('let block-spacing = 1em')
-    expect(template).toContain('let heading-spacing = 1.05em')
-    expect(template).toContain('above: 1.1em')
-    expect(template).toContain('below: 1.1em')
-    expect(template).toContain('spacing: list-spacing')
-    expect(template).toContain('box(move(dy: 0.04em, it))')
-    expect(template).toContain('marker: list-markers')
-    expect(template).toContain('indent: 1.3em')
-    expect(template).toContain('body-indent: 0.38em')
-    expect(template).toContain('baseline: -0.06em')
-    expect(template).toContain('box(baseline: -0.05em')
-    expect(template).toContain('inset: (x: 8pt, y: 5.5pt)')
-    expect(template).toContain('justification-limits: (')
-    expect(template).toContain('sticky: true')
-    expect(template).toContain('stroke: (x, y) =>')
+  it('reports missing fonts once per family', () => {
+    expect(
+      parseTypstDiagnostics(
+        'warning: unknown font family: example\nwarning: unknown font family: example',
+      ),
+    ).toEqual([
+      { code: 'typst-font-missing', severity: 'warning', message: 'unknown font family: example' },
+    ])
+  })
+
+  it('rejects invalid sizes and unusable required font stacks', () => {
+    for (const fontSize of [0, -1, 7, 15, Infinity, NaN]) {
+      expect(() => PdfTemplateSchema.parse({ fontSize })).toThrow()
+    }
+    expect(() => PdfTemplateSchema.parse({ fonts: [] })).toThrow()
+    expect(() => PdfTemplateSchema.parse({ headingFonts: ['  '] })).toThrow()
+    expect(() => PdfTemplateSchema.parse({ profile: 'unknown' })).toThrow()
   })
 })
