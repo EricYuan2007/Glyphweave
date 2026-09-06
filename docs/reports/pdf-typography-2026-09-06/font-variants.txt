@@ -1,0 +1,36 @@
+DejaVu Sans Mono
+  │   Style: Normal, Weight: 700, Stretch: 100%
+  │   Style: Italic, Weight: 700, Stretch: 100%
+  │   Style: Italic, Weight: 400, Stretch: 100%
+      Style: Normal, Weight: 400, Stretch: 100%
+
+Libertinus Serif
+  │   Style: Normal, Weight: 400, Stretch: 100%
+  │   Style: Normal, Weight: 700, Stretch: 100%
+  │   Style: Italic, Weight: 400, Stretch: 100%
+  │   Style: Italic, Weight: 700, Stretch: 100%
+  │   Style: Normal, Weight: 600, Stretch: 100%
+      Style: Italic, Weight: 600, Stretch: 100%
+
+Menlo
+  │   Style: Normal, Weight: 400, Stretch: 100%
+  │   Style: Normal, Weight: 700, Stretch: 100%
+  │   Style: Italic, Weight: 400, Stretch: 100%
+      Style: Italic, Weight: 700, Stretch: 100%
+
+PingFang SC
+  │   Style: Normal, Weight: 400, Stretch: 100%
+  │   Style: Normal, Weight: 500, Stretch: 100%
+  │   Style: Normal, Weight: 600, Stretch: 100%
+  │   Style: Normal, Weight: 300, Stretch: 100%
+  │   Style: Normal, Weight: 200, Stretch: 100%
+      Style: Normal, Weight: 100, Stretch: 100%
+
+Songti SC
+  │   Style: Normal, Weight: 900, Stretch: 100%
+  │   Style: Normal, Weight: 700, Stretch: 100%
+  │   Style: Normal, Weight: 300, Stretch: 100%
+      Style: Normal, Weight: 400, Stretch: 100%
+
+STSong
+      Style: Normal, Weight: 300, Stretch: 100%

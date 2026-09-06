@@ -37,7 +37,18 @@ describe('build pipeline', () => {
         pdfInputs.push(input)
         const { outputPath } = input
         await writeFile(outputPath, '%PDF fake')
-        return { outputPath, stdout: '', stderr: '' }
+        return {
+          outputPath,
+          stdout: '',
+          stderr: '',
+          diagnostics: [
+            {
+              code: 'typst-font-missing',
+              severity: 'warning',
+              message: 'unknown font family: example',
+            },
+          ],
+        }
       },
     })
 
@@ -48,9 +59,18 @@ describe('build pipeline', () => {
     expect(index.posts[0].slug).toBe('basic-post')
     expect(index.posts[0].publicPdfPath).toBe('/glyphweave/posts/basic-post/article.pdf')
     expect(pdfInputs).toHaveLength(1)
+    expect(result.built[0]!.manifest.diagnostics).toContainEqual({
+      code: 'typst-font-missing',
+      severity: 'warning',
+      message: 'unknown font family: example',
+    })
     const capturedPdfInput = pdfInputs[0]!
     expect(capturedPdfInput.wrapper?.pdfTemplate).toMatchObject({
       injectTemplate: true,
+      profile: 'editorial',
+      fontSize: 10.5,
+      latinFonts: ['Libertinus Serif'],
+      headingFonts: expect.arrayContaining(['Noto Sans CJK SC']),
       fonts: expect.arrayContaining(['PingFang SC']),
       lang: 'zh',
       region: 'CN',

@@ -136,8 +136,8 @@ export default defineConfig({
       failure: 'warn',
       template: {
         enabled: true,
-        fonts: ['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC'],
-        monoFonts: ['Menlo', 'DejaVu Sans Mono'],
+        profile: 'editorial',
+        fontSize: 10.5,
         lang: 'zh',
         region: 'CN',
       },
@@ -158,9 +158,12 @@ export default defineConfig({
 ```
 
 PDF builds use a Glyphweave Typst template by default. It adds an editorial A4 layout, page
-furniture, Chinese serif typography, code panels, and dedicated spacing for tables, figures, and
-display equations. For Linux deployments, set
-`typst.pdf.template.fonts` to installed fonts such as `Noto Serif CJK SC` or `Source Han Serif SC`.
+furniture, Chinese serif typography, unboxed code listings, and dedicated spacing for tables, figures, and
+display equations. Body text uses 10.5pt CJK serif and Libertinus Serif Latin faces with calibrated
+1.6× ordinary line spacing. Native word breaking and mathematical italics are preserved; long tables
+can span pages. On Linux, install Noto CJK and use `typst.pdf.template.profile: 'portable'`.
+Explicit `fonts`, `latinFonts`, `headingFonts`, and `monoFonts` override profile defaults.
+See [PDF configuration and font diagnostics](docs/troubleshooting.md#pdf-chinese-text-uses-poor-or-missing-fonts).
 
 ## CLI
 

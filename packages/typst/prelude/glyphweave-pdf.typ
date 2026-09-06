@@ -2,34 +2,47 @@
   body,
   fonts: (
     "Songti SC",
+    "Noto Serif CJK SC",
     "STSong",
     "PingFang SC",
-    "Noto Serif CJK SC",
   ),
   heading-fonts: (
     "PingFang SC",
+    "Noto Sans CJK SC",
     "Heiti SC",
     "STHeiti",
-    "Noto Sans CJK SC",
   ),
+  heading-weight: 600,
+  latin-fonts: ("Libertinus Serif",),
+  font-size: 10.5pt,
   mono-fonts: ("Menlo", "DejaVu Sans Mono"),
   lang: "zh",
   region: "CN",
-) = {
+) = context {
   let ink = rgb("#262624")
   let muted = rgb("#6c6b67")
   let rule = rgb("#d8d7d2")
-  let soft = rgb("#f7f7f4")
   let accent = rgb("#245b74")
   let heading-size = 13.5pt
-  let line-leading = 0.8em
   let list-spacing = 0.95em
-  let block-spacing = 1em
-  let heading-spacing = 1.05em
   let list-markers = (
-    text(font: heading-fonts, size: 1em, weight: "bold")[•],
-    text(font: heading-fonts, size: 0.82em, weight: "bold")[•],
+    text(font: heading-fonts, size: 1em, weight: heading-weight)[•],
+    text(font: heading-fonts, size: 0.82em, weight: heading-weight)[•],
   )
+
+  // Keep CJK punctuation in the CJK face while giving Latin real italic/bold faces.
+  let body-fonts = latin-fonts.map(name => (name: name, covers: "latin-in-cjk")) + fonts
+  // Calibrate natural text frames instead of assuming every font has a 1em frame.
+  // Tall equations may still enlarge individual lines; do not clip them to a grid.
+  let leading-for(ratio, size: font-size, font: body-fonts) = {
+    let sample = text(font: font, size: size, weight: 400)[中文Agpq]
+    let single = measure(sample)
+    let pair = measure({
+      set par(leading: 0pt)
+      [#sample#linebreak()#sample]
+    })
+    calc.max(0pt, ratio * size - (pair.height - single.height))
+  }
 
   set page(
     paper: "a4",
@@ -49,12 +62,17 @@
   )
 
   set text(
-    font: fonts,
+    font: body-fonts,
+    weight: 400,
+    tracking: 0pt,
+    cjk-latin-spacing: auto,
     lang: lang,
     region: region,
-    size: 10pt,
+    size: font-size,
     fill: ink,
   )
+  let line-leading = leading-for(1.6)
+  let block-spacing = line-leading + 0.15em
   set par(
     justify: true,
     first-line-indent: (amount: 2em, all: true),
@@ -75,7 +93,13 @@
   set terms(indent: 1.3em, spacing: list-spacing)
   set heading(numbering: "1.1")
 
-  show regex("[A-Za-z0-9]+"): it => box(move(dy: 0.04em, it))
+  // Text remains text: no global ASCII boxes or baseline rules inside mathematics.
+  show math.equation: set text(font: "New Computer Modern Math")
+  show emph: it => {
+    // CJK families often have no italic face. Preserve emphasis without fake slant.
+    show regex("[\\p{Han}]+"): set text(style: "normal", weight: 700)
+    it
+  }
 
   let heading-content(it) = context {
     if it.level > 1 {
@@ -86,44 +110,46 @@
     it.body
   }
 
+  // One heading rhythm across levels, expressed in pt rather than inherited em.
+  show heading: set block(above: 18pt, below: 12pt, sticky: true)
   show heading: it => {
-    set text(font: heading-fonts, size: heading-size, weight: "semibold", fill: ink)
+    set text(font: heading-fonts, size: heading-size, weight: heading-weight, fill: ink)
     set par(first-line-indent: 0pt, justify: false, leading: 0.5em)
-    block(above: heading-spacing, below: heading-spacing, breakable: false, sticky: true)[#heading-content(it)]
+    block(breakable: false)[#heading-content(it)]
   }
 
+  // Separate code through whitespace, monospace and line numbers, like a printed listing.
   show raw.where(block: true): it => block(
     width: 100%,
     above: 1.1em,
     below: 1.1em,
-    inset: (x: 9pt, y: 6pt),
-    fill: soft,
-    stroke: (left: 0.6pt + rule),
+    inset: (x: 0pt, y: 6pt),
+    fill: none,
+    stroke: none,
     breakable: true,
   )[
-    #set text(font: mono-fonts, size: 7.6pt, fill: ink)
-    #set par(first-line-indent: 0pt, justify: false, leading: 0.38em, spacing: 0pt)
+    #set text(font: mono-fonts + fonts, size: 8.5pt, fill: ink)
+    #set par(first-line-indent: 0pt, justify: false, leading: leading-for(1.45, size: 8.5pt, font: mono-fonts + fonts), spacing: 0pt)
     #show raw.line: line => grid(
       columns: (2.15em, 1fr),
-      column-gutter: 0.75em,
-      align(right, text(font: mono-fonts, size: 6.8pt, fill: muted)[#line.number]),
+      column-gutter: 1em,
+      align(right, text(font: mono-fonts, size: 7.5pt, fill: muted)[#line.number]),
       line.body,
     )
     #it
   ]
-  show raw.where(block: false): it => box(
-    baseline: -0.06em,
-    text(font: mono-fonts, size: 0.86em, it),
-  )
+  // Keep native break opportunities in commands and paths. A box makes all of a
+  // raw span indivisible, stretching the preceding justified Chinese line.
+  show raw.where(block: false): set text(font: mono-fonts + fonts, size: 0.88em)
 
-  show math.equation.where(block: false): it => box(baseline: -0.05em, it)
-
-  show math.equation.where(block: true): it => block(
-    width: 100%,
-    above: 0.45em,
-    below: 0.45em,
+  // Keep display spacing on the native equation block, without nested wrappers.
+  show math.equation.where(block: true): set block(
+    above: 1em,
+    below: 1em,
     breakable: false,
-  )[#align(center, it)]
+  )
+  // Multiline equation rows have their own rhythm, independent of CJK body leading.
+  show math.equation.where(block: true): set par(leading: 0.5em)
 
   set table(
     inset: (x: 8pt, y: 5.5pt),
@@ -135,21 +161,25 @@
     },
   )
   show table: it => block(width: 100%, above: 0.85em, below: 0.85em)[#it]
-  show table.cell: set text(size: 8.4pt)
-  show table.cell: set par(first-line-indent: 0pt, justify: false, leading: line-leading, spacing: 0pt)
-  show table.cell.where(y: 0): set text(weight: "semibold")
+  show table.cell: set text(size: 9pt)
+  show table.cell: set par(first-line-indent: 0pt, justify: false, leading: leading-for(1.5, size: 9pt), spacing: 0pt)
+  show table.cell.where(y: 0): set text(font: heading-fonts, weight: 500)
 
+  show figure.where(kind: table): set block(breakable: true)
   show figure: it => block(
     width: 100%,
     above: 0.75em,
     below: 0.75em,
-    breakable: false,
+    breakable: it.kind == table,
   )[#align(center, it)]
-  show figure.caption: set text(size: 7.8pt, fill: muted)
-  show figure.caption: set par(first-line-indent: 0pt, justify: false, leading: 0.4em)
+  show figure.caption: set text(size: 8.5pt, fill: muted)
+  show figure.caption: set par(first-line-indent: 0pt, justify: false, leading: leading-for(1.5, size: 8.5pt))
 
   show quote.where(block: true): set par(first-line-indent: (amount: 2em, all: true), leading: line-leading)
-  show footnote.entry: set text(size: 7.7pt, fill: muted)
+  show footnote.entry: set text(size: 8.5pt, fill: muted)
+  show footnote.entry: set par(first-line-indent: 0pt, leading: leading-for(1.5, size: 8.5pt))
+  show bibliography: set text(size: 9pt)
+  show bibliography: set par(leading: leading-for(1.5, size: 9pt), spacing: 0.5em)
   show link: set text(fill: accent)
 
   body

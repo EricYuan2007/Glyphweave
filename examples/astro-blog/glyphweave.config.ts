@@ -13,6 +13,7 @@ export default defineConfig({
   typst: {
     pdf: {
       failure: pagesBase ? 'error' : 'warn',
+      template: { profile: pagesBase ? 'portable' : 'editorial' },
     },
   },
 })

@@ -31,6 +31,10 @@ export interface TypstHtmlWrapperOptions {
 
 export interface TypstPdfWrapperOptions {
   injectTemplate?: boolean
+  profile?: 'editorial' | 'portable'
+  fontSize?: number
+  latinFonts?: string[]
+  headingFonts?: string[]
   fonts?: string[]
   monoFonts?: string[]
   lang?: string

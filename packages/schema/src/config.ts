@@ -28,6 +28,37 @@ export const PostMetadataSchema = z.object({
   canonicalUrl: z.string().url().nullable().optional().default(null),
 })
 
+// Resolve profile defaults once; explicit font choices remain authoritative.
+export const PdfTemplateSchema = z
+  .object({
+    enabled: z.boolean().default(true),
+    profile: z.enum(['editorial', 'portable']).default('editorial'),
+    fonts: z.array(z.string().trim().min(1)).min(1).optional(),
+    latinFonts: z.array(z.string().trim().min(1)).default(['Libertinus Serif']),
+    headingFonts: z.array(z.string().trim().min(1)).min(1).optional(),
+    monoFonts: z.array(z.string().trim().min(1)).min(1).optional(),
+    fontSize: z.number().finite().min(8).max(14).default(10.5),
+    lang: z.string().default('zh'),
+    region: z.string().default('CN'),
+  })
+  .transform((value) => ({
+    ...value,
+    fonts:
+      value.fonts ??
+      (value.profile === 'portable'
+        ? ['Noto Serif CJK SC']
+        : ['Songti SC', 'Noto Serif CJK SC', 'STSong', 'PingFang SC']),
+    headingFonts:
+      value.headingFonts ??
+      (value.profile === 'portable'
+        ? ['Noto Sans CJK SC']
+        : ['PingFang SC', 'Noto Sans CJK SC', 'Heiti SC', 'STHeiti']),
+    monoFonts:
+      value.monoFonts ??
+      (value.profile === 'portable' ? ['DejaVu Sans Mono'] : ['Menlo', 'DejaVu Sans Mono']),
+  }))
+  .default({})
+
 export const GlyphweaveConfigSchema = z
   .object({
     content: z
@@ -52,17 +83,7 @@ export const GlyphweaveConfigSchema = z
           .object({
             enabledByDefault: z.boolean().default(false),
             failure: z.enum(['error', 'warn']).default('error'),
-            template: z
-              .object({
-                enabled: z.boolean().default(true),
-                fonts: z
-                  .array(z.string().min(1))
-                  .default(['Songti SC', 'STSong', 'PingFang SC', 'Noto Serif CJK SC']),
-                monoFonts: z.array(z.string().min(1)).default(['Menlo', 'DejaVu Sans Mono']),
-                lang: z.string().default('zh'),
-                region: z.string().default('CN'),
-              })
-              .default({}),
+            template: PdfTemplateSchema,
           })
           .default({}),
       })

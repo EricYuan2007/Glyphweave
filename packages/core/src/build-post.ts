@@ -58,7 +58,7 @@ export async function buildPost(
   if (pdfEnabled) {
     pdfPath = path.join(outputDir, 'article.pdf')
     try {
-      await deps.compilePdf({
+      const pdfCompile = await deps.compilePdf({
         creationTimestamp,
         binary: config.typst.binary,
         inputPath: post.sourcePath,
@@ -69,6 +69,10 @@ export async function buildPost(
         wrapper: {
           pdfTemplate: {
             injectTemplate: config.typst.pdf.template.enabled,
+            profile: config.typst.pdf.template.profile,
+            fontSize: config.typst.pdf.template.fontSize,
+            latinFonts: config.typst.pdf.template.latinFonts,
+            headingFonts: config.typst.pdf.template.headingFonts,
             fonts: config.typst.pdf.template.fonts,
             monoFonts: config.typst.pdf.template.monoFonts,
             lang: config.typst.pdf.template.lang,
@@ -76,6 +80,7 @@ export async function buildPost(
           },
         },
       })
+      adapted.diagnostics.push(...(pdfCompile.diagnostics ?? []))
     } catch (error) {
       if (config.typst.pdf.failure === 'error') throw error
       adapted.diagnostics.push({

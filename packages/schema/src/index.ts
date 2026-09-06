@@ -1,6 +1,7 @@
 export {
   GlyphweaveConfigSchema,
   PostMetadataSchema,
+  PdfTemplateSchema,
   defaultConfig,
   defineConfig,
 } from './config.js'

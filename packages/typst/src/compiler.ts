@@ -2,6 +2,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
+import { PdfTemplateSchema } from '@glyphweave/schema'
 import { parseTypstDiagnostics } from './diagnostics.js'
 import type {
   CompileInput,
@@ -11,7 +12,7 @@ import type {
 } from './types.js'
 
 export const GLYPHWEAVE_HTML_PRELUDE_VERSION = 'glyphweave-html-2'
-export const GLYPHWEAVE_PDF_PRELUDE_VERSION = 'glyphweave-pdf-1'
+export const GLYPHWEAVE_PDF_PRELUDE_VERSION = 'glyphweave-pdf-2'
 
 export async function compileTypstHtml(input: CompileInput): Promise<CompileOutput> {
   if (shouldUseHtmlWrapper(input.wrapper)) {
@@ -98,7 +99,7 @@ async function runTypstWrapper(
         '',
       ].join('\n'),
     )
-    return await runTypstProcess(
+    const result = await runTypstProcess(
       { ...input, rootPath: sourceDir },
       [
         'compile',
@@ -109,6 +110,14 @@ async function runTypstWrapper(
       sourceDir,
       format === 'html' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : GLYPHWEAVE_PDF_PRELUDE_VERSION,
     )
+    if (
+      format === 'pdf' &&
+      input.wrapper?.pdfTemplate?.profile === 'portable' &&
+      /warning: unknown font family:/i.test(result.stderr)
+    ) {
+      throw new Error(`Portable PDF profile requires its configured fonts. ${result.stderr}`)
+    }
+    return result
   } finally {
     await rm(workspace, { recursive: true, force: true })
   }
@@ -123,11 +132,16 @@ function shouldUsePdfWrapper(wrapper: TypstPdfWrapperOptions | undefined) {
 }
 
 function pdfTemplateArguments(template: TypstPdfWrapperOptions | undefined) {
+  const resolved = PdfTemplateSchema.parse(template)
   return [
-    `fonts: ${typstStringTuple(template?.fonts)}`,
-    `mono-fonts: ${typstStringTuple(template?.monoFonts)}`,
-    `lang: ${JSON.stringify(template?.lang ?? 'zh')}`,
-    `region: ${JSON.stringify(template?.region ?? 'CN')}`,
+    `font-size: ${resolved.fontSize}pt`,
+    `heading-weight: ${resolved.profile === 'portable' ? 700 : 600}`,
+    `latin-fonts: ${typstStringTuple(resolved.latinFonts)}`,
+    `heading-fonts: ${typstStringTuple(resolved.headingFonts)}`,
+    `fonts: ${typstStringTuple(resolved.fonts)}`,
+    `mono-fonts: ${typstStringTuple(resolved.monoFonts)}`,
+    `lang: ${JSON.stringify(resolved.lang)}`,
+    `region: ${JSON.stringify(resolved.region)}`,
   ].join(', ')
 }
 

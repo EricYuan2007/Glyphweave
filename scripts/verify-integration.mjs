@@ -65,3 +65,5 @@ for (const strategy of ['mathml', 'svg-frame']) {
 console.log(
   'Real Typst comments/includes/macros/references both renderers, incremental invalidation and HTML/PDF byte equivalence passed',
 )
+
+await import('./verify-pdf-typography.mjs')
