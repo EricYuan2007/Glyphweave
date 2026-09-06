@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Adopt pnpm Action 6, ESLint 10 and Vitest 4 after compatibility checks; preserve
+  underlying errors on output ownership failures. Limit automatic npm version PRs
+  to minor/patch releases and require explicit major migrations.
+
 - Upgrade the example to Astro 7.2.10 and refresh compatible dependency patches; move
   post-build Pagefind imports into a static module to avoid unresolved Vite preload markers.
 - Add the official npm vulnerability audit to CI. Integrate reviewed Actions, Execa

@@ -65,7 +65,8 @@ export async function ownOutput(rootDir: string, config: GlyphweaveConfig) {
     await writeFile(marker, expected, { flag: 'wx' })
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
-    if ((await readFile(marker, 'utf8')) !== expected) throw new Error('Output ownership mismatch')
+    if ((await readFile(marker, 'utf8')) !== expected)
+      throw new Error('Output ownership mismatch', { cause: error })
   }
   const generations = path.join(output, 'generations')
   await mkdir(generations, { recursive: true })

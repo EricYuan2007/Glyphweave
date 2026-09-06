@@ -35,6 +35,11 @@ Keep the adapter independent of core. Disk JSON is parsed with its schema. Compi
 or filesystem failures must retain context and must not corrupt the committed index.
 Public API comments document path bases, side effects and failure guarantees.
 
+Automatic npm version PRs stay within validated major versions. Major upgrades
+require a focused migration with runtime, schema, rendered-output or test-toolchain
+evidence. In particular, Node types stay aligned with the lowest supported runtime,
+Node 22. Minor, patch and security updates remain enabled.
+
 ## Issues and security
 
 For bugs, include versions, a minimal Typst fixture, configuration and a redacted
