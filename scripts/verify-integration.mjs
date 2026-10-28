@@ -2,8 +2,10 @@ import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import os from 'node:os'
 import path from 'node:path'
-import { buildAll, defaultConfig } from '../packages/core/dist/index.js'
+import { buildAll, defaultConfig, prepareNativeEngine } from '../packages/core/dist/index.js'
 import { readGlyphweaveContentIndex, readGlyphweavePost } from '../packages/astro/dist/index.js'
+// Integration fixtures live outside the workspace; prepare their engine explicitly.
+const nativeEngine = await prepareNativeEngine('glyphweave-typst-html', process.cwd())
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-real-'))
 const dir = path.join(root, 'content/typst-posts/demo')
 await mkdir(path.join(dir, 'assets'), { recursive: true })
@@ -23,7 +25,7 @@ await writeFile(
 for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   const config = defaultConfig()
   config.math.strategy = strategy
-  config.math.html.binary = path.resolve('crates/typst-html/target/release/glyphweave-typst-html')
+  config.math.html.binary = nativeEngine
   config.typst.pdf.enabledByDefault = true
   const result = await buildAll(root, config)
   assert.equal(result.cache.compiled, 1)
