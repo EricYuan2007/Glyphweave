@@ -4,6 +4,7 @@ import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 const root = process.cwd()
+process.env.PATH = `${path.join(root, 'crates/typst-html/target/release')}${path.delimiter}${process.env.PATH ?? ''}`
 const work = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-packages-'))
 const packages = ['schema', 'math-renderer', 'typst', 'html-adapter', 'core', 'astro', 'cli']
 for (const name of packages)

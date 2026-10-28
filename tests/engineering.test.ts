@@ -42,7 +42,7 @@ describe('engineering contracts', () => {
     'rejects unsafe clean/build output %s before mutations',
     async (output) => {
       const f = await fixture()
-      const config = defaultConfig()
+      const config = mathmlConfig()
       config.output.root = output
       await expect(buildAll(f.root, config, f.deps)).rejects.toThrow(/Unsafe/)
       await expect(clean(f.root, config)).rejects.toThrow(/Unsafe/)
@@ -53,7 +53,7 @@ describe('engineering contracts', () => {
   it('rejects symlink output and unowned clean', async () => {
     const f = await fixture()
     await symlink(f.postDir, path.join(f.root, 'linked'))
-    const config = defaultConfig()
+    const config = mathmlConfig()
     config.output.root = 'linked'
     await expect(buildAll(f.root, config, f.deps)).rejects.toThrow(/Unsafe/)
     await mkdir(path.join(f.root, '.glyphweave'))
@@ -70,7 +70,7 @@ describe('engineering contracts', () => {
 
   it('applies PDF defaults, explicit overrides and visible warning diagnostics', async () => {
     const f = await fixture()
-    const config = defaultConfig()
+    const config = mathmlConfig()
     config.typst.pdf.enabledByDefault = true
     expect((await buildAll(f.root, config, f.deps)).built[0].manifest.pdf.enabled).toBe(true)
     await f.metadata('pdf: false')
@@ -98,10 +98,10 @@ describe('engineering contracts', () => {
   ])('does not export old resources after %s/%s', async (visibility, status) => {
     const f = await fixture()
     await f.metadata('pdf: true')
-    await buildAll(f.root, defaultConfig(), f.deps)
+    await buildAll(f.root, mathmlConfig(), f.deps)
     await exportGlyphweaveAssets(f.root, 'public/glyphweave/posts')
     await f.metadata('pdf: true', visibility, status)
-    await buildAll(f.root, defaultConfig(), f.deps)
+    await buildAll(f.root, mathmlConfig(), f.deps)
     await exportGlyphweaveAssets(f.root, 'public/glyphweave/posts')
     await expect(
       access(path.join(f.root, 'public/glyphweave/posts/demo/article.pdf')),
@@ -111,10 +111,10 @@ describe('engineering contracts', () => {
   it('preserves the complete old snapshot after a later build failure', async () => {
     const f = await fixture()
     await f.metadata('pdf: true')
-    await buildAll(f.root, defaultConfig(), f.deps)
+    await buildAll(f.root, mathmlConfig(), f.deps)
     const before = await readGlyphweaveContentIndex(f.root)
     await expect(
-      buildAll(f.root, defaultConfig(), {
+      buildAll(f.root, mathmlConfig(), {
         ...f.deps,
         compilePdf: async () => {
           throw new Error('fail')
@@ -129,9 +129,9 @@ describe('engineering contracts', () => {
 
   it('rejects concurrent writers and never steals an existing lock', async () => {
     const f = await fixture()
-    const output = await prepareOutput(f.root, defaultConfig())
+    const output = await prepareOutput(f.root, mathmlConfig())
     await writeFile(path.join(output, '.build.lock'), 'synthetic lock')
-    await expect(buildAll(f.root, defaultConfig(), f.deps)).rejects.toThrow('locked')
+    await expect(buildAll(f.root, mathmlConfig(), f.deps)).rejects.toThrow('locked')
     await expect(clean(f.root)).rejects.toThrow('locked')
     expect(await readFile(path.join(output, '.build.lock'), 'utf8')).toBe('synthetic lock')
   })
@@ -139,7 +139,7 @@ describe('engineering contracts', () => {
   it('unlisted posts retain direct routes but do not enter listings', async () => {
     const f = await fixture()
     await f.metadata('', 'unlisted')
-    await buildAll(f.root, defaultConfig(), f.deps)
+    await buildAll(f.root, mathmlConfig(), f.deps)
     const index = await readGlyphweaveContentIndex(f.root)
     expect(publishedPosts(index)).toHaveLength(1)
     expect(publishedPosts(index, true)).toHaveLength(0)
@@ -159,8 +159,8 @@ describe('engineering contracts', () => {
 
   it('keeps literal paths in code, strips obfuscated protocols and fixes ID references', async () => {
     const f = await fixture()
-    const result = await buildAll(f.root, defaultConfig(), f.deps)
-    const outputDir = await resolvePostOutputDir(f.root, defaultConfig(), 'demo')
+    const result = await buildAll(f.root, mathmlConfig(), f.deps)
+    const outputDir = await resolvePostOutputDir(f.root, mathmlConfig(), 'demo')
     const rawHtmlPath = path.join(outputDir, 'raw.html')
     await writeFile(
       rawHtmlPath,
@@ -171,7 +171,7 @@ describe('engineering contracts', () => {
       outputDir,
       post: result.built[0].post,
       publicBasePath: '/glyphweave',
-      options: { ...defaultConfig().html, headingIds: 'stable' },
+      options: { ...mathmlConfig().html, headingIds: 'stable' },
     })
     expect(adapted.toc.map((h) => h.id)).toEqual(['a', 'a-2', 'a-2-2'])
     expect(adapted.contentHtml).toContain('href="#a"')
@@ -181,8 +181,8 @@ describe('engineering contracts', () => {
 
   it('rejects assets symlinking outside the declared directory', async () => {
     const f = await fixture()
-    const result = await buildAll(f.root, defaultConfig(), f.deps)
-    const outputDir = await resolvePostOutputDir(f.root, defaultConfig(), 'demo')
+    const result = await buildAll(f.root, mathmlConfig(), f.deps)
+    const outputDir = await resolvePostOutputDir(f.root, mathmlConfig(), 'demo')
     const rawHtmlPath = path.join(outputDir, 'raw.html')
     await writeFile(path.join(f.root, 'outside.png'), 'synthetic')
     await symlink(path.join(f.root, 'outside.png'), path.join(f.postDir, 'assets', 'link.png'))
@@ -193,7 +193,7 @@ describe('engineering contracts', () => {
         outputDir,
         post: result.built[0].post,
         publicBasePath: '/glyphweave',
-        options: defaultConfig().html,
+        options: mathmlConfig().html,
       }),
     ).rejects.toThrow('escapes')
   })
@@ -208,3 +208,9 @@ describe('engineering contracts', () => {
     await expect(readGlyphweaveContentIndex(f.root)).rejects.toThrow()
   })
 })
+
+function mathmlConfig() {
+  const config = defaultConfig()
+  config.math.strategy = 'mathml'
+  return config
+}

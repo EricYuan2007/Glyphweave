@@ -39,7 +39,7 @@ async function fixture() {
       return { outputPath, stdout: '', stderr: '' }
     },
   }
-  const config = defaultConfig()
+  const config = mathmlConfig()
   return {
     root,
     dirs,
@@ -154,3 +154,9 @@ describe('transactional incremental cache', () => {
     await expect(f.run()).rejects.toThrow('Input link escapes article')
   })
 })
+
+function mathmlConfig() {
+  const config = defaultConfig()
+  config.math.strategy = 'mathml'
+  return config
+}

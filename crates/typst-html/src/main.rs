@@ -7,7 +7,7 @@ use typst::{
     diag::{FileError, FileResult},
     foundations::Bytes,
     layout::{Frame, FrameItem, Transform},
-    syntax::{FileId, Source, VirtualRoot},
+    syntax::{FileId, Source, Span, SyntaxKind, VirtualRoot},
     visualize::{Geometry, LineCap, Paint},
 };
 use typst_as_lib::{
@@ -109,6 +109,41 @@ impl FileResolver for SafeFiles {
     fn resolve_source(&self, id: FileId) -> FileResult<Cow<'_, Source>> {
         let text = String::from_utf8(self.bytes(id)?).map_err(|_| FileError::InvalidUtf8)?;
         Ok(Cow::Owned(Source::new(id, text)))
+    }
+}
+// Source spans come from the evaluated equation, never from repr(content).
+// Preserve delimiters, comments and whitespace; macro dependencies remain authored code.
+fn equation_source(world: &dyn typst::World, span: Span) -> Option<String> {
+    let source = world.source(span.id()?).ok()?;
+    let found = source.find(span)?;
+    let mut node = &found;
+    let mut call = None;
+    loop {
+        if node.kind() == SyntaxKind::Equation {
+            return Some(source.text().get(node.range())?.to_owned());
+        }
+        if call.is_none() && node.kind() == SyntaxKind::FuncCall {
+            call = source.text().get(node.range()).map(|s| format!("#{s}"));
+        }
+        match node.parent() {
+            Some(parent) => node = parent,
+            None => return call,
+        }
+    }
+}
+fn capture_sources(elem: &mut HtmlElement, world: &dyn typst::World) {
+    if attribute(elem, "data-gw-math").is_some() {
+        let source = find_element(elem, &|e| e.tag.resolve().as_ref() == "math")
+            .and_then(|math| equation_source(world, math.span));
+        if let Some(source) = source {
+            elem.attrs
+                .push(HtmlAttr::intern("data-gw-typst-source").unwrap(), source);
+        }
+    }
+    for child in elem.children.make_mut() {
+        if let HtmlNode::Element(child) = child {
+            capture_sources(child, world);
+        }
     }
 }
 #[derive(Default)]
@@ -350,7 +385,7 @@ impl Export {
                 })?;
             let math = find_element(marker, &|e| e.tag.resolve().as_ref() == "math")
                 .ok_or_else(|| anyhow!("Equation did not produce mathematical semantics"))?;
-            let value = json!({"math":semantic_node(math,0)?,"alt":attribute(marker,"aria-label"),"lang":attribute(marker,"lang").unwrap_or_else(||"en".into())});
+            let value = json!({"source":attribute(elem,"data-gw-typst-source"),"math":semantic_node(math,0)?,"alt":attribute(marker,"aria-label"),"lang":attribute(marker,"lang").unwrap_or_else(||"en".into())});
             elem.children.retain(|n| match n {
                 HtmlNode::Element(e) => {
                     find_element(e, &|c| attribute(c, "data-gw-semantic").is_some()).is_none()
@@ -418,10 +453,14 @@ fn run() -> Result<()> {
         .build();
     let result = engine
         .with_world(relative.as_str(), |world| {
-            typst::compile::<HtmlDocument>(&FixedWorld {
+            let mut result = typst::compile::<HtmlDocument>(&FixedWorld {
                 inner: world,
                 epoch,
-            })
+            });
+            if let Ok(doc) = &mut result.output {
+                capture_sources(doc.root_mut(), world);
+            }
+            result
         })
         .map_err(|e| anyhow!("{e:?}"))?;
     for warning in &result.warnings {

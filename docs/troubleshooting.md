@@ -98,6 +98,6 @@ pnpm glyphweave doctor
 
 ## Formulas are missing or misaligned
 
-Check `.glyphweave/logs/<slug>.html.log` and the manifest's `capture.math` section. The default `mathml` mode should report matching `sourceFormulaCount` and `renderedCount`. Use `svg-frame` only when cross-browser visual consistency is more important than selectable, semantic formulas.
+Check `.glyphweave/logs/<slug>.html.log` and the manifest's `capture.math` section. The explicit `mathml` mode should report matching `sourceFormulaCount` and `renderedCount`. The default `html-frame` mode uses compiler-owned layout while retaining accessible MathML and selectable Typst source. See native-math-renderer.md for engine setup.
 
 See [migration notes](migration.md) for current output and configuration contracts.

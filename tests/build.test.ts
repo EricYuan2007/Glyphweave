@@ -27,7 +27,7 @@ describe('build pipeline', () => {
     )
 
     const pdfInputs: CompileInput[] = []
-    const result = await buildAll(root, defaultConfig(), {
+    const result = await buildAll(root, mathmlConfig(), {
       typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(outputPath, '<body><h1>Basic Post</h1><p>Searchable body.</p></body>')
@@ -77,19 +77,19 @@ describe('build pipeline', () => {
     })
     expect(
       await readFile(
-        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'content.html'),
+        path.join(await resolvePostOutputDir(root, mathmlConfig(), 'basic-post'), 'content.html'),
         'utf-8',
       ),
     ).toContain('Searchable body')
     expect(
       await readFile(
-        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'toc.json'),
+        path.join(await resolvePostOutputDir(root, mathmlConfig(), 'basic-post'), 'toc.json'),
         'utf-8',
       ),
     ).toContain('Basic Post')
     expect(
       await readFile(
-        path.join(await resolvePostOutputDir(root, defaultConfig(), 'basic-post'), 'manifest.json'),
+        path.join(await resolvePostOutputDir(root, mathmlConfig(), 'basic-post'), 'manifest.json'),
         'utf-8',
       ),
     ).toContain('typst 0.15.0')
@@ -113,7 +113,7 @@ describe('build pipeline', () => {
       ].join('\n'),
     )
 
-    await buildAll(root, defaultConfig(), {
+    await buildAll(root, mathmlConfig(), {
       typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(
@@ -138,7 +138,7 @@ describe('build pipeline', () => {
 
     const manifest = JSON.parse(
       await readFile(
-        path.join(await resolvePostOutputDir(root, defaultConfig(), 'math-post'), 'manifest.json'),
+        path.join(await resolvePostOutputDir(root, mathmlConfig(), 'math-post'), 'manifest.json'),
         'utf-8',
       ),
     )
@@ -187,7 +187,7 @@ describe('build pipeline', () => {
     await writePost('private-post', 'published', 'private')
     await writePost('archived-post', 'archived', 'public')
 
-    const result = await buildAll(root, defaultConfig(), {
+    const result = await buildAll(root, mathmlConfig(), {
       typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
       compileHtml: async ({ outputPath }) => {
         await writeFile(outputPath, '<body><h1>Post</h1></body>')
@@ -225,7 +225,7 @@ describe('build pipeline', () => {
       ].join('\n'),
     )
 
-    const config = defaultConfig()
+    const config = mathmlConfig()
     config.typst.pdf.failure = 'warn'
 
     await buildAll(root, config, {
@@ -241,12 +241,12 @@ describe('build pipeline', () => {
 
     const manifest = JSON.parse(
       await readFile(
-        path.join(await resolvePostOutputDir(root, defaultConfig(), 'pdf-warn'), 'manifest.json'),
+        path.join(await resolvePostOutputDir(root, mathmlConfig(), 'pdf-warn'), 'manifest.json'),
         'utf-8',
       ),
     )
     const content = await readFile(
-      path.join(await resolvePostOutputDir(root, defaultConfig(), 'pdf-warn'), 'content.html'),
+      path.join(await resolvePostOutputDir(root, mathmlConfig(), 'pdf-warn'), 'content.html'),
       'utf-8',
     )
     expect(manifest.pdf.enabled).toBe(false)
@@ -271,7 +271,7 @@ describe('build pipeline', () => {
     )
 
     await expect(
-      buildAll(root, defaultConfig(), {
+      buildAll(root, mathmlConfig(), {
         typstInfo: async () => ({ binary: 'typst', version: 'typst 0.15.0' }),
         compileHtml: async ({ outputPath }) => {
           await writeFile(outputPath, '<body><p>Missing formula.</p></body>')
@@ -297,7 +297,7 @@ describe('build pipeline', () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-old-typst-'))
 
     await expect(
-      buildAll(root, defaultConfig(), {
+      buildAll(root, mathmlConfig(), {
         typstInfo: async () => ({ binary: 'typst', version: 'typst 0.14.2' }),
         compileHtml: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
         compilePdf: async ({ outputPath }) => ({ outputPath, stdout: '', stderr: '' }),
@@ -305,3 +305,9 @@ describe('build pipeline', () => {
     ).rejects.toThrow('Glyphweave requires Typst 0.15.0 or newer')
   })
 })
+
+function mathmlConfig() {
+  const config = defaultConfig()
+  config.math.strategy = 'mathml'
+  return config
+}

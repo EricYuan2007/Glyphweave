@@ -30,3 +30,16 @@ runs:
         fi
         sudo apt-get "${apt_options[@]}" install --yes --no-download "${packages[@]}"
         typst fonts
+    - name: Prepare current stable Rust for native Typst
+      shell: bash
+      run: |
+        rustup update stable --no-self-update
+        echo 'RUSTUP_TOOLCHAIN=stable' >> "$GITHUB_ENV"
+    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          crates/typst-html/target
+        key: native-${{ runner.os }}-${{ hashFiles('crates/typst-html/Cargo.lock', 'crates/typst-html/Cargo.toml', 'crates/typst-html/src/**/*.rs') }}
+        restore-keys: native-${{ runner.os }}-

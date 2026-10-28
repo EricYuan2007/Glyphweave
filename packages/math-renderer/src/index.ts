@@ -66,6 +66,7 @@ function safeSemantic(value: unknown): value is SemanticNode {
   return typeof value === 'object' && value !== null && (value as SemanticNode).tag === 'math' && check(value, 0)
 }
 const semantics = z.object({
+  source: z.string().max(100000).nullable().optional(),
   math: z.custom<SemanticNode>(safeSemantic, 'Invalid or unsafe mathematical semantics'),
   alt: z.string().max(10000).nullable(),
   lang: z.string().regex(/^[a-zA-Z]{2,8}(-[a-zA-Z0-9]{1,8})*$/),
@@ -185,7 +186,10 @@ export function renderMathLayout(input: unknown, fontUrl: string): RenderedMath 
     `.${scope}>.gw-layout-ink{position:absolute;inset:0;user-select:none}`,
     `.${scope} .gw-layout-glyph{position:absolute;left:0;top:0;display:block;margin:0;padding:0;border:0;font-family:${family}!important;font-weight:400!important;font-style:normal!important;font-synthesis:none;line-height:0!important;letter-spacing:0!important;font-feature-settings:"kern" 0,"liga" 0;white-space:pre;overflow:visible}`,
     `.${scope} .gw-layout-rule{position:absolute;display:block;margin:0;padding:0;border:0}`,
-    `.${scope}>.gw-layout-semantics{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important}`,
+    `.${scope}>.gw-layout-semantics{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;user-select:none!important}`,
+    `.${scope}>.gw-layout-source{position:absolute;inset:0;overflow:hidden;color:transparent;forced-color-adjust:none;white-space:pre;line-height:1;user-select:all;cursor:text;z-index:1}`,
+    `.${scope}.gw-math-selected{background:Highlight;background:color-mix(in srgb, Highlight 25%, transparent)}`,
+    `.${scope}>.gw-layout-source::selection{color:transparent;background:transparent}`,
     `@media(forced-colors:active){.${scope} .gw-layout-glyph{color:CanvasText!important}.${scope} .gw-layout-rule{background:CanvasText!important}}`,
   ]
   const frames = new Map<string, string>()
@@ -218,7 +222,7 @@ export function renderMathLayout(input: unknown, fontUrl: string): RenderedMath 
     }
     frames.set(
       frame.id,
-      `<span class="${scope} ${cls}" data-gw-accessible-math="true"><span class="gw-layout-ink" aria-hidden="true">${ink}</span><span class="gw-layout-semantics" lang="${escape(frame.semantics.lang)}">${semanticHtml({ ...frame.semantics.math, attrs: { ...frame.semantics.math.attrs, ...(frame.semantics.alt ? { "aria-label": frame.semantics.alt } : {}) } })}</span></span>`,
+      `<span class="${scope} ${cls}" data-gw-accessible-math="true"><span class="gw-layout-ink" aria-hidden="true" data-pagefind-ignore>${ink}</span>${frame.semantics.source ? `<span class="gw-layout-source" aria-hidden="true" data-pagefind-ignore data-gw-typst-source="${escape(frame.semantics.source)}">${escape(frame.semantics.source)}</span>` : ''}<span class="gw-layout-semantics" lang="${escape(frame.semantics.lang)}">${semanticHtml({ ...frame.semantics.math, attrs: { ...frame.semantics.math.attrs, ...(frame.semantics.alt ? { "aria-label": frame.semantics.alt } : {}) } })}</span></span>`,
     )
   }
   return { frames, css: css.join('\n'), font: stableFontBytes(font.toArrayBuffer()), digest }

@@ -20,9 +20,10 @@ await writeFile(
   path.join(dir, 'index.typ'),
   '#image("assets/diagram.svg")\n#link("assets/diagram.svg")[Download diagram]\n// $ignored$\n/* $also_ignored$ */\n= Demo <intro>\nSee #link(<intro>)[intro].\n#include "included.typ"\n#let twice(body) = [#body #body]\n#twice[$y$]\n#datetime.today().display()\n$ cases(x "if" x > 0, -x "otherwise") $\n',
 )
-for (const strategy of ['mathml', 'svg-frame']) {
+for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   const config = defaultConfig()
   config.math.strategy = strategy
+  config.math.html.binary = path.resolve('crates/typst-html/target/release/glyphweave-typst-html')
   config.typst.pdf.enabledByDefault = true
   const result = await buildAll(root, config)
   assert.equal(result.cache.compiled, 1)
@@ -44,7 +45,7 @@ for (const strategy of ['mathml', 'svg-frame']) {
       `Cache/full output mismatch for ${strategy}`,
     )
   }
-  assert.equal(warm.built[0].manifest.assets.length, 1)
+  assert.equal(warm.built[0].manifest.assets.length, strategy === 'html-frame' ? 4 : 1)
   assert.deepEqual(
     await readFile(path.join(root, warm.built[0].manifest.assets[0].output)),
     await readFile(path.join(root, full.built[0].manifest.assets[0].output)),
@@ -57,13 +58,17 @@ for (const strategy of ['mathml', 'svg-frame']) {
   const count = result.built[0].manifest.capture.math.renderedCount
   if (count !== 4) throw new Error(`Expected 4 rendered formulas, got ${count}`)
   if (!post.contentHtml.includes('href="#intro"')) throw new Error('Broken Typst cross reference')
+  if (strategy === 'html-frame') {
+    const layout = JSON.parse(await readFile(path.join(root, result.built[0].manifest.html.rawPath) + '.layout.json', 'utf8'))
+    assert.deepEqual(layout.frames.map(frame => frame.semantics.source), ['$x + 1$', '$y$', '$y$', '$ cases(x "if" x > 0, -x "otherwise") $'])
+  }
   if (strategy === 'mathml' && !post.contentHtml.includes('<mtable'))
     throw new Error('Missing cases table')
   if (strategy === 'svg-frame' && !post.contentHtml.includes('<path'))
     throw new Error('Missing SVG paths')
 }
 console.log(
-  'Real Typst comments/includes/macros/references both renderers, incremental invalidation and HTML/PDF byte equivalence passed',
+  'Real Typst comments/includes/macros/references all three renderers, incremental invalidation and HTML/PDF byte equivalence passed',
 )
 
 await import('./verify-pdf-typography.mjs')

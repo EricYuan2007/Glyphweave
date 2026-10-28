@@ -1,10 +1,10 @@
 # Native Typst HTML math backend
 
-`html-frame` is an opt-in Glyphweave backend. Typst 0.15.1 evaluates the complete document and performs mathematical layout. Glyphweave exports the resulting glyphs, rules, positions and baselines directly to static HTML/CSS and a per-article OpenType subset. It does not use MathJax, KaTeX, SVG, Canvas or browser MathML for visible mathematics. A separate, visually clipped MathML layer provides accessibility. Non-mathematical `html.frame` content still uses Typst's normal exporter.
+`html-frame` is the default Glyphweave backend. Typst 0.15.1 evaluates the complete document and performs mathematical layout. Glyphweave exports the resulting glyphs, rules, positions and baselines directly to static HTML/CSS and a per-article OpenType subset. It does not use MathJax, KaTeX, SVG, Canvas or browser MathML for visible mathematics. A separate, visually clipped MathML layer provides accessibility. Non-mathematical `html.frame` content still uses Typst's normal exporter.
 
 ## Build and enable
 
-A Rust toolchain is required to build the native executable. Development was tested with Rust 1.99.1; Cargo.lock pins the compiler libraries. The executable embeds Typst 0.15.1 and its standard fonts. The ordinary Typst CLI remains required for PDF output and environment checks and must also be 0.15.1.
+Rust 1.92 or newer is required to build the native executable. Workspace builds prepare it automatically using Cargo; subsequent builds reuse Cargo’s compilation cache. A prebuilt `glyphweave-typst-html` on PATH or `math.html.binary` avoids the Rust requirement. Development was tested with Rust 1.99.1; Cargo.lock pins the compiler libraries. The executable embeds Typst 0.15.1 and its standard fonts. The ordinary Typst CLI remains required for PDF output and environment checks and may be any compatible version from 0.15.0 onward.
 
 ```sh
 pnpm install
@@ -80,3 +80,20 @@ pnpm test:native
 ## Serif defaults
 
 The HTML and PDF preludes retain New Computer Modern Math for mathematical glyphs and stretchy delimiters. CJK conditions prefer Noto Serif CJK SC, Songti SC, then STSong. Install the chosen fonts in the build environment; explicit author font choices remain available. STIX Two Math was evaluated but not retained after visual review of its delimiter shapes.
+
+## Selecting and copying equations
+
+The native compiler records the equation’s original source span, including `$` delimiters, whitespace and comments. Selection exposes that source as ordinary text without changing glyph layout or the accessible MathML tree. No source is reconstructed from `repr(content)` or private glyph codes.
+
+For whole-formula highlighting and correct copying across prose and equations, initialize the small browser module once:
+
+```ts
+import { installMathCopy } from '@glyphweave/math-renderer/browser'
+installMathCopy()
+```
+
+The Astro example and InkStack already initialize it. A partial selection inside a formula copies the complete formula; a mixed selection preserves surrounding prose. This only handles an actual copy event and never reads the clipboard. The source overlay is excluded from assistive technology and Pagefind indexing.
+
+An equation constructed with `math.equation(...)` preserves its source expression. Macros and variables still need their original definitions when pasted elsewhere. Dynamically generated content without an attributable source span has no source overlay; mathematical accessibility remains available.
+
+`math.strategy: 'mathml'` and `'svg-frame'` remain explicit alternatives. Neither is silently substituted if the native engine cannot build.

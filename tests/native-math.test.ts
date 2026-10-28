@@ -30,7 +30,7 @@ const sample = () => ({
       baseline: 14,
       em: 10,
       text: 'x < y',
-      semantics: { math: {tag: 'math', attrs: {}, children: [{tag:'mi', attrs:{}, children:['x']}]}, alt: 'x < y', lang: 'en' },
+      semantics: { source: '$ x < y $', math: {tag: 'math', attrs: {}, children: [{tag:'mi', attrs:{}, children:['x']}]}, alt: 'x < y', lang: 'en' },
       items: [
         { kind: 'glyph', glyph: 0, x: 2, y: 14, size: 10, color: '#000000' },
         { kind: 'rect', x: 0, y: 8, width: 12, height: 0.5, color: '#000000' },
@@ -61,6 +61,17 @@ describe('native Typst HTML renderer', () => {
     bad.frames[0]!.semantics.math.tag = 'math'
     Object.assign(bad.frames[0]!.semantics.math.attrs, {onclick: 'alert(1)'})
     expect(() => renderMathLayout(bad, './math.otf')).toThrow(/semantics/)
+  })
+  it('escapes selectable source without exposing internal glyphs or duplicate accessible math', () => {
+    const layout = sample()
+    layout.frames[0]!.semantics.source = '$ "</span><script>bad</script>" $'
+    const result = renderMathLayout(layout, './math.otf')
+    const html = result.frames.get('gw-frame-0')!
+    expect(html).toContain('data-gw-typst-source="$ &quot;&lt;/span&gt;')
+    expect(html).not.toContain('<script>')
+    expect(html.match(/<math/g)).toHaveLength(1)
+    expect(html).toContain('class="gw-layout-source" aria-hidden="true"')
+    expect(result.css).toContain('user-select:all')
   })
   it('writes explicit symmetric font metrics, including deep stretchy glyphs', () => {
     const r = renderMathLayout(sample(), './math.otf')
