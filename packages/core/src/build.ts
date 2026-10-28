@@ -1,3 +1,4 @@
+import { prepareNativeEngine } from './native-engine.js'
 import { createCompilerIdentity } from '@glyphweave/typst'
 import {
   hash,
@@ -47,11 +48,14 @@ async function buildGeneration(
   const environment = identify ? await identify(config.typst.binary) : ''
   // Native HTML layout and semantics come from one embedded compiler. The CLI
   // builds PDF independently; requiring its exact patch version adds no safety.
+  const hasPublishedPosts = posts.some(post => post.metadata.visibility !== 'private' && post.metadata.status === 'published')
+  if (config.math.strategy === 'html-frame' && hasPublishedPosts)
+    config.math.html.binary = await prepareNativeEngine(config.math.html.binary, rootDir)
   const nativeEnvironment =
-    config.math.strategy === 'html-frame'
+    config.math.strategy === 'html-frame' && hasPublishedPosts
       ? await nativeRendererIdentity(config.math.html.binary, rootDir)
       : ''
-  const implementation = enabled ? await implementationIdentity(rootDir) : ''
+  const implementation = identify ? await implementationIdentity(rootDir) : ''
   const previous = enabled ? await readCache(rootDir, output) : { version: 1 as const, entries: {} }
   const next: BuildCache = { version: 1, entries: {} }
   const cache = { reused: 0, compiled: 0, enabled }
@@ -116,7 +120,7 @@ async function buildGeneration(
     )
     built.push({ post, manifest })
     if (
-      enabled &&
+      identify &&
       !manifest.diagnostics.some((diagnostic) => diagnostic.code === 'glyphweave-pdf-failed')
     ) {
       next.entries[post.metadata.slug] = {
@@ -136,7 +140,7 @@ async function buildGeneration(
       throw new Error('Article inputs changed during build; retry')
   }
   if (
-    config.math.strategy === 'html-frame' &&
+    config.math.strategy === 'html-frame' && hasPublishedPosts &&
     (await nativeRendererIdentity(config.math.html.binary, rootDir)) !== nativeEnvironment
   )
     throw new Error('Native renderer changed during build; retry')
@@ -145,7 +149,7 @@ async function buildGeneration(
     throw new Error(
       'Compiler environment changed during build (possibly a first package download); retry',
     )
-  if (enabled && (await implementationIdentity(rootDir)) !== implementation)
+  if (identify && (await implementationIdentity(rootDir)) !== implementation)
     throw new Error('Generator implementation changed during build; retry')
   await writeFile(path.join(outputRoot, 'cache.json'), JSON.stringify(next, null, 2))
   await writeContentIndex(

@@ -42,7 +42,7 @@ Optional PDF output follows the same Typst source:
 - Generate stable heading IDs and `toc.json`.
 - Reject local absolute paths and unsafe URL protocols.
 - Rewrite article-local assets into public deployment paths.
-- Render equations as native Typst 0.15 MathML by default, with explicit SVG fallback support.
+- Render equations with native Typst HTML glyph layout by default, with semantic MathML and selectable Typst source; keep MathML and SVG as explicit alternatives.
 - Normalize inline and block equations into stable, accessible `.gw-math` wrappers.
 - Emit math capture statistics and Typst HTML diagnostics in each manifest.
 - Emit per-post `manifest.json` and a site-level `.glyphweave/content-index.json`.
@@ -144,7 +144,7 @@ export default defineConfig({
     },
   },
   math: {
-    strategy: 'mathml',
+    strategy: 'html-frame',
     svg: {
       includeSourceFallback: true,
       inlineVerticalShift: '0.08em',

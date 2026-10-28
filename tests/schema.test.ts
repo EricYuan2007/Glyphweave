@@ -50,7 +50,7 @@ describe('schemas', () => {
     expect(config.output.root).toBe('.glyphweave')
     expect(config.output.publicBasePath).toBe('/glyphweave')
     expect(config.html.headingIds).toBe('preserve')
-    expect(config.math.strategy).toBe('mathml')
+    expect(config.math.strategy).toBe('html-frame')
     expect(config.math.svg.includeSourceFallback).toBe(true)
     expect(config.math.svg.inlineVerticalShift).toBe('0.08em')
     expect(config.capture.strict).toBe(true)

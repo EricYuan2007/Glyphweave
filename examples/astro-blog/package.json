@@ -14,6 +14,7 @@
     "@glyphweave/core": "workspace:*",
     "@glyphweave/schema": "workspace:*",
     "astro": "7.3.3",
-    "pagefind": "1.5.2"
+    "pagefind": "1.5.2",
+    "@glyphweave/math-renderer": "workspace:*"
   }
 }

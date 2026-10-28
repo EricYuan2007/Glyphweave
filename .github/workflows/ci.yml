@@ -44,8 +44,6 @@ jobs:
       - run: pnpm test:integration
       - run: pnpm test:package
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
-      - run: rustup update stable --no-self-update
-      - run: cargo +stable --version
       - run: pnpm test:native
         env:
           RUSTUP_TOOLCHAIN: stable

@@ -15,3 +15,6 @@ export type {
 } from '@glyphweave/schema'
 
 export { ownOutput as prepareOutput } from './output.js'
+
+export { prepareNativeEngine } from './native-engine.js'
+export { nativeRendererIdentity } from './fingerprint.js'

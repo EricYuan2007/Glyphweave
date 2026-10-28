@@ -1,6 +1,6 @@
 # Math Rendering and Capture
 
-Glyphweave requires Typst 0.15.0 or newer and uses `math.strategy: "mathml"` by default. Typst exports each equation as semantic MathML, and the HTML adapter wraps it as `.gw-math--inline` or `.gw-math--block` without adding duplicate screen-reader text.
+Glyphweave requires Typst 0.15.0 or newer and defaults to `math.strategy: "html-frame"` ([native setup and source copying](native-math-renderer.md)). The `mathml` mode described below is an explicit browser-layout alternative. Typst exports each equation as semantic MathML, and the HTML adapter wraps it as `.gw-math--inline` or `.gw-math--block` without adding duplicate screen-reader text.
 
 ```html
 <span class="gw-math gw-math--inline" data-gw-renderer="native-mathml">
@@ -63,5 +63,4 @@ Strict capture fails on compiler-confirmed content loss. Source formula counts a
 ## Native HTML backend
 
 `math.strategy: 'html-frame'` uses Typst's own layout with Glyphweave's HTML/font
-backend, without MathJax or KaTeX. This is opt-in and requires the separately built
-native compiler bridge. See [setup, geometry, validation and limitations](native-math-renderer.md).
+backend, without MathJax or KaTeX. This is the default; workspace builds prepare the native compiler bridge automatically. See [setup, geometry, validation and limitations](native-math-renderer.md).

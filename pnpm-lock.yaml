@@ -59,6 +59,9 @@ importers:
       '@glyphweave/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@glyphweave/math-renderer':
+        specifier: workspace:*
+        version: link:../../packages/math-renderer
       '@glyphweave/schema':
         specifier: workspace:*
         version: link:../../packages/schema
