@@ -52,7 +52,7 @@ export async function implementationIdentity(rootDir: string) {
     platform: process.platform,
     arch: process.arch,
   }
-  for (const name of ['schema', 'typst', 'html-adapter']) {
+  for (const name of ['schema', 'typst', 'html-adapter', 'math-renderer']) {
     const entry = require.resolve(`@glyphweave/${name}`)
     const runtime = path.dirname(entry)
     entries[name] = await snapshotTree(runtime)
@@ -73,4 +73,24 @@ export async function implementationIdentity(rootDir: string) {
     if (path.dirname(directory) === directory) break
   }
   return hash(JSON.stringify(entries))
+}
+
+/** The native bridge embeds Typst and bundled fonts; hash its actual executable bytes. */
+export async function nativeRendererIdentity(binary: string, rootDir: string) {
+  const candidates =
+    binary.includes('/') || binary.includes('\\')
+      ? [path.resolve(rootDir, binary)]
+      : (process.env.PATH ?? '')
+          .split(path.delimiter)
+          .map((directory) => path.join(directory, binary))
+  for (const file of candidates) {
+    try {
+      return hash(await readFile(file))
+    } catch (error) {
+      if (!['ENOENT', 'EISDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error
+    }
+  }
+  throw new Error(
+    `Native HTML renderer not found: ${binary}. Build it with pnpm build:native and set math.html.binary.`,
+  )
 }

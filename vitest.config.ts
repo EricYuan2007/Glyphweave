@@ -9,9 +9,12 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@glyphweave/math-renderer': new URL('./packages/math-renderer/src/index.ts', import.meta.url)
+        .pathname,
       '@glyphweave/core': new URL('./packages/core/src/index.ts', import.meta.url).pathname,
       '@glyphweave/schema': new URL('./packages/schema/src/index.ts', import.meta.url).pathname,
-      '@glyphweave/html-adapter': new URL('./packages/html-adapter/src/index.ts', import.meta.url).pathname,
+      '@glyphweave/html-adapter': new URL('./packages/html-adapter/src/index.ts', import.meta.url)
+        .pathname,
       '@glyphweave/typst': new URL('./packages/typst/src/index.ts', import.meta.url).pathname,
       '@glyphweave/astro': new URL('./packages/astro/src/index.ts', import.meta.url).pathname,
     },

@@ -94,7 +94,7 @@
   set heading(numbering: "1.1")
 
   // Text remains text: no global ASCII boxes or baseline rules inside mathematics.
-  show math.equation: set text(font: "New Computer Modern Math")
+  show math.equation: set text(font: ("New Computer Modern Math",) + fonts)
   show emph: it => {
     // CJK families often have no italic face. Preserve emphasis without fake slant.
     show regex("[\\p{Han}]+"): set text(style: "normal", weight: 700)

@@ -14,7 +14,7 @@ export const GLYPHWEAVE_VERSION: string = JSON.parse(
 ).version
 
 export function expectedPreludeVersion(config: GlyphweaveConfig) {
-  return config.math.strategy === 'svg-frame' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : null
+  return config.math.strategy !== 'mathml' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : null
 }
 
 export function expectedPdfPreludeVersion(config: GlyphweaveConfig) {

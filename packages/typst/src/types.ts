@@ -27,6 +27,7 @@ export interface CompileOutput {
 
 export interface TypstHtmlWrapperOptions {
   mathStrategy?: GlyphweaveConfig['math']['strategy']
+  nativeHtmlBinary?: string
 }
 
 export interface TypstPdfWrapperOptions {

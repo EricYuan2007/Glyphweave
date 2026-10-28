@@ -28,6 +28,9 @@
       ],
       "@glyphweave/astro": [
         "packages/astro/src/index.ts"
+      ],
+      "@glyphweave/math-renderer": [
+        "packages/math-renderer/src/index.ts"
       ]
     }
   },

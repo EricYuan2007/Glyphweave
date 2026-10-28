@@ -1,7 +1,7 @@
 import { preview } from 'astro'
 
 // Playwright owns this foreground process; the CLI may daemonize in agent environments.
-const server = await preview({ server: { host: '127.0.0.1', port: 4321 } })
+const server = await preview({ server: { host: '127.0.0.1', port: Number(process.env.GLYPHWEAVE_TEST_PORT ?? 4321) } })
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, async () => {
     await server.stop()

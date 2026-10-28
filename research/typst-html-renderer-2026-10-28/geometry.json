@@ -1,0 +1,50 @@
+[
+  {
+    "name": "chromium",
+    "width": 1100,
+    "glyphCount": 822,
+    "worstBaseline": 0.015374999999998806,
+    "worstPosition": 0.015513888888875726,
+    "worstDimension": 0.015444444444440819
+  },
+  {
+    "name": "chromium",
+    "width": 390,
+    "glyphCount": 822,
+    "worstBaseline": 0.015374999999998806,
+    "worstPosition": 0.015513888888875726,
+    "worstDimension": 0.015444444444440819
+  },
+  {
+    "name": "firefox",
+    "width": 1100,
+    "glyphCount": 822,
+    "worstBaseline": 0.008349609375002842,
+    "worstPosition": 0.008275119357620042,
+    "worstDimension": 0.008226291232659833
+  },
+  {
+    "name": "firefox",
+    "width": 390,
+    "glyphCount": 822,
+    "worstBaseline": 0.008781250000001961,
+    "worstPosition": 0.008236463758692025,
+    "worstDimension": 0.008226291232659833
+  },
+  {
+    "name": "webkit",
+    "width": 1100,
+    "glyphCount": 822,
+    "worstBaseline": 0.015374999999998806,
+    "worstPosition": 0.015513888888875726,
+    "worstDimension": 0.015444444444440819
+  },
+  {
+    "name": "webkit",
+    "width": 390,
+    "glyphCount": 822,
+    "worstBaseline": 0.015374999999998806,
+    "worstPosition": 0.015513888888875726,
+    "worstDimension": 0.015444444444440819
+  }
+]

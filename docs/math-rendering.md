@@ -59,3 +59,9 @@ Manifest schema version 2 records the selected renderer and counts MathML and SV
 ```
 
 Strict capture fails on compiler-confirmed content loss. Source formula counts are lexical hints; includes and macros can change rendered cardinality, so count mismatches are warnings.
+
+## Native HTML backend
+
+`math.strategy: 'html-frame'` uses Typst's own layout with Glyphweave's HTML/font
+backend, without MathJax or KaTeX. This is opt-in and requires the separately built
+native compiler bridge. See [setup, geometry, validation and limitations](native-math-renderer.md).

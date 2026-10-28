@@ -19,7 +19,8 @@
     "rehype-sanitize": "^6.0.0",
     "shiki": "3.23.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "@glyphweave/math-renderer": "workspace:*"
   },
   "engines": {
     "node": ">=22.18"

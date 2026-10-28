@@ -36,7 +36,12 @@ export async function buildPost(
     outputPath: rawPath,
     cwd: post.postDir,
     rootPath: post.postDir,
-    wrapper: { mathStrategy: config.math.strategy },
+    wrapper: {
+      mathStrategy: config.math.strategy,
+      nativeHtmlBinary: config.math.html.binary.includes('/')
+        ? path.resolve(rootDir, config.math.html.binary)
+        : config.math.html.binary,
+    },
     logPath: path.join(logDir, `${post.metadata.slug}.html.log`),
   })
   const adapted = await adaptTypstHtml({

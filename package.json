@@ -29,13 +29,15 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify:demo": "pnpm build:packages && pnpm glyphweave build --root examples/minimal && pnpm build:demo && pnpm pagefind:demo",
-    "build:packages": "tsc -b packages/schema packages/typst packages/html-adapter packages/core packages/astro packages/cli",
+    "build:packages": "tsc -b packages/schema packages/math-renderer packages/typst packages/html-adapter packages/core packages/astro packages/cli",
     "check:astro": "pnpm --filter example-astro-blog exec astro check",
     "test:e2e": "playwright test",
     "test:package": "pnpm build:packages && node scripts/verify-packages.mjs",
     "test:integration": "pnpm build:packages && node scripts/verify-integration.mjs",
     "benchmark": "pnpm build:packages && node scripts/benchmark.mjs",
-    "audit": "pnpm audit --registry=https://registry.npmjs.org"
+    "audit": "pnpm audit --registry=https://registry.npmjs.org",
+    "build:native": "cargo build --locked --manifest-path crates/typst-html/Cargo.toml --release",
+    "test:native": "node scripts/verify-native-math.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
@@ -49,7 +51,9 @@
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.69.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "opentype.js": "2.0.0",
+    "@types/opentype.js": "^1.3.8"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -217,6 +217,9 @@ export function sanitize(root: HastNode) {
         delete node.properties[key]
     }
   })
-  const clean = sanitizeHast(root as Root, schema)
-  Object.assign(root, clean)
+  // Sanitize a fragment root: passing <body> itself can promote its sole child
+  // and discard that child's wrapper when the adapter serializes children.
+  const clean = sanitizeHast({ type: 'root', children: root.children ?? [] } as Root, schema)
+  if (clean.type !== 'root') throw new Error('Sanitizer returned an invalid fragment')
+  root.children = clean.children as HastNode[]
 }

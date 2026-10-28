@@ -67,3 +67,13 @@ Repository source is in `packages/`, runnable samples in `examples/minimal` and
 programs in `scripts/`, and maintained guidance in `docs/`. Historical reviews live
 in Git history and PR discussions rather than competing with current documentation.
 Root dependencies are development tools; runtime dependencies belong to their packages.
+
+## Native HTML mathematical layout
+
+The optional `html-frame` strategy adds `@glyphweave/math-renderer` and the Rust
+`crates/typst-html` compiler bridge. The bridge extracts native frames before SVG
+encoding; the renderer emits static HTML/CSS and glyph-subset fonts. The adapter
+validates sidecars and inserts renderer-owned output after author sanitization.
+Generated assets remain under the current manifest and generation transaction.
+See [native math renderer](native-math-renderer.md) for the geometry contract,
+setup, cache identity, supported operations and explicit limitations.

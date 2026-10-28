@@ -59,3 +59,10 @@ Manifest schema version 2 会记录最终 renderer，并分别统计 MathML 与 
 ```
 
 严格捕获模式在编译器确认内容丢失时失败。源公式计数只是词法提示；include 和宏可能改变渲染数量，因此数量差异只记录警告。SVG 的实际构建使用编译器侧的公式表示作为辅助文本，不按源码顺序猜测对应关系。
+
+## 原生 HTML 后端
+
+新增可选的 `math.strategy: 'html-frame'`：保留 Typst 的布局计算，由 Glyphweave 输出
+HTML/CSS 与字形字体，不引入 MathJax、KaTeX，也不经过 SVG/MathML 显示公式。
+需要单独构建 Rust 编译桥；支持范围、几何规则与限制见
+[原生数学渲染后端](../native-math-renderer.md)。默认策略保持不变。

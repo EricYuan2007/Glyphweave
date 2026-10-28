@@ -13,3 +13,10 @@ test-results/
 **/content/**/index.pdf
 
 .pnpm-store/
+
+# Native Typst layout bridge
+crates/**/target/
+
+/output/
+
+/research/math-accessibility-2026-10-28/

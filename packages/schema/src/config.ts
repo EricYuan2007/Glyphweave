@@ -102,7 +102,11 @@ export const GlyphweaveConfigSchema = z
       .default({}),
     math: z
       .object({
-        strategy: z.enum(['mathml', 'svg-frame']).default('mathml'),
+        strategy: z.enum(['mathml', 'svg-frame', 'html-frame']).default('mathml'),
+        html: z
+          .object({ binary: z.string().min(1).default('glyphweave-typst-html') })
+          .strict()
+          .default({}),
         svg: z
           .object({
             includeSourceFallback: z.boolean().default(true),

@@ -11,7 +11,7 @@ import type {
   TypstPdfWrapperOptions,
 } from './types.js'
 
-export const GLYPHWEAVE_HTML_PRELUDE_VERSION = 'glyphweave-html-2'
+export const GLYPHWEAVE_HTML_PRELUDE_VERSION = 'glyphweave-html-3'
 export const GLYPHWEAVE_PDF_PRELUDE_VERSION = 'glyphweave-pdf-2'
 
 export async function compileTypstHtml(input: CompileInput): Promise<CompileOutput> {
@@ -89,7 +89,9 @@ async function runTypstWrapper(
     const relativeSource = path.relative(input.cwd, input.inputPath).replace(/\\/g, '/')
     const wrapperPath = path.join(wrapperDir, `main.${format}.typ`)
     const show =
-      format === 'html' ? name : `${name}.with(${pdfTemplateArguments(input.wrapper?.pdfTemplate)})`
+      format === 'html'
+        ? `${name}.with(semantics: ${input.wrapper?.mathStrategy === 'html-frame' ? 'true' : 'false'})`
+        : `${name}.with(${pdfTemplateArguments(input.wrapper?.pdfTemplate)})`
     await writeFile(
       wrapperPath,
       [
@@ -99,17 +101,20 @@ async function runTypstWrapper(
         '',
       ].join('\n'),
     )
-    const result = await runTypstProcess(
-      { ...input, rootPath: sourceDir },
-      [
-        'compile',
-        ...(format === 'html' ? ['--features', 'html', '--format', 'html'] : []),
-        wrapperPath,
-        input.outputPath,
-      ],
-      sourceDir,
-      format === 'html' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : GLYPHWEAVE_PDF_PRELUDE_VERSION,
-    )
+    const result =
+      format === 'html' && input.wrapper?.mathStrategy === 'html-frame'
+        ? await runNativeHtml(input, sourceDir, wrapperPath)
+        : await runTypstProcess(
+            { ...input, rootPath: sourceDir },
+            [
+              'compile',
+              ...(format === 'html' ? ['--features', 'html', '--format', 'html'] : []),
+              wrapperPath,
+              input.outputPath,
+            ],
+            sourceDir,
+            format === 'html' ? GLYPHWEAVE_HTML_PRELUDE_VERSION : GLYPHWEAVE_PDF_PRELUDE_VERSION,
+          )
     if (
       format === 'pdf' &&
       input.wrapper?.pdfTemplate?.profile === 'portable' &&
@@ -124,7 +129,7 @@ async function runTypstWrapper(
 }
 
 function shouldUseHtmlWrapper(wrapper: TypstHtmlWrapperOptions | undefined) {
-  return wrapper?.mathStrategy === 'svg-frame'
+  return wrapper?.mathStrategy === 'svg-frame' || wrapper?.mathStrategy === 'html-frame'
 }
 
 function shouldUsePdfWrapper(wrapper: TypstPdfWrapperOptions | undefined) {
@@ -150,4 +155,34 @@ function typstStringTuple(values: string[] | undefined) {
   if (safeValues.length === 0) return '()'
   if (safeValues.length === 1) return `(${JSON.stringify(safeValues[0])},)`
   return `(${safeValues.map((value) => JSON.stringify(value)).join(', ')})`
+}
+
+async function runNativeHtml(
+  input: CompileInput,
+  root: string,
+  source: string,
+): Promise<CompileOutput> {
+  await mkdir(path.dirname(input.outputPath), { recursive: true })
+  const result = await execa(
+    input.wrapper?.nativeHtmlBinary ?? 'glyphweave-typst-html',
+    [root, source, input.outputPath, String(input.creationTimestamp ?? 0)],
+    {
+      cwd: input.cwd,
+      timeout: input.timeoutMs ?? 60_000,
+      reject: false,
+    },
+  )
+  if (input.logPath) {
+    await mkdir(path.dirname(input.logPath), { recursive: true })
+    await writeFile(input.logPath, [result.stdout, result.stderr].join('\n'))
+  }
+  if (result.exitCode !== 0)
+    throw new Error(result.stderr || `Native HTML compiler exited ${result.exitCode}`)
+  return {
+    outputPath: input.outputPath,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    diagnostics: parseTypstDiagnostics(result.stderr),
+    preludeVersion: GLYPHWEAVE_HTML_PRELUDE_VERSION,
+  }
 }

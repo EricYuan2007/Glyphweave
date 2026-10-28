@@ -24,6 +24,7 @@ export function createCaptureReport(
   input: {
     sourceFormulaCount: number
     nativeMathml: number
+    typstFrameHtml?: number
     typstFrameSvg: number
     sourceFallbacks: number
     diagnostics: GlyphweaveDiagnostic[]
@@ -42,15 +43,18 @@ export function createCaptureReport(
   const math = {
     sourceCountMethod: 'lexical-hint' as const,
     sourceFormulaCount: input.sourceFormulaCount,
-    renderedCount: input.nativeMathml + input.typstFrameSvg,
-    total: input.nativeMathml + input.typstFrameSvg,
+    renderedCount: input.nativeMathml + input.typstFrameSvg + (input.typstFrameHtml ?? 0),
+    total: input.nativeMathml + input.typstFrameSvg + (input.typstFrameHtml ?? 0),
     inline: 0,
     block: 0,
     nativeMathml: input.nativeMathml,
     typstFrameSvg: input.typstFrameSvg,
+    typstFrameHtml: input.typstFrameHtml ?? 0,
     sourceFallbacks: input.sourceFallbacks,
     failed: 0,
-    mismatch: input.sourceFormulaCount !== input.nativeMathml + input.typstFrameSvg,
+    mismatch:
+      input.sourceFormulaCount !==
+      input.nativeMathml + input.typstFrameSvg + (input.typstFrameHtml ?? 0),
   }
   visit(root as Root, 'element', (node: HastNode) => {
     if (isHeading(node)) content.headings += 1

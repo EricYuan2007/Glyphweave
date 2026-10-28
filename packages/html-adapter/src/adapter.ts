@@ -1,3 +1,4 @@
+import { prepareNativeMath } from './native-math.js'
 import type { Root } from 'hast'
 import { readFile } from 'node:fs/promises'
 import { toHtml } from 'hast-util-to-html'
@@ -21,29 +22,44 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
   const body = extractBody(root)
   const source = await readFile(input.post.sourcePath, 'utf-8')
   const sourceFormulas = scanSourceFormulasFromText(source, input.post.sourcePath)
+  const native = await prepareNativeMath(body, input)
   const nativeMathml = normalizeNativeMathml(body)
   const mathFrameCapture = normalizeTypstFrameMath(body, sourceFormulas, input.math)
   const rewrittenAssets = await rewriteAssets(body, input)
+  if (native) rewrittenAssets.push(...native.assets)
   rewriteLinks(body)
   sanitize(body)
   normalizeHeadingIds(body, input.options.headingIds)
   const toc = extractToc(body)
   normalizeQuoteAttributions(body)
   await highlightCodeBlocks(body)
+  native?.apply(body)
 
   const diagnostics = [
     ...(input.diagnostics ?? []),
-    ...createCaptureDiagnostics(sourceFormulas, nativeMathml + mathFrameCapture.typstFrameSvg),
+    ...createCaptureDiagnostics(
+      sourceFormulas,
+      nativeMathml + mathFrameCapture.typstFrameSvg + (native?.count ?? 0),
+    ),
   ]
   const capture = createCaptureReport(body, {
     sourceFormulaCount: sourceFormulas.length,
     nativeMathml,
     typstFrameSvg: mathFrameCapture.typstFrameSvg,
+    typstFrameHtml: native?.count ?? 0,
     sourceFallbacks: mathFrameCapture.sourceFallbacks,
     diagnostics,
   })
   // Code highlighting is a trusted transform: only fixed Shiki colors and owned controls.
-  const contentHtml = toHtml({ type: 'root', children: body.children ?? [] } as Root)
+  const stylesheet = native
+    ? toHtml({
+        type: 'element',
+        tagName: 'link',
+        properties: { rel: ['stylesheet'], href: native.stylesheet },
+        children: [],
+      })
+    : ''
+  const contentHtml = stylesheet + toHtml({ type: 'root', children: body.children ?? [] } as Root)
 
   return {
     contentHtml: `<div class="${input.options.scopeClass}">${contentHtml}</div>`,

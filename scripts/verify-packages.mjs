@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process'
 
 const root = process.cwd()
 const work = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-packages-'))
-const packages = ['schema', 'typst', 'html-adapter', 'core', 'astro', 'cli']
+const packages = ['schema', 'math-renderer', 'typst', 'html-adapter', 'core', 'astro', 'cli']
 for (const name of packages)
   execFileSync(
     'pnpm',

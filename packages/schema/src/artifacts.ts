@@ -41,6 +41,7 @@ export const CaptureReportSchema = z.object({
     block: z.number().int().nonnegative(),
     nativeMathml: z.number().int().nonnegative(),
     typstFrameSvg: z.number().int().nonnegative(),
+    typstFrameHtml: z.number().int().nonnegative().default(0),
     sourceFallbacks: z.number().int().nonnegative(),
     failed: z.number().int().nonnegative(),
     mismatch: z.boolean(),
@@ -55,7 +56,7 @@ export const ManifestSchema = z.object({
   typst: z.object({
     version: z.string(),
     features: z.array(z.string()),
-    mathRenderer: z.enum(['mathml', 'svg-frame']),
+    mathRenderer: z.enum(['mathml', 'svg-frame', 'html-frame']),
     preludeVersion: z.string().nullable(),
     pdfPreludeVersion: z.string().nullable(),
   }),

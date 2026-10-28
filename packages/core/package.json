@@ -15,7 +15,8 @@
     "@glyphweave/schema": "workspace:*",
     "@glyphweave/typst": "workspace:*",
     "fast-glob": "^3.3.3",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "@glyphweave/math-renderer": "workspace:*"
   },
   "engines": {
     "node": ">=22.18"

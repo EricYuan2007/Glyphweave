@@ -1,5 +1,10 @@
 import { createCompilerIdentity } from '@glyphweave/typst'
-import { hash, implementationIdentity, snapshotTree } from './fingerprint.js'
+import {
+  hash,
+  implementationIdentity,
+  snapshotTree,
+  nativeRendererIdentity,
+} from './fingerprint.js'
 import { readCache, reusePost, type BuildCache } from './cache.js'
 import { randomUUID } from 'node:crypto'
 import { ContentIndexSchema } from '@glyphweave/schema'
@@ -40,6 +45,16 @@ async function buildGeneration(
   const identify = deps === defaultBuildDependencies ? createCompilerIdentity() : deps.cacheIdentity
   const enabled = stableConfig.cache.enabled && Boolean(identify)
   const environment = identify ? await identify(config.typst.binary) : ''
+  if (
+    config.math.strategy === 'html-frame' &&
+    !/^typst 0\.15\.1(?:\s|$)/.test(typst.version) &&
+    typst.version !== '0.15.1'
+  )
+    throw new Error('html-frame requires Typst 0.15.1 to match the native layout bridge')
+  const nativeEnvironment =
+    config.math.strategy === 'html-frame'
+      ? await nativeRendererIdentity(config.math.html.binary, rootDir)
+      : ''
   const implementation = enabled ? await implementationIdentity(rootDir) : ''
   const previous = enabled ? await readCache(rootDir, output) : { version: 1 as const, entries: {} }
   const next: BuildCache = { version: 1, entries: {} }
@@ -74,6 +89,7 @@ async function buildGeneration(
         source: post.sourcePath,
         config: { ...stableConfig, cache: undefined },
         environment,
+        nativeEnvironment,
         implementation,
         typst: typst.version,
         creationTimestamp,
@@ -123,6 +139,11 @@ async function buildGeneration(
     if (hash(JSON.stringify(await snapshotTree(directory))) !== snapshot)
       throw new Error('Article inputs changed during build; retry')
   }
+  if (
+    config.math.strategy === 'html-frame' &&
+    (await nativeRendererIdentity(config.math.html.binary, rootDir)) !== nativeEnvironment
+  )
+    throw new Error('Native renderer changed during build; retry')
   // Never publish a generation assembled from different compiler/font/package environments.
   if (identify && (await identify(config.typst.binary)) !== environment)
     throw new Error(

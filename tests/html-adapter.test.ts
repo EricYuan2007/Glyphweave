@@ -254,6 +254,7 @@ describe('HTML adapter', () => {
       options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
       math: {
         strategy: 'svg-frame',
+        html: { binary: 'glyphweave-typst-html' },
         svg: { includeSourceFallback: true, inlineVerticalShift: '0.08em' },
       },
     })
