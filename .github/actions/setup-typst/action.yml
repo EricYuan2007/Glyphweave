@@ -1,15 +1,32 @@
-name: Setup Typst and PDF tools
-description: Install the verified Linux compiler and reproducible PDF font families
+name: Setup verified Typst and PDF fonts
+description: Install pinned Typst 0.15.1 on the Ubuntu CI build runner
 runs:
   using: composite
   steps:
     - shell: bash
       run: |
         set -euo pipefail
-        archive="$RUNNER_TEMP/typst.tar.xz"
-        curl --fail --location --retry 3 https://github.com/typst/typst/releases/download/v0.15.0/typst-x86_64-unknown-linux-musl.tar.xz -o "$archive"
-        echo "59b207df01be2dab9f13e80f73d04d7ff8273ffd46b3dd1b9eef5c60f3eeabea  $archive" | sha256sum --check
-        tar -xf "$archive" -C "$RUNNER_TEMP"
-        echo "$RUNNER_TEMP/typst-x86_64-unknown-linux-musl" >> "$GITHUB_PATH"
-        sudo apt-get update
-        sudo apt-get install --yes fonts-noto-cjk fonts-dejavu-core poppler-utils
+        tool_dir="$(mktemp -d)"
+        trap 'rm -rf -- "$tool_dir"' EXIT
+        curl --fail --location --retry 3 --connect-timeout 20 --max-time 120 https://github.com/typst/typst/releases/download/v0.15.1/typst-x86_64-unknown-linux-musl.tar.xz --output "$tool_dir/typst.tar.xz"
+        printf '%s  %s\n' 'a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c' "$tool_dir/typst.tar.xz" | sha256sum --check
+        tar -xf "$tool_dir/typst.tar.xz" -C "$tool_dir"
+        sudo install "$tool_dir/typst-x86_64-unknown-linux-musl/typst" /usr/local/bin/typst
+        test "$(typst --version | awk '{print $2}')" = '0.15.1'
+        packages=(fonts-noto-cjk fonts-dejavu-core poppler-utils)
+        apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+        # Bound network-only operations; never interrupt dpkg while installing.
+        # Hosted runners' Azure mirror can stall on the large CJK font package.
+        if ! sudo timeout 120 apt-get "${apt_options[@]}" update ||
+           ! sudo timeout 180 apt-get "${apt_options[@]}" install --yes --download-only "${packages[@]}"; then
+          echo '::warning::Runner package mirror stalled; retrying the official Ubuntu archive.'
+          printf '%s\n' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' \
+            'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu noble-security main universe' > "$tool_dir/ubuntu.list"
+          apt_options+=(-o "Dir::Etc::sourcelist=$tool_dir/ubuntu.list" -o Dir::Etc::sourceparts=-)
+          sudo timeout 120 apt-get "${apt_options[@]}" update
+          sudo timeout 180 apt-get "${apt_options[@]}" install --yes --download-only "${packages[@]}"
+        fi
+        sudo apt-get "${apt_options[@]}" install --yes --no-download "${packages[@]}"
+        typst fonts

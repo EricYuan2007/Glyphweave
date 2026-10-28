@@ -45,12 +45,8 @@ async function buildGeneration(
   const identify = deps === defaultBuildDependencies ? createCompilerIdentity() : deps.cacheIdentity
   const enabled = stableConfig.cache.enabled && Boolean(identify)
   const environment = identify ? await identify(config.typst.binary) : ''
-  if (
-    config.math.strategy === 'html-frame' &&
-    !/^typst 0\.15\.1(?:\s|$)/.test(typst.version) &&
-    typst.version !== '0.15.1'
-  )
-    throw new Error('html-frame requires Typst 0.15.1 to match the native layout bridge')
+  // Native HTML layout and semantics come from one embedded compiler. The CLI
+  // builds PDF independently; requiring its exact patch version adds no safety.
   const nativeEnvironment =
     config.math.strategy === 'html-frame'
       ? await nativeRendererIdentity(config.math.html.binary, rootDir)

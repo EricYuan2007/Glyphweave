@@ -92,6 +92,8 @@ describe('Typst math helpers', () => {
       'Glyphweave requires Typst 0.15.0 or newer',
     )
     expect(() => assertSupportedTypst('typst 0.15.0')).not.toThrow()
-    expect(() => assertSupportedTypst('typst 1.0.0')).toThrow('Untested Typst version')
+    for (const version of ['0.15.1', '0.15.2', '0.16.0', '1.0.0'])
+      expect(() => assertSupportedTypst(`typst ${version}`)).not.toThrow()
+    expect(() => assertSupportedTypst('unknown')).toThrow('Unable to parse')
   })
 })
