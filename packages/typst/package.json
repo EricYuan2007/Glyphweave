@@ -11,8 +11,8 @@
     }
   },
   "dependencies": {
-    "execa": "^10.0.1",
-    "@glyphweave/schema": "workspace:*"
+    "@glyphweave/schema": "workspace:*",
+    "execa": "^10.2.1"
   },
   "engines": {
     "node": ">=22.18"

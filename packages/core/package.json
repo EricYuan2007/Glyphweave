@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@glyphweave/html-adapter": "workspace:*",
+    "@glyphweave/math-renderer": "workspace:*",
     "@glyphweave/schema": "workspace:*",
     "@glyphweave/typst": "workspace:*",
     "fast-glob": "^3.3.3",
-    "yaml": "^2.9.0",
-    "@glyphweave/math-renderer": "workspace:*"
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=22.18"

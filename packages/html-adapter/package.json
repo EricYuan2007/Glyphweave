@@ -11,6 +11,7 @@
     }
   },
   "dependencies": {
+    "@glyphweave/math-renderer": "workspace:*",
     "@glyphweave/schema": "workspace:*",
     "@glyphweave/typst": "workspace:*",
     "hast-util-sanitize": "^5.0.2",
@@ -19,8 +20,7 @@
     "rehype-sanitize": "^6.0.0",
     "shiki": "3.23.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.1.0",
-    "@glyphweave/math-renderer": "workspace:*"
+    "unist-util-visit": "^5.2.0"
   },
   "engines": {
     "node": ">=22.18"

@@ -57,7 +57,7 @@ export const PdfTemplateSchema = z
       value.monoFonts ??
       (value.profile === 'portable' ? ['DejaVu Sans Mono'] : ['Menlo', 'DejaVu Sans Mono']),
   }))
-  .default({})
+  .prefault({})
 
 export const GlyphweaveConfigSchema = z
   .object({
@@ -67,14 +67,14 @@ export const GlyphweaveConfigSchema = z
         pattern: z.string().default('*/post.yaml'),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     output: z
       .object({
         root: z.string().default('.glyphweave'),
         publicBasePath: z.string().default('/glyphweave'),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     typst: z
       .object({
         binary: z.string().default('typst'),
@@ -85,10 +85,10 @@ export const GlyphweaveConfigSchema = z
             failure: z.enum(['error', 'warn']).default('error'),
             template: PdfTemplateSchema,
           })
-          .default({}),
+          .prefault({}),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     html: z
       .object({
         sanitize: z.literal(true).default(true),
@@ -99,31 +99,31 @@ export const GlyphweaveConfigSchema = z
           .default('glyphweave-content'),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     math: z
       .object({
         strategy: z.enum(['mathml', 'svg-frame', 'html-frame']).default('mathml'),
         html: z
           .object({ binary: z.string().min(1).default('glyphweave-typst-html') })
           .strict()
-          .default({}),
+          .prefault({}),
         svg: z
           .object({
             includeSourceFallback: z.boolean().default(true),
             inlineVerticalShift: z.string().default('0.08em'),
           })
           .strict()
-          .default({}),
+          .prefault({}),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     capture: z
       .object({
         strict: z.boolean().default(true),
         report: z.literal(true).default(true),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     assets: z
       .object({
         copy: z.literal(true).default(true),
@@ -132,16 +132,16 @@ export const GlyphweaveConfigSchema = z
           .default(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.pdf']),
       })
       .strict()
-      .default({}),
+      .prefault({}),
     cache: z
       .object({
         enabled: z.boolean().default(true),
       })
       .strict()
-      .default({}),
+      .prefault({}),
   })
   .strict()
-  .default({})
+  .prefault({})
 
 export type GlyphweaveConfig = z.infer<typeof GlyphweaveConfigSchema>
 export type GlyphweavePostMetadata = z.infer<typeof PostMetadataSchema>
