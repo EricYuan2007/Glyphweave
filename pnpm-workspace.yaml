@@ -1,6 +1,9 @@
 packages:
-  - "packages/*"
-  - "examples/*"
+  - 'packages/*'
+  - 'examples/*'
 allowBuilds:
   esbuild: true
   sharp: true
+minimumReleaseAgeExclude:
+  - eslint@10.14.0
+  - hast-util-to-html@9.0.6

@@ -4,14 +4,13 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "types": ["node", "vitest/globals"],
-    "baseUrl": ".",
     "paths": {
-      "glyphweave": ["packages/glyphweave/src/build/index.ts"],
-      "glyphweave/schema": ["packages/glyphweave/src/schema/index.ts"],
-      "glyphweave/compiler": ["packages/glyphweave/src/compiler/index.ts"],
-      "glyphweave/html": ["packages/glyphweave/src/html/index.ts"],
-      "glyphweave/math": ["packages/glyphweave/src/math/index.ts"],
-      "glyphweave/artifacts": ["packages/glyphweave/src/artifacts/index.ts"]
+      "glyphweave": ["./packages/glyphweave/src/build/index.ts"],
+      "glyphweave/schema": ["./packages/glyphweave/src/schema/index.ts"],
+      "glyphweave/compiler": ["./packages/glyphweave/src/compiler/index.ts"],
+      "glyphweave/html": ["./packages/glyphweave/src/html/index.ts"],
+      "glyphweave/math": ["./packages/glyphweave/src/math/index.ts"],
+      "glyphweave/artifacts": ["./packages/glyphweave/src/artifacts/index.ts"]
     }
   },
   "include": ["packages/**/*.ts", "tests/**/*.ts", "examples/**/*.ts", "eslint.config.js"],

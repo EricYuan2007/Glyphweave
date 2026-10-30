@@ -4,7 +4,7 @@
 
 Security fixes target the current development line. Until a stable release is
 published, consumers should use the latest reviewed commit; older snapshots do
-not receive separate maintenance. Tested compiler compatibility is Typst 0.15.0.
+not receive separate maintenance. The tested compiler is Typst 0.15.1.
 
 ## Reporting a vulnerability
 

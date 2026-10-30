@@ -10,7 +10,7 @@
     "pagefind": "pagefind --site dist"
   },
   "dependencies": {
-    "astro": "7.3.3",
+    "astro": "7.4.4",
     "pagefind": "1.5.2",
     "glyphweave": "workspace:*"
   }

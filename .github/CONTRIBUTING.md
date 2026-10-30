@@ -5,7 +5,7 @@ Thank you for contributing. Read the [code of conduct](CODE_OF_CONDUCT.md) and
 
 ## Development
 
-Use Node.js 22.18+, pnpm 12.16.1 and Typst 0.15.0. Clone the repository, then run:
+Use Node.js 26.13+, pnpm 12.16.1 and Typst 0.15.1. Clone the repository, then run:
 
 ```sh
 pnpm install --frozen-lockfile
@@ -37,7 +37,10 @@ Public API comments document path bases, side effects and failure guarantees.
 Automatic npm version PRs stay within validated major versions. Major upgrades
 require a focused migration with runtime, schema, rendered-output or test-toolchain
 evidence. In particular, Node types stay aligned with the lowest supported runtime,
-Node 22. Minor, patch and security updates remain enabled.
+Node 26. TypeScript 6 is the current supported compiler line: the ESLint and Astro
+check integrations do not yet support TypeScript 7, which removes the JavaScript
+compiler API. Upgrade that stack together once its upstream APIs support it.
+Minor, patch and security updates remain enabled.
 
 ## Issues and security
 

@@ -49,7 +49,7 @@ Optional PDF output follows the same Typst source:
 
 ## Requirements
 
-- Node.js 22.18 or newer.
+- Node.js 26.13 or newer.
 - pnpm 12.16.1 or newer.
 - Typst CLI 0.15.0 or newer for real Typst compilation.
 
@@ -256,7 +256,7 @@ The framework CI validates packages; personal blog deployment belongs to the sep
 
 `glyphweave` owns compiler orchestration, schema, HTML/math rendering and artifact IO. Its public subpaths are `/schema`, `/compiler`, `/html`, `/math`, `/artifacts`, `/browser`, and `/styles/*`. `@glyphweave/astro` provides `glyphweaveLoader` with a host transform callback; it does not impose publication policy.
 
-Native Rust code is split into `world`, `source` and `frame` modules. `pnpm build:native` creates the executable for the current platform; `pnpm pack` includes it in a platform-restricted archive. Consumers need Typst but never need Cargo for a normal build. Local archives are not registry releases.
+Native Rust code is split into `world`, `source` and `frame` modules. `pnpm build:native` creates the executable for the current platform; `pnpm pack:packages` includes it in a platform-restricted archive. Consumers need Typst but never need Cargo for a normal build. Local archives are not registry releases.
 
 CI runs the normal checks on changes. Integration, native and browser validation plus platform archive creation run on manual dispatch; no workflow deploys the example automatically.
 
