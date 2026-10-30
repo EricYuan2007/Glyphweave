@@ -96,7 +96,7 @@ export const ContentIndexSchema = z.object({
       visibility: z.enum(['public', 'unlisted', 'private']),
       language: z.string(),
       cover: z.string().nullable().default(null),
-      canonicalUrl: z.string().url().nullable().default(null),
+      canonicalUrl: z.url().nullable().default(null),
       contentHtmlPath: z.string(),
       tocPath: z.string(),
       pdfPath: z.string().nullable(),

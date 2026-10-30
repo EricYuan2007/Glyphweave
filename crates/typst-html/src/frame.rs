@@ -137,7 +137,10 @@ impl Export {
                     text.push_str(&t.text);
                     let color = paint(&t.fill)?;
                     let font = t.font.font();
-                    let digest = format!("{:x}", Sha256::digest(font.data().as_slice()));
+                    let digest = Sha256::digest(font.data().as_slice())
+                        .iter()
+                        .map(|byte| format!("{byte:02x}"))
+                        .collect::<String>();
                     let instance = format!("{}:{}:{:?}", digest, font.index(), t.font.variations());
                     if let Some(os2) = t.font.ttf().tables().os2
                         && (matches!(

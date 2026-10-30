@@ -22,10 +22,10 @@ export const PostMetadataSchema = z.object({
     .nullable()
     .optional()
     .refine((value) => value == null || !localAbsolutePathPattern.test(value), {
-      message: 'cover must not be a local absolute path',
+      error: 'cover must not be a local absolute path',
     })
     .default(null),
-  canonicalUrl: z.string().url().nullable().optional().default(null),
+  canonicalUrl: z.url().nullable().optional().default(null),
 })
 
 // Resolve profile defaults once; explicit font choices remain authoritative.
@@ -60,23 +60,21 @@ export const PdfTemplateSchema = z
   .prefault({})
 
 export const GlyphweaveConfigSchema = z
-  .object({
+  .strictObject({
     content: z
-      .object({
+      .strictObject({
         root: z.string().default('content/typst-posts'),
         pattern: z.string().default('*/post.yaml'),
       })
-      .strict()
       .prefault({}),
     output: z
-      .object({
+      .strictObject({
         root: z.string().default('.glyphweave'),
         publicBasePath: z.string().default('/glyphweave'),
       })
-      .strict()
       .prefault({}),
     typst: z
-      .object({
+      .strictObject({
         binary: z.string().default('typst'),
         pdf: z
           .object({
@@ -86,57 +84,48 @@ export const GlyphweaveConfigSchema = z
           })
           .prefault({}),
       })
-      .strict()
       .prefault({}),
     html: z
-      .object({
+      .strictObject({
         headingIds: z.enum(['preserve', 'stable']).default('preserve'),
         scopeClass: z
           .string()
           .regex(/^[a-zA-Z_][a-zA-Z0-9_-]*$/)
           .default('glyphweave-content'),
       })
-      .strict()
       .prefault({}),
     math: z
-      .object({
+      .strictObject({
         strategy: z.enum(['mathml', 'svg-frame', 'html-frame']).default('html-frame'),
         html: z
-          .object({ binary: z.string().min(1).default('glyphweave-typst-html') })
-          .strict()
+          .strictObject({ binary: z.string().min(1).default('glyphweave-typst-html') })
           .prefault({}),
         svg: z
-          .object({
+          .strictObject({
             includeSourceFallback: z.boolean().default(true),
             inlineVerticalShift: z.string().default('0.08em'),
           })
-          .strict()
           .prefault({}),
       })
-      .strict()
       .prefault({}),
     capture: z
-      .object({
+      .strictObject({
         strict: z.boolean().default(true),
       })
-      .strict()
       .prefault({}),
     assets: z
-      .object({
+      .strictObject({
         allowedExtensions: z
           .array(z.string())
           .default(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.pdf']),
       })
-      .strict()
       .prefault({}),
     cache: z
-      .object({
+      .strictObject({
         enabled: z.boolean().default(true),
       })
-      .strict()
       .prefault({}),
   })
-  .strict()
   .prefault({})
 
 export type GlyphweaveConfig = z.infer<typeof GlyphweaveConfigSchema>

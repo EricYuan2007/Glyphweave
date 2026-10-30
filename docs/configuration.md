@@ -16,4 +16,4 @@ Sanitization, asset rewriting, capture reports and Typst HTML features are alway
 
 `buildDocuments(root, config, loadDocuments)` lets the host choose documents directly, including private drafts for a local preview. `buildAll` applies standalone publication policy. Always consume paths from the committed content index.
 
-Normal installation and compilation never invoke Cargo. Build the native engine explicitly with `pnpm build:native`, then make a platform archive with `pnpm pack`.
+Normal installation and compilation never invoke Cargo. Build the native engine explicitly with `pnpm build:native`, then make a platform archive with `pnpm pack:packages`.

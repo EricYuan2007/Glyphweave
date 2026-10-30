@@ -6,43 +6,37 @@ const number = z.number().finite().min(-1e7).max(1e7)
 const positive = number.refine((n) => n > 0)
 const color = z.string().regex(/^#[0-9a-f]{6}([0-9a-f]{2})?$/i)
 const command = z.discriminatedUnion('op', [
-  z.object({ op: z.literal('M'), x: number, y: number }).strict(),
-  z.object({ op: z.literal('L'), x: number, y: number }).strict(),
-  z.object({ op: z.literal('Q'), x1: number, y1: number, x: number, y: number }).strict(),
-  z
-    .object({
-      op: z.literal('C'),
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-      x: number,
-      y: number,
-    })
-    .strict(),
-  z.object({ op: z.literal('Z') }).strict(),
+  z.strictObject({ op: z.literal('M'), x: number, y: number }),
+  z.strictObject({ op: z.literal('L'), x: number, y: number }),
+  z.strictObject({ op: z.literal('Q'), x1: number, y1: number, x: number, y: number }),
+  z.strictObject({
+    op: z.literal('C'),
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    x: number,
+    y: number,
+  }),
+  z.strictObject({ op: z.literal('Z') }),
 ])
 const item = z.discriminatedUnion('kind', [
-  z
-    .object({
-      kind: z.literal('glyph'),
-      glyph: z.number().int().nonnegative(),
-      x: number,
-      y: number,
-      size: positive,
-      color,
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('rect'),
-      x: number,
-      y: number,
-      width: number.nonnegative(),
-      height: number.nonnegative(),
-      color,
-    })
-    .strict(),
+  z.strictObject({
+    kind: z.literal('glyph'),
+    glyph: z.number().int().nonnegative(),
+    x: number,
+    y: number,
+    size: positive,
+    color,
+  }),
+  z.strictObject({
+    kind: z.literal('rect'),
+    x: number,
+    y: number,
+    width: number.nonnegative(),
+    height: number.nonnegative(),
+    color,
+  }),
 ])
 export interface SemanticNode {
   tag: string
@@ -86,14 +80,12 @@ function safeSemantic(value: unknown): value is SemanticNode {
     check(value, 0)
   )
 }
-const semantics = z
-  .object({
-    source: z.string().max(100000).nullable().optional(),
-    math: z.custom<SemanticNode>(safeSemantic, 'Invalid or unsafe mathematical semantics'),
-    alt: z.string().max(10000).nullable(),
-    lang: z.string().regex(/^[a-zA-Z]{2,8}(-[a-zA-Z0-9]{1,8})*$/),
-  })
-  .strict()
+const semantics = z.strictObject({
+  source: z.string().max(100000).nullable().optional(),
+  math: z.custom<SemanticNode>(safeSemantic, 'Invalid or unsafe mathematical semantics'),
+  alt: z.string().max(10000).nullable(),
+  lang: z.string().regex(/^[a-zA-Z]{2,8}(-[a-zA-Z0-9]{1,8})*$/),
+})
 function semanticHtml(node: SemanticNode): string {
   return `<${node.tag}${Object.entries(node.attrs)
     .map(([k, v]) => ` ${k}="${escape(v)}"`)
@@ -102,34 +94,28 @@ function semanticHtml(node: SemanticNode): string {
     )}>${node.children.map((c) => (typeof c === 'string' ? escape(c) : semanticHtml(c))).join('')}</${node.tag}>`
 }
 /** Coordinates are Typst points. Glyph outlines use a 1000-unit, Y-up font grid. */
-export const LayoutSchema = z
-  .object({
-    version: z.literal(2),
-    compiler: z.literal('typst-0.15.1'),
-    glyphs: z
-      .array(
-        z.object({ key: z.string().max(300), commands: z.array(command).max(100000) }).strict(),
-      )
-      .max(6000),
-    frames: z
-      .array(
-        z
-          .object({
-            id: z.string().regex(/^gw-frame-[0-9]+$/),
-            width: number.nonnegative(),
-            height: number.nonnegative(),
-            baseline: number,
-            em: positive,
-            text: z.string().max(100000),
-            semantics,
-            items: z.array(item).max(100000),
-          })
-          .strict(),
-      )
-      .max(10000),
-    fonts: z.array(z.object({ family: z.string(), license: z.string() }).strict()).max(500),
-  })
-  .strict()
+export const LayoutSchema = z.strictObject({
+  version: z.literal(2),
+  compiler: z.literal('typst-0.15.1'),
+  glyphs: z
+    .array(z.strictObject({ key: z.string().max(300), commands: z.array(command).max(100000) }))
+    .max(6000),
+  frames: z
+    .array(
+      z.strictObject({
+        id: z.string().regex(/^gw-frame-[0-9]+$/),
+        width: number.nonnegative(),
+        height: number.nonnegative(),
+        baseline: number,
+        em: positive,
+        text: z.string().max(100000),
+        semantics,
+        items: z.array(item).max(100000),
+      }),
+    )
+    .max(10000),
+  fonts: z.array(z.strictObject({ family: z.string(), license: z.string() })).max(500),
+})
 export type MathLayout = z.infer<typeof LayoutSchema>
 
 const escape = (s: string) =>

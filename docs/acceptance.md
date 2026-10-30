@@ -1,6 +1,6 @@
 # Acceptance
 
-Run these from a clean checkout with Node 22.18+, pnpm 12.16.1 and Typst 0.15.0:
+Run these from a clean checkout with Node 26.13+, pnpm 12.16.1 and Typst 0.15.1:
 
 ```sh
 pnpm install --frozen-lockfile

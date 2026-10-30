@@ -10,9 +10,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 typst = "=0.15.1"
 typst-html = "=0.15.1"
-typst-as-lib = { version = "=0.16.0", features = ["typst-kit-fonts", "typst-html", "typst-kit-embed-fonts"] }
+typst-as-lib = { version = "=0.17.0", features = ["typst-kit-fonts", "typst-html", "typst-kit-embed-fonts"] }
 ttf-parser = "0.25"
-sha2 = "0.10"
+sha2 = "0.11"
 chrono = "0.4"
 
 [profile.dev]

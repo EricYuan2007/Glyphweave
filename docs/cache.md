@@ -55,5 +55,5 @@ installed tarballs and reuse across CLI processes. `pnpm benchmark 100` measures
 warm, one-article change and forced builds, including environment hashing. Its simple
 formula fixture is a reproducible comparison, not a general throughput guarantee.
 
-Supported validation targets are Node 22.18+/24 and Typst 0.15.x on Linux/macOS.
+Supported validation targets are Node 26.13+/24 and Typst 0.15.x on Linux/macOS.
 Typst HTML export remains experimental; inspect representative content before releasing.
