@@ -1,52 +1,24 @@
 {
+  "extends": "./packages/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": [
-      "node",
-      "vitest/globals"
-    ],
+    "types": ["node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
-      "glyphweave": [
-        "packages/glyphweave/src/build/index.ts"
-      ],
-      "glyphweave/schema": [
-        "packages/glyphweave/src/schema/index.ts"
-      ],
-      "glyphweave/compiler": [
-        "packages/glyphweave/src/compiler/index.ts"
-      ],
-      "glyphweave/html": [
-        "packages/glyphweave/src/html/index.ts"
-      ],
-      "glyphweave/math": [
-        "packages/glyphweave/src/math/index.ts"
-      ],
-      "glyphweave/artifacts": [
-        "packages/glyphweave/src/artifacts/index.ts"
-      ]
+      "glyphweave": ["packages/glyphweave/src/build/index.ts"],
+      "glyphweave/schema": ["packages/glyphweave/src/schema/index.ts"],
+      "glyphweave/compiler": ["packages/glyphweave/src/compiler/index.ts"],
+      "glyphweave/html": ["packages/glyphweave/src/html/index.ts"],
+      "glyphweave/math": ["packages/glyphweave/src/math/index.ts"],
+      "glyphweave/artifacts": ["packages/glyphweave/src/artifacts/index.ts"]
     }
   },
-  "include": [
-    "packages/**/*.ts",
-    "tests/**/*.ts",
-    "examples/**/*.ts",
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "eslint.config.js"
-  ],
+  "include": ["packages/**/*.ts", "tests/**/*.ts", "examples/**/*.ts", "eslint.config.js"],
   "exclude": [
     "node_modules",
     "dist",
     ".glyphweave",
-    "examples/astro-blog/dist",
     "**/dist/**",
     "**/node_modules/**",
     "**/.inkstack/**",

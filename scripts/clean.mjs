@@ -7,8 +7,6 @@ if (args.some((arg) => !['--cache', '--dry-run'].includes(arg)))
   throw new Error('Use --cache and/or --dry-run')
 const generated = [
   'dist',
-  'test-results',
-  'playwright-report',
   '.astro',
   'examples/astro-blog/dist',
   'examples/minimal/dist',

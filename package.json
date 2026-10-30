@@ -26,12 +26,12 @@
     "check": "pnpm build:packages && pnpm lint && pnpm typecheck && pnpm check:astro && pnpm test",
     "lint": "eslint .",
     "pagefind:demo": "pnpm --filter example-astro-blog pagefind",
-    "test": "vitest run",
+    "test": "vitest run --config tests/unit/config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify:demo": "pnpm build:packages && pnpm glyphweave build --root examples/minimal && pnpm build:demo && pnpm pagefind:demo",
     "build:packages": "tsc -b packages/glyphweave packages/astro",
     "check:astro": "pnpm --filter example-astro-blog exec astro check",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config tests/browser/config.ts",
     "test:package": "pnpm build:packages && node tests/integration/verify-packages.mjs",
     "test:integration": "pnpm build:packages && node tests/integration/verify-integration.mjs",
     "benchmark": "pnpm build:packages && node tests/benchmarks/benchmark.mjs",
@@ -58,13 +58,12 @@
     "typescript-eslint": "^8.72.1",
     "vitest": "^4.1.12"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
-  },
   "engines": {
     "node": ">=22.18"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false,
+    "printWidth": 100
   }
 }

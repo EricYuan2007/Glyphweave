@@ -248,9 +248,9 @@ See the [documentation index](docs/README.md), [configuration reference](docs/co
 
 ## Repository maintenance
 
-Keep maintained source in `packages/`, reusable build tools in `scripts/`, and behavioral regression fixtures in `tests/fixtures/`. Generated test output belongs in ignored `test-results/`; one-off experiments stay outside the repository. Historical research and audit reports remain available in Git history.
+Keep maintained source in `packages/`, reusable build tools in `scripts/`, and behavioral regression fixtures in `tests/fixtures/`. Generated test output belongs in ignored `dist/test-results/`; one-off experiments stay outside the repository. Historical research and audit reports remain available in Git history.
 
-Pages deploys the site artifact produced and tested by CI; it does not rebuild the demo. Native renderer regressions write only to `test-results/native-math/`.
+The framework CI validates packages; personal blog deployment belongs to the separate blog repository. Native renderer regressions write only to `dist/test-results/native-math/`.
 
 ## Package boundaries
 
@@ -269,3 +269,5 @@ CI runs the normal checks on changes. Integration, native and browser validation
 ## Consumer deployment boundary
 
 Personal blog publishing belongs to the independent private [blog repository](https://github.com/EricYuan2007/blog). This repository builds and verifies Glyphweave packages; it holds no personal blog deployment credentials and does not trigger that repository. Consumers adopt framework updates explicitly through pinned package archives.
+
+Test configuration lives with its tests in `tests/unit/config.ts` and `tests/browser/config.ts`; use `pnpm test` and `pnpm test:e2e`. Vitest reuses the TypeScript source paths, and workspace/package compiler options share `packages/tsconfig.json`. Formatting settings live in package.json; build permissions live only in pnpm-workspace.yaml. Root ESLint and TypeScript entries remain discoverable by editors.
