@@ -1,19 +1,5 @@
-# Configuration contract
+# 配置合同
 
-Glyphweave accepts only the current strict schema. There is no compatibility migration.
+Glyphweave 只接受当前严格 schema，不提供旧配置迁移。完整字段说明以[配置参考](../configuration.md)为准；本文提供中文入口，避免重复维护字段清单。
 
-- `content.root` and `content.pattern`: standalone document discovery.
-- `output.root` and `output.publicBasePath`: generation directory and public asset URL prefix.
-- `typst.binary` and `typst.pdf`: compiler and optional PDF configuration.
-- `html.headingIds`, `html.scopeClass`: HTML presentation boundary.
-- `math.strategy`: `html-frame` (default), `mathml`, or `svg-frame`.
-- `math.html.binary`: explicit native engine, or the packaged platform binary.
-- `capture.strict`: fail on unsupported or incomplete equation capture.
-- `assets.allowedExtensions`: allowed local asset suffixes.
-- `cache.enabled`: reuse verified artifacts; CLI `--no-cache` forces compilation.
-
-Sanitization, asset rewriting, capture reports and Typst HTML features are always enabled. They are not configurable fields. Unknown fields are errors.
-
-`buildDocuments(root, config, loadDocuments)` lets the host choose documents directly, including private drafts for a local preview. `buildAll` applies standalone publication policy. Always consume paths from the committed content index.
-
-Normal installation and compilation never invoke Cargo. Build the native engine explicitly with `pnpm build:native`, then make a platform archive with `pnpm pack`.
+配置未知字段会报错。公式默认使用 Typst 原生 `html-frame`，也可显式选择 `mathml` 或 `svg-frame`。PDF 可按文章启用，具体字体、模板和验证要求见 [PDF 排版](../pdf-typography.md)。
