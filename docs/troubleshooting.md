@@ -100,4 +100,4 @@ pnpm glyphweave doctor
 
 Check `.glyphweave/logs/<slug>.html.log` and the manifest's `capture.math` section. The explicit `mathml` mode should report matching `sourceFormulaCount` and `renderedCount`. The default `html-frame` mode uses compiler-owned layout while retaining accessible MathML and selectable Typst source. See native-math-renderer.md for engine setup.
 
-See [migration notes](migration.md) for current output and configuration contracts.
+See [configuration reference](configuration.md) for current output and configuration contracts.

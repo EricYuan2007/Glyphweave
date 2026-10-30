@@ -136,4 +136,4 @@ pnpm check
 pnpm run verify:demo
 ```
 
-升级前请阅读[迁移说明](migration.md)，产物路径必须从索引读取。
+升级前请阅读[配置说明](configuration.md)，产物路径必须从索引读取。

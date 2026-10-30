@@ -70,7 +70,7 @@ Root dependencies are development tools; runtime dependencies belong to their pa
 
 ## Native HTML mathematical layout
 
-The optional `html-frame` strategy adds `@glyphweave/math-renderer` and the Rust
+The optional `html-frame` strategy adds `glyphweave/math` and the Rust
 `crates/typst-html` compiler bridge. The bridge extracts native frames before SVG
 encoding; the renderer emits static HTML/CSS and glyph-subset fonts. The adapter
 validates sidecars and inserts renderer-owned output after author sanitization.

@@ -9,14 +9,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@glyphweave/math-renderer': new URL('./packages/math-renderer/src/index.ts', import.meta.url)
+      'glyphweave/math': new URL('./packages/glyphweave/src/math/index.ts', import.meta.url)
         .pathname,
-      '@glyphweave/core': new URL('./packages/core/src/index.ts', import.meta.url).pathname,
-      '@glyphweave/schema': new URL('./packages/schema/src/index.ts', import.meta.url).pathname,
-      '@glyphweave/html-adapter': new URL('./packages/html-adapter/src/index.ts', import.meta.url)
+      'glyphweave/schema': new URL('./packages/glyphweave/src/schema/index.ts', import.meta.url).pathname,
+      'glyphweave/html': new URL('./packages/glyphweave/src/html/index.ts', import.meta.url)
         .pathname,
-      '@glyphweave/typst': new URL('./packages/typst/src/index.ts', import.meta.url).pathname,
-      '@glyphweave/astro': new URL('./packages/astro/src/index.ts', import.meta.url).pathname,
+      'glyphweave/compiler': new URL('./packages/glyphweave/src/compiler/index.ts', import.meta.url).pathname,
+      'glyphweave/artifacts': new URL('./packages/glyphweave/src/artifacts/index.ts', import.meta.url).pathname,
+      'glyphweave': new URL('./packages/glyphweave/src/build/index.ts', import.meta.url).pathname,
     },
   },
 })

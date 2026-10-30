@@ -2,8 +2,8 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, stat, utimes, symlink } from '
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { buildAll, resolvePostOutputDir, type BuildDependencies } from '@glyphweave/core'
-import { defaultConfig } from '@glyphweave/schema'
+import { buildAll, resolvePostOutputDir, type BuildDependencies } from 'glyphweave'
+import { defaultConfig } from 'glyphweave/schema'
 
 const roots: string[] = []
 afterEach(async () => {

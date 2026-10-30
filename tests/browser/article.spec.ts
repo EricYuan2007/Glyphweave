@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('article math, navigation and keyboard lightbox work without overflow', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  await page.goto('/posts/hnsw-search-notes/')
+  await page.goto('posts/hnsw-search-notes/')
   await expect(page.locator('math')).toHaveCount(11)
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -33,7 +33,7 @@ test('article math, navigation and keyboard lightbox work without overflow', asy
 })
 
 test('search returns a published article', async ({ page }) => {
-  await page.goto('/search/')
+  await page.goto('search/')
   await page.getByLabel('Search query').fill('HNSW')
   await page.locator('#article-search button').click()
   await expect(page.locator('#search-results a').first()).toBeVisible()

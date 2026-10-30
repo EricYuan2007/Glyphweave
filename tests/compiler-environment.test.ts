@@ -2,7 +2,7 @@ import { chmod, mkdtemp, mkdir, writeFile, rm, stat, utimes } from 'node:fs/prom
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
-import { createCompilerIdentity } from '@glyphweave/typst'
+import { createCompilerIdentity } from 'glyphweave/compiler'
 let root: string
 afterEach(async () => {
   vi.unstubAllEnvs()

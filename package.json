@@ -20,7 +20,7 @@
     "pagefind"
   ],
   "scripts": {
-    "glyphweave": "tsx packages/cli/src/index.ts",
+    "glyphweave": "tsx packages/glyphweave/src/cli/index.ts",
     "build": "pnpm build:packages",
     "build:demo": "pnpm --filter example-astro-blog build",
     "check": "pnpm build:packages && pnpm lint && pnpm typecheck && pnpm check:astro && pnpm test",
@@ -29,15 +29,16 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify:demo": "pnpm build:packages && pnpm glyphweave build --root examples/minimal && pnpm build:demo && pnpm pagefind:demo",
-    "build:packages": "tsc -b packages/schema packages/math-renderer packages/typst packages/html-adapter packages/core packages/astro packages/cli",
+    "build:packages": "tsc -b packages/glyphweave packages/astro",
     "check:astro": "pnpm --filter example-astro-blog exec astro check",
     "test:e2e": "playwright test",
     "test:package": "pnpm build:packages && node scripts/verify-packages.mjs",
     "test:integration": "pnpm build:packages && node scripts/verify-integration.mjs",
     "benchmark": "pnpm build:packages && node scripts/benchmark.mjs",
     "audit": "pnpm audit --registry=https://registry.npmjs.org",
-    "build:native": "cargo build --locked --manifest-path crates/typst-html/Cargo.toml --release",
-    "test:native": "node scripts/verify-native-math.mjs"
+    "build:native": "node scripts/build-native.mjs",
+    "test:native": "node scripts/verify-native-math.mjs",
+    "pack": "pnpm build:packages && node scripts/pack.mjs"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",

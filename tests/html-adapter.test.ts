@@ -2,8 +2,8 @@ import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { adaptTypstHtml } from '@glyphweave/html-adapter'
-import type { DiscoveredTypstPost } from '@glyphweave/core'
+import { adaptTypstHtml } from 'glyphweave/html'
+import type { DiscoveredTypstPost } from 'glyphweave'
 
 async function makePost(
   rawHtml: string,
@@ -66,6 +66,40 @@ async function makePost(
 }
 
 describe('HTML adapter', () => {
+  it('externalizes Typst embedded images only when they match owned source assets', async () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0H10V10Z"/></svg>'
+    const fixture = await makePost(`<html><body><h1>Demo</h1><p><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="diagram"></p></body></html>`)
+    await writeFile(path.join(fixture.post.assetDir!, 'diagram.svg'), svg)
+    const output = await adaptTypstHtml({ ...fixture, publicBasePath: '/InkStack/glyphweave', options: { headingIds: 'stable', scopeClass: 'glyphweave-content' } })
+    expect(output.contentHtml).toContain('src="/InkStack/glyphweave/posts/demo/assets/diagram.svg"')
+    expect(output.contentHtml).not.toContain('data:')
+    expect(await readFile(path.join(fixture.outputDir, 'assets/diagram.svg'), 'utf8')).toBe(svg)
+    expect(output.rewrittenAssets).toHaveLength(1)
+  })
+
+  it.each([
+    ['data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=', 'byte-identical source'],
+    ['data:text/html;base64,PHNjcmlwdD4=', 'encoding'],
+    ['data:image/png;base64,%%%=', 'encoding'],
+    ['data:image/png;base64,YQ', 'base64'],
+  ])('rejects unowned or malformed embedded images: %s', async (src, error) => {
+    const fixture = await makePost(`<body><img src="${src}"></body>`)
+    await expect(adaptTypstHtml({ ...fixture, publicBasePath: '/glyphweave', options: { headingIds: 'stable', scopeClass: 'glyphweave-content' } })).rejects.toThrow(error)
+  })
+
+  it('preserves safe MathML spacing without permitting arbitrary attributes', async () => {
+    const fixture = await makePost('<html><body><math><mi>x</mi><mspace width="0.2222em" height="0.1em" onmouseover="alert(1)"></mspace><mtext>if</mtext><mspace width="url(https://example.com)"></mspace></math></body></html>', 'Inline $x$.')
+    const output = await adaptTypstHtml({
+      rawHtmlPath: fixture.rawHtmlPath,
+      post: fixture.post,
+      outputDir: fixture.outputDir,
+      publicBasePath: '/glyphweave',
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
+    expect(output.contentHtml).toContain('<mspace width="0.2222em" height="0.1em"></mspace>')
+    expect(output.contentHtml).not.toContain('onmouseover')
+    expect(output.contentHtml).not.toContain('url(')
+  })
   it('keeps Typst quote attributions inside their blockquote', async () => {
     const fixture = await makePost(`<!doctype html>
       <html><body>
@@ -79,7 +113,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
     expect(output.contentHtml).toContain(
@@ -108,7 +142,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
     expect(output.toc).toEqual([
@@ -134,7 +168,7 @@ describe('HTML adapter', () => {
         post: fixture.post,
         outputDir: fixture.outputDir,
         publicBasePath: '/glyphweave',
-        options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+        options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
       }),
     ).rejects.toThrow('Local absolute path detected')
   })
@@ -153,7 +187,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
     expect(output.contentHtml).toContain(
@@ -172,7 +206,7 @@ describe('HTML adapter', () => {
         post: fixture.post,
         outputDir: fixture.outputDir,
         publicBasePath: '/glyphweave',
-        options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+        options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
       }),
     ).rejects.toThrow('Asset escapes post assets directory')
   })
@@ -198,7 +232,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
     expect(output.contentHtml).toContain(
@@ -251,7 +285,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
       math: {
         strategy: 'svg-frame',
         html: { binary: 'glyphweave-typst-html' },
@@ -291,7 +325,7 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
     expect(output.capture.content.footnotes).toBe(1)
@@ -310,14 +344,12 @@ describe('HTML adapter', () => {
       post: fixture.post,
       outputDir: fixture.outputDir,
       publicBasePath: '/glyphweave',
-      options: { sanitize: true, headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
 
-    expect(output.contentHtml).toContain('class="gw-code-block"')
     expect(output.contentHtml).toContain('class="shiki')
-    expect(output.contentHtml).toContain('data-code-language="Typst"')
-    expect(output.contentHtml).toContain('data-copy-code')
-    expect(output.contentHtml).toContain('aria-label="Copy code"')
+    expect(output.contentHtml).toContain('data-language="Typst"')
+    expect(output.contentHtml).not.toContain('data-copy-code')
     expect(output.contentHtml).toContain('#let')
   })
 })

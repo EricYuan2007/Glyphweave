@@ -3,7 +3,7 @@
 ## Users
 
 - [Quick start](../README.md) / [中文入口](../README.zh-CN.md)
-- [Migration and supported configuration](migration.md)
+- [Supported configuration](configuration.md)
 - [Astro integration](astro-integration.md)
 - [Incremental cache and reproducibility](cache.md) / [增量缓存](zh-CN/cache.md)
 - [Math rendering](math-rendering.md)

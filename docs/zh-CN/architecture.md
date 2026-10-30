@@ -19,6 +19,6 @@ published/public 进入页面、列表和搜索；published/unlisted 仅允许�
 
 HTML 使用允许列表净化，再执行受信的代码高亮与控件生成。源公式数量是词法提示，严格模式依据编译器确认的内容丢失失败。原始 HTML 和日志不部署。缓存默认启用，按内容与工具链指纹失效，命中后验证并复制到新代次；详见[增量缓存](cache.md)。
 
-参见[迁移说明](migration.md)、[安全模型](security.md)及 [ADR](../decisions/0001-build-and-publication-contract.md)。
+参见[配置说明](configuration.md)、[安全模型](security.md)及 [ADR](../decisions/0001-build-and-publication-contract.md)。
 
 core 将事务、单篇编译、缓存、指纹和输出所有权分为独立模块；Typst HTML/PDF 共用包装器的暂存与清理逻辑。根目录仅保留工程配置，基础示例位于 examples/minimal，完整站点位于 examples/astro-blog。历史评估从当前文档中移除，仍可在 Git 历史查阅。

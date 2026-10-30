@@ -1,5 +1,5 @@
 ---
-import '@glyphweave/astro/styles/glyphweave-math.css'
+import 'glyphweave/styles/glyphweave-math.css'
 import '../styles/tokens.css'
 import '../styles/base.css'
 import '../styles/content.css'
@@ -44,6 +44,6 @@ const pageTitle = title === 'Glyphweave Blog' ? title : `${title} | Glyphweave B
 </html>
 
 <script>
-  import { installMathCopy } from '@glyphweave/math-renderer/browser'
+  import { installMathCopy } from 'glyphweave/browser'
   installMathCopy()
 </script>

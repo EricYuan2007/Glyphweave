@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { GlyphweaveConfigSchema, PostMetadataSchema } from '@glyphweave/schema'
+import { GlyphweaveConfigSchema, PostMetadataSchema } from 'glyphweave/schema'
 
 describe('schemas', () => {
   it('normalizes post metadata defaults', () => {
@@ -54,7 +54,6 @@ describe('schemas', () => {
     expect(config.math.svg.includeSourceFallback).toBe(true)
     expect(config.math.svg.inlineVerticalShift).toBe('0.08em')
     expect(config.capture.strict).toBe(true)
-    expect(config.capture.report).toBe(true)
     expect(config.typst.pdf.template.enabled).toBe(true)
     expect(config.typst.pdf.template.fonts).toContain('PingFang SC')
     expect(config.typst.pdf.template.lang).toBe('zh')

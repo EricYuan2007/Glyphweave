@@ -2,15 +2,15 @@ import { access, mkdir, mkdtemp, readFile, realpath, symlink, writeFile } from '
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildAll, clean, loadConfig, prepareOutput, resolvePostOutputDir } from '@glyphweave/core'
-import { defaultConfig, GlyphweaveConfigSchema } from '@glyphweave/schema'
+import { buildAll, clean, loadConfig, prepareOutput, resolvePostOutputDir } from 'glyphweave'
+import { defaultConfig, GlyphweaveConfigSchema } from 'glyphweave/schema'
 import {
   exportGlyphweaveAssets,
   publishedPosts,
   readGlyphweaveContentIndex,
-} from '@glyphweave/astro'
-import { adaptTypstHtml } from '@glyphweave/html-adapter'
-import type { CompileInput } from '@glyphweave/typst'
+} from 'glyphweave/artifacts'
+import { adaptTypstHtml } from 'glyphweave/html'
+import type { CompileInput } from 'glyphweave/compiler'
 
 async function fixture() {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'glyphweave-regression-')))

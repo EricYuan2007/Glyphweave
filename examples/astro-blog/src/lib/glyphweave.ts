@@ -1,4 +1,4 @@
-import { publishedPosts, readGlyphweaveContentIndex, readGlyphweavePost } from '@glyphweave/astro'
+import { publishedPosts, readGlyphweaveContentIndex, readGlyphweavePost } from 'glyphweave/artifacts'
 const root = process.cwd()
 // One immutable snapshot per static build, shared by routes and listing pages.
 const snapshot = readGlyphweaveContentIndex(root)

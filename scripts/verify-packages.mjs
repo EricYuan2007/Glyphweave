@@ -4,15 +4,8 @@ import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 
 const root = process.cwd()
-process.env.PATH = `${path.join(root, 'crates/typst-html/target/release')}${path.delimiter}${process.env.PATH ?? ''}`
 const work = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-packages-'))
-const packages = ['schema', 'math-renderer', 'typst', 'html-adapter', 'core', 'astro', 'cli']
-for (const name of packages)
-  execFileSync(
-    'pnpm',
-    ['--dir', path.join(root, 'packages', name), 'pack', '--pack-destination', work],
-    { stdio: 'pipe' },
-  )
+execFileSync(process.execPath, ['scripts/pack.mjs', work], { cwd: root, stdio: 'pipe' })
 const tarballs = (await readdir(work))
   .filter((name) => name.endsWith('.tgz'))
   .map((name) => path.join(work, name))
@@ -27,12 +20,12 @@ await writeFile(
   path.join(work, 'smoke.mjs'),
   `
 import { mkdir, writeFile } from 'node:fs/promises';
-import { buildAll, defaultConfig } from '@glyphweave/core';
-import { readGlyphweaveContentIndex, exportGlyphweaveAssets } from '@glyphweave/astro';
+import { buildAll, defaultConfig } from 'glyphweave';
+import { readGlyphweaveContentIndex, exportGlyphweaveAssets } from 'glyphweave/artifacts';
 await mkdir('content/typst-posts/demo', {recursive:true});
 await writeFile('content/typst-posts/demo/post.yaml', 'title: Demo\\nslug: demo\\ndescription: Demo\\ndate: "2026-09-05"\\nstatus: published\\nvisibility: public\\npdf: true\\n');
 await writeFile('content/typst-posts/demo/index.typ', '= Demo\\nInline $x + y$.\\n');
-for (const strategy of ['mathml', 'svg-frame']) {
+for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   const config = defaultConfig(); config.math.strategy = strategy;
   await buildAll(process.cwd(), config);
   if ((await buildAll(process.cwd(), config)).cache.reused !== 1) throw new Error('Installed cache did not hit');

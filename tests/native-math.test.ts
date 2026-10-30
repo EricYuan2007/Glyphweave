@@ -3,9 +3,9 @@ import os from 'node:os'
 import path from 'node:path'
 import opentype from 'opentype.js'
 import { describe, it, expect, vi } from 'vitest'
-import { renderMathLayout } from '@glyphweave/math-renderer'
-import { adaptTypstHtml } from '@glyphweave/html-adapter'
-import { defaultConfig } from '@glyphweave/schema'
+import { renderMathLayout } from 'glyphweave/math'
+import { adaptTypstHtml } from 'glyphweave/html'
+import { defaultConfig } from 'glyphweave/schema'
 
 const sample = () => ({
   version: 2,

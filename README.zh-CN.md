@@ -1,7 +1,6 @@
 # Glyphweave
 
 [![CI](https://github.com/EricYuan2007/Glyphweave/actions/workflows/ci.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/ci.yml)
-[![Pages](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
 ![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220)
 ![Typst](https://img.shields.io/badge/Typst-0.15.x-239dad)
@@ -180,4 +179,4 @@ PDF 默认使用 10.5pt 宋体正文与 Libertinus Serif 英文，按字体校�
 
 ## 项目维护
 
-参见[文档索引](docs/README.md)、[迁移说明](docs/zh-CN/migration.md)、[贡献指南](CONTRIBUTING.md)、[安全政策](SECURITY.md)和[变更记录](CHANGELOG.md)。各包已支持编译并通过本地 tarball 验证，不代表已经发布到 npm。
+参见[文档索引](docs/README.md)、[配置说明](docs/zh-CN/configuration.md)、[贡献指南](CONTRIBUTING.md)、[安全政策](SECURITY.md)和[变更记录](CHANGELOG.md)。各包已支持编译并通过本地 tarball 验证，不代表已经发布到 npm。

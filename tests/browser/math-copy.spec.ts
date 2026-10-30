@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('native equations retain exact selectable Typst source', async ({ page }) => {
-  await page.goto('/posts/hnsw-search-notes/')
+  await page.goto('posts/hnsw-search-notes/')
   const source = page.locator('.gw-layout-source').first()
   await expect(source).toBeVisible()
   const copied = await source.evaluate(node => {
@@ -25,7 +25,7 @@ test('native equations retain exact selectable Typst source', async ({ page }) =
 })
 
 test('copying prose with equations preserves text and replaces only formula content', async ({ page }) => {
-  await page.goto('/posts/hnsw-search-notes/')
+  await page.goto('posts/hnsw-search-notes/')
   const result = await page.locator('p').filter({ has: page.locator('.gw-layout-source') }).first().evaluate(p => {
     const expected = p.cloneNode(true) as HTMLElement
     expected.querySelectorAll('.gw-layout-ink, .gw-layout-semantics').forEach(n => n.remove())
@@ -45,8 +45,10 @@ test('copying prose with equations preserves text and replaces only formula cont
 test('real pointer selection and keyboard copy put Typst on the clipboard', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'chromium', 'Clipboard read permission is Chromium-specific')
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-  await page.goto('/posts/hnsw-search-notes/')
-  const source = page.locator('.gw-layout-source').first()
+  await page.goto('posts/hnsw-search-notes/')
+  await page.evaluate(() => document.fonts.ready)
+  // Use a formula wider than the browser drag threshold; the first $q$ is only 8px.
+  const source = page.locator('.gw-layout-source').filter({ hasText: '$a+b=c$' })
   await source.scrollIntoViewIfNeeded()
   const box = (await source.boundingBox())!
   await page.mouse.move(box.x + 1, box.y + box.height / 2)
