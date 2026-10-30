@@ -50,7 +50,7 @@ Optional PDF output follows the same Typst source:
 ## Requirements
 
 - Node.js 22.18 or newer.
-- pnpm 11.1.1 or newer.
+- pnpm 12.16.1 or newer.
 - Typst CLI 0.15.0 or newer for real Typst compilation.
 
 Install Typst on macOS:

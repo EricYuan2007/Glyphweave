@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@11.1.1",
+  "packageManager": "pnpm@12.16.1",
   "description": "Build-time Typst-to-web publishing pipeline for blog-ready HTML, TOC, manifests, and optional PDFs.",
   "repository": {
     "type": "git",
