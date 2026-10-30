@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
@@ -7,59 +7,63 @@ import { buildAll, defaultConfig } from '../../packages/glyphweave/dist/build/in
 const count = Number(process.argv[2] ?? 10)
 if (!Number.isInteger(count) || count < 1 || count > 1000) throw new Error('Count must be 1..1000')
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-benchmark-'))
-for (let i = 0; i < count; i++) {
-  const dir = path.join(root, 'content/typst-posts', `post-${i}`)
-  await mkdir(dir, { recursive: true })
-  await writeFile(
-    path.join(dir, 'post.yaml'),
-    `title: Post ${i}\nslug: post-${i}\ndescription: Benchmark\ndate: "2026-09-05"\nstatus: published\nvisibility: public\n`,
-  )
-  await writeFile(
-    path.join(dir, 'index.typ'),
-    '= Benchmark\nInline $x^2+y^2=z^2$.\n$ sum_(i=1)^n i = frac(n(n+1),2) $\n',
-  )
-}
-const runs = []
-const config = defaultConfig()
-config.typst.pdf.enabledByDefault = process.argv.includes('--pdf')
-let expected
-for (const mode of ['cold', 'warm', 'single-change', 'forced']) {
-  if (mode === 'single-change')
+try {
+  for (let i = 0; i < count; i++) {
+    const dir = path.join(root, 'content/typst-posts', `post-${i}`)
+    await mkdir(dir, { recursive: true })
     await writeFile(
-      path.join(root, 'content/typst-posts/post-0/extra.typ'),
-      '// changed dependency\n',
+      path.join(dir, 'post.yaml'),
+      `title: Post ${i}\nslug: post-${i}\ndescription: Benchmark\ndate: "2026-09-05"\nstatus: published\nvisibility: public\n`,
     )
-  if (mode === 'forced') config.cache.enabled = false
-  const start = performance.now()
-  const result = await buildAll(root, config)
-  const contents = await Promise.all(
-    result.built.map((post) => readFile(path.join(root, post.manifest.html.contentPath), 'utf8')),
+    await writeFile(
+      path.join(dir, 'index.typ'),
+      '= Benchmark\nInline $x^2+y^2=z^2$.\n$ sum_(i=1)^n i = frac(n(n+1),2) $\n',
+    )
+  }
+  const runs = []
+  const config = defaultConfig()
+  config.typst.pdf.enabledByDefault = process.argv.includes('--pdf')
+  let expected
+  for (const mode of ['cold', 'warm', 'single-change', 'forced']) {
+    if (mode === 'single-change')
+      await writeFile(
+        path.join(root, 'content/typst-posts/post-0/extra.typ'),
+        '// changed dependency\n',
+      )
+    if (mode === 'forced') config.cache.enabled = false
+    const start = performance.now()
+    const result = await buildAll(root, config)
+    const contents = await Promise.all(
+      result.built.map((post) => readFile(path.join(root, post.manifest.html.contentPath), 'utf8')),
+    )
+    if (expected && JSON.stringify(contents) !== JSON.stringify(expected))
+      throw new Error('Non-equivalent rebuild')
+    expected = contents
+    const expectedCompiled = mode === 'warm' ? 0 : mode === 'single-change' ? 1 : count
+    if (result.cache.compiled !== expectedCompiled)
+      throw new Error(`Unexpected cache behavior: ${mode}`)
+    runs.push({
+      mode,
+      milliseconds: Math.round(performance.now() - start),
+      ...result.cache,
+      posts: result.built.length,
+      htmlBytes: contents.reduce((sum, value) => sum + Buffer.byteLength(value), 0),
+    })
+  }
+  console.log(
+    JSON.stringify(
+      {
+        node: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        fixture: `2 formulas per post; PDF=${config.typst.pdf.enabledByDefault}; environment and font hashing included`,
+        runs,
+        parentPeakRssBytes: process.resourceUsage().maxRSS * 1024,
+      },
+      null,
+      2,
+    ),
   )
-  if (expected && JSON.stringify(contents) !== JSON.stringify(expected))
-    throw new Error('Non-equivalent rebuild')
-  expected = contents
-  const expectedCompiled = mode === 'warm' ? 0 : mode === 'single-change' ? 1 : count
-  if (result.cache.compiled !== expectedCompiled)
-    throw new Error(`Unexpected cache behavior: ${mode}`)
-  runs.push({
-    mode,
-    milliseconds: Math.round(performance.now() - start),
-    ...result.cache,
-    posts: result.built.length,
-    htmlBytes: contents.reduce((sum, value) => sum + Buffer.byteLength(value), 0),
-  })
+} finally {
+  await rm(root, { recursive: true, force: true })
 }
-console.log(
-  JSON.stringify(
-    {
-      node: process.version,
-      platform: process.platform,
-      arch: process.arch,
-      fixture: `2 formulas per post; PDF=${config.typst.pdf.enabledByDefault}; environment and font hashing included`,
-      runs,
-      parentPeakRssBytes: process.resourceUsage().maxRSS * 1024,
-    },
-    null,
-    2,
-  ),
-)
