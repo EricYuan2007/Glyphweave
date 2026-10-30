@@ -2,8 +2,15 @@ import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import os from 'node:os'
 import path from 'node:path'
-import { buildAll, defaultConfig, prepareNativeEngine } from '../packages/glyphweave/dist/build/index.js'
-import { readGlyphweaveContentIndex, readGlyphweavePost } from '../packages/glyphweave/dist/artifacts/index.js'
+import {
+  buildAll,
+  defaultConfig,
+  prepareNativeEngine,
+} from '../../packages/glyphweave/dist/build/index.js'
+import {
+  readGlyphweaveContentIndex,
+  readGlyphweavePost,
+} from '../../packages/glyphweave/dist/artifacts/index.js'
 // Integration fixtures live outside the workspace; prepare their engine explicitly.
 const nativeEngine = await prepareNativeEngine('glyphweave-typst-html', process.cwd())
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-real-'))
@@ -61,8 +68,16 @@ for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   if (count !== 4) throw new Error(`Expected 4 rendered formulas, got ${count}`)
   if (!post.contentHtml.includes('href="#intro"')) throw new Error('Broken Typst cross reference')
   if (strategy === 'html-frame') {
-    const layout = JSON.parse(await readFile(path.join(root, result.built[0].manifest.html.rawPath) + '.layout.json', 'utf8'))
-    assert.deepEqual(layout.frames.map(frame => frame.semantics.source), ['$x + 1$', '$y$', '$y$', '$ cases(x "if" x > 0, -x "otherwise") $'])
+    const layout = JSON.parse(
+      await readFile(
+        path.join(root, result.built[0].manifest.html.rawPath) + '.layout.json',
+        'utf8',
+      ),
+    )
+    assert.deepEqual(
+      layout.frames.map((frame) => frame.semantics.source),
+      ['$x + 1$', '$y$', '$y$', '$ cases(x "if" x > 0, -x "otherwise") $'],
+    )
   }
   if (strategy === 'mathml' && !post.contentHtml.includes('<mtable'))
     throw new Error('Missing cases table')

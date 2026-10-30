@@ -244,7 +244,7 @@ Chinese:
 
 ## Project maintenance
 
-See the [documentation index](docs/README.md), [configuration reference](docs/configuration.md), [contribution guide](CONTRIBUTING.md), [security policy](SECURITY.md), [support](SUPPORT.md), and [changelog](CHANGELOG.md). Compiled packages are tested through local tarballs; this checkout does not imply a published npm release.
+See the [documentation index](docs/README.md), [configuration reference](docs/configuration.md), [contribution guide](.github/CONTRIBUTING.md), [security policy](.github/SECURITY.md), [support](.github/SUPPORT.md), and [changelog](CHANGELOG.md). Compiled packages are tested through local tarballs; this checkout does not imply a published npm release.
 
 ## Repository maintenance
 
@@ -259,3 +259,9 @@ Pages deploys the site artifact produced and tested by CI; it does not rebuild t
 Native Rust code is split into `world`, `source` and `frame` modules. `pnpm build:native` creates the executable for the current platform; `pnpm pack` includes it in a platform-restricted archive. Consumers need Typst but never need Cargo for a normal build. Local archives are not registry releases.
 
 CI runs the normal checks on changes. Integration, native and browser validation plus platform archive creation run on manual dispatch; no workflow deploys the example automatically.
+
+## Repository layout and cleanup
+
+`packages/` owns the two JavaScript packages, `crates/` owns the Rust engine, and `examples/` contains the minimal compiler input and Astro consumer. Tests live in `tests/unit`, `tests/integration`, `tests/browser`, `tests/benchmarks` and shared fixtures. `scripts/` contains native builds, packaging and cleanup. Contributor policies live in `.github/`.
+
+`pnpm clean --dry-run` lists generated outputs; `pnpm clean` removes outputs and browser reports, and `pnpm clean:cache` also removes rebuildable compiler caches and Cargo target files. Installed native binaries, source fixtures and author documents are retained.

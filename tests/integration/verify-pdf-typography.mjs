@@ -3,8 +3,8 @@ import { mkdtemp, readFile, writeFile, copyFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
-import { compileTypstPdf } from '../packages/glyphweave/dist/compiler/index.js'
-import { PdfTemplateSchema } from '../packages/glyphweave/dist/schema/index.js'
+import { compileTypstPdf } from '../../packages/glyphweave/dist/compiler/index.js'
+import { PdfTemplateSchema } from '../../packages/glyphweave/dist/schema/index.js'
 
 // Real paged rendering tests live in integration, not in the compiler-free unit suite.
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-pdf-test-'))

@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import fs from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import { chromium, firefox, webkit } from '@playwright/test'
-const root = pathToFileURL(path.resolve('test-results/native-math') + path.sep)
+const root = pathToFileURL(path.resolve('dist/test-results/native-math') + path.sep)
 const layout = JSON.parse(await fs.readFile(new URL('raw.html.layout.json', root), 'utf8'))
 const results = []
 for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {

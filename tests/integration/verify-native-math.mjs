@@ -3,7 +3,7 @@ import path from 'node:path'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 
 const root = process.cwd()
-const study = path.join(root, 'test-results/native-math')
+const study = path.join(root, 'dist/test-results/native-math')
 const run = (binary, args) => execFileSync(binary, args, { cwd: root, stdio: 'inherit' })
 run('cargo', ['build', '--release', '--locked', '--manifest-path', 'crates/typst-html/Cargo.toml'])
 run('pnpm', ['build:packages'])
@@ -13,7 +13,7 @@ await mkdir(study, { recursive: true })
 const fixture = path.join(root, 'tests/fixtures/native-math')
 run(binary, [fixture, path.join(fixture, 'main.typ'), path.join(study, 'raw.html'), '1793145600'])
 for (const script of ['preview', 'geometry', 'integration'])
-  run(process.execPath, [path.join(root, 'scripts/native-math', `${script}.mjs`)])
+  run(process.execPath, [path.join(root, 'tests/integration/native-math', `${script}.mjs`)])
 run(binary, [
   fixture,
   path.join(fixture, 'stress.typ'),
@@ -38,4 +38,4 @@ console.log(
   'Native compiler, layout, three-engine browser, cache/export/rollback and source regressions passed.',
 )
 
-run(process.execPath, ['scripts/verify-math-accessibility.mjs'])
+run(process.execPath, ['tests/integration/verify-math-accessibility.mjs'])

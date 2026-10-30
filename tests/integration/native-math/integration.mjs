@@ -1,8 +1,8 @@
-import { buildAll, defaultConfig } from '../../packages/glyphweave/dist/build/index.js'
+import { buildAll, defaultConfig } from '../../../packages/glyphweave/dist/build/index.js'
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
-const root = path.resolve('test-results/native-math/site')
+const root = path.resolve('dist/test-results/native-math/site')
 const post = path.join(root, 'content/typst-posts/formulas')
 await fs.mkdir(post, { recursive: true })
 await fs.copyFile(
@@ -31,7 +31,7 @@ console.log(
   ),
 )
 await fs.writeFile(
-  path.resolve('test-results/native-math/integration.json'),
+  path.resolve('dist/test-results/native-math/integration.json'),
   JSON.stringify(
     { first: first.cache, second: second.cache, manifest: first.built[0].manifest },
     null,
@@ -39,7 +39,8 @@ await fs.writeFile(
   ),
 )
 
-const { exportGlyphweaveAssets } = await import('../../packages/glyphweave/dist/artifacts/index.js')
+const { exportGlyphweaveAssets } =
+  await import('../../../packages/glyphweave/dist/artifacts/index.js')
 await exportGlyphweaveAssets(root, 'public/glyphweave')
 const published = await fs.readFile(path.join(root, '.glyphweave/content-index.json'), 'utf8')
 const original = await fs.readFile(path.join(post, 'index.typ'), 'utf8')

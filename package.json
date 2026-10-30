@@ -32,13 +32,15 @@
     "build:packages": "tsc -b packages/glyphweave packages/astro",
     "check:astro": "pnpm --filter example-astro-blog exec astro check",
     "test:e2e": "playwright test",
-    "test:package": "pnpm build:packages && node scripts/verify-packages.mjs",
-    "test:integration": "pnpm build:packages && node scripts/verify-integration.mjs",
-    "benchmark": "pnpm build:packages && node scripts/benchmark.mjs",
+    "test:package": "pnpm build:packages && node tests/integration/verify-packages.mjs",
+    "test:integration": "pnpm build:packages && node tests/integration/verify-integration.mjs",
+    "benchmark": "pnpm build:packages && node tests/benchmarks/benchmark.mjs",
     "audit": "pnpm audit --registry=https://registry.npmjs.org",
     "build:native": "node scripts/build-native.mjs",
-    "test:native": "node scripts/verify-native-math.mjs",
-    "pack": "pnpm build:packages && node scripts/pack.mjs"
+    "test:native": "node tests/integration/verify-native-math.mjs",
+    "pack": "pnpm build:packages && node scripts/pack.mjs",
+    "clean": "node scripts/clean.mjs",
+    "clean:cache": "node scripts/clean.mjs --cache"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",

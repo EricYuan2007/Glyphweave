@@ -2,8 +2,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 /* global URL */
 import fs from 'node:fs/promises'
-import { renderMathLayout } from '../../packages/glyphweave/dist/math/index.js'
-const root = pathToFileURL(path.resolve('test-results/native-math') + path.sep)
+import { renderMathLayout } from '../../../packages/glyphweave/dist/math/index.js'
+const root = pathToFileURL(path.resolve('dist/test-results/native-math') + path.sep)
 const layout = JSON.parse(await fs.readFile(new URL('raw.html.layout.json', root), 'utf8'))
 const rendered = renderMathLayout(layout, './math.otf')
 await fs.writeFile(new URL('math.otf', root), rendered.font)

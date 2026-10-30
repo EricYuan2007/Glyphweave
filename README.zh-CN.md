@@ -179,4 +179,4 @@ PDF 默认使用 10.5pt 宋体正文与 Libertinus Serif 英文，按字体校�
 
 ## 项目维护
 
-参见[文档索引](docs/README.md)、[配置说明](docs/zh-CN/configuration.md)、[贡献指南](CONTRIBUTING.md)、[安全政策](SECURITY.md)和[变更记录](CHANGELOG.md)。各包已支持编译并通过本地 tarball 验证，不代表已经发布到 npm。
+参见[文档索引](docs/README.md)、[配置说明](docs/zh-CN/configuration.md)、[贡献指南](.github/CONTRIBUTING.md)、[安全政策](.github/SECURITY.md)和[变更记录](CHANGELOG.md)。各包已支持编译并通过本地 tarball 验证，不代表已经发布到 npm。

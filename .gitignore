@@ -23,3 +23,9 @@ crates/**/target/
 /research/
 
 /packages/glyphweave/native/
+
+**/.astro/
+**/.glyphweave/
+**/public/glyphweave/
+**/dist/
+**/.inkstack/
