@@ -2,14 +2,11 @@ node_modules/
 dist/
 .astro/
 .glyphweave/
-examples/astro-blog/public/glyphweave/
 .npmrc
 .DS_Store
 *.log
 
 *.tsbuildinfo
-playwright-report/
-test-results/
 **/content/**/index.pdf
 
 .pnpm-store/
@@ -17,15 +14,10 @@ test-results/
 # Native Typst layout bridge
 crates/**/target/
 
-/output/
 
 # One-off experiments stay local; maintained fixtures belong in tests/.
 /research/
 
 /packages/glyphweave/native/
 
-**/.astro/
-**/.glyphweave/
 **/public/glyphweave/
-**/dist/
-**/.inkstack/

@@ -5,7 +5,7 @@ Thank you for contributing. Read the [code of conduct](CODE_OF_CONDUCT.md) and
 
 ## Development
 
-Use Node.js 22.18+, pnpm 11.1.1 and Typst 0.15.0. Clone the repository, then run:
+Use Node.js 22.18+, pnpm 12.16.1 and Typst 0.15.0. Clone the repository, then run:
 
 ```sh
 pnpm install --frozen-lockfile

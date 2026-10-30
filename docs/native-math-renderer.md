@@ -65,7 +65,7 @@ The generated fonts are local derived assets. A font's permission bits are not a
 
 ## Validation and reproduction
 
-Maintained native-renderer regression fixtures live in Glyphweave `tests/fixtures/native-math/`. Run `pnpm test:native` in Glyphweave; generated files go to `test-results/native-math/`. The 50 formulas are a development corpus, not a blind benchmark.
+Maintained native-renderer regression fixtures live in Glyphweave `tests/fixtures/native-math/`. Run `pnpm test:native` in Glyphweave; generated files go to `dist/test-results/native-math/`. The 50 formulas are a development corpus, not a blind benchmark.
 
 ```sh
 pnpm test
