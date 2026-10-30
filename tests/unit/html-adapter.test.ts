@@ -67,10 +67,17 @@ async function makePost(
 
 describe('HTML adapter', () => {
   it('externalizes Typst embedded images only when they match owned source assets', async () => {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0H10V10Z"/></svg>'
-    const fixture = await makePost(`<html><body><h1>Demo</h1><p><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="diagram"></p></body></html>`)
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0H10V10Z"/></svg>'
+    const fixture = await makePost(
+      `<html><body><h1>Demo</h1><p><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="diagram"></p></body></html>`,
+    )
     await writeFile(path.join(fixture.post.assetDir!, 'diagram.svg'), svg)
-    const output = await adaptTypstHtml({ ...fixture, publicBasePath: '/InkStack/glyphweave', options: { headingIds: 'stable', scopeClass: 'glyphweave-content' } })
+    const output = await adaptTypstHtml({
+      ...fixture,
+      publicBasePath: '/InkStack/glyphweave',
+      options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
+    })
     expect(output.contentHtml).toContain('src="/InkStack/glyphweave/posts/demo/assets/diagram.svg"')
     expect(output.contentHtml).not.toContain('data:')
     expect(await readFile(path.join(fixture.outputDir, 'assets/diagram.svg'), 'utf8')).toBe(svg)
@@ -84,11 +91,20 @@ describe('HTML adapter', () => {
     ['data:image/png;base64,YQ', 'base64'],
   ])('rejects unowned or malformed embedded images: %s', async (src, error) => {
     const fixture = await makePost(`<body><img src="${src}"></body>`)
-    await expect(adaptTypstHtml({ ...fixture, publicBasePath: '/glyphweave', options: { headingIds: 'stable', scopeClass: 'glyphweave-content' } })).rejects.toThrow(error)
+    await expect(
+      adaptTypstHtml({
+        ...fixture,
+        publicBasePath: '/glyphweave',
+        options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      }),
+    ).rejects.toThrow(error)
   })
 
   it('preserves safe MathML spacing without permitting arbitrary attributes', async () => {
-    const fixture = await makePost('<html><body><math><mi>x</mi><mspace width="0.2222em" height="0.1em" onmouseover="alert(1)"></mspace><mtext>if</mtext><mspace width="url(https://example.com)"></mspace></math></body></html>', 'Inline $x$.')
+    const fixture = await makePost(
+      '<html><body><math><mi>x</mi><mspace width="0.2222em" height="0.1em" onmouseover="alert(1)"></mspace><mtext>if</mtext><mspace width="url(https://example.com)"></mspace></math></body></html>',
+      'Inline $x$.',
+    )
     const output = await adaptTypstHtml({
       rawHtmlPath: fixture.rawHtmlPath,
       post: fixture.post,

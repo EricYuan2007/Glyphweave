@@ -1,7 +1,7 @@
 # Security model
 
 Authors and executable configuration are trusted. This local build tool is not a
-server sandbox. See the root [security policy](../SECURITY.md) for private reporting.
+server sandbox. See the root [security policy](../.github/SECURITY.md) for private reporting.
 
 The adapter validates URL protocols after removing ASCII controls and uses an
 allowlist for HTML, MathML and static SVG. Only numeric Typst layout styles survive.

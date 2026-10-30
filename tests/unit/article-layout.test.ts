@@ -4,7 +4,7 @@ import {
   buildTocTree,
   positionSidenotes,
   selectActiveHeading,
-} from '../examples/astro-blog/src/lib/article-layout.js'
+} from '../../examples/astro-blog/src/lib/article-layout.js'
 
 describe('article layout helpers', () => {
   it('keeps nested table-of-contents branches manual by default', async () => {

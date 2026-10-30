@@ -11,10 +11,10 @@
 
 ## Contributors
 
-- [Contributing](../CONTRIBUTING.md)
+- [Contributing](../.github/CONTRIBUTING.md)
 - [Architecture](architecture.md)
 - [HTML adapter](adapter.md)
-- [Security model](security.md) / [Private reporting](../SECURITY.md)
+- [Security model](security.md) / [Private reporting](../.github/SECURITY.md)
 - [Acceptance](acceptance.md)
 - [Architecture decisions](decisions/0001-build-and-publication-contract.md)
 - [Changelog](../CHANGELOG.md)

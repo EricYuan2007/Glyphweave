@@ -6,12 +6,12 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     ignores: [
-      'node_modules/**',
+      '**/node_modules/**',
       'test-results/**',
       'playwright-report/**',
       'research/**',
       '**/dist/**',
-      '.glyphweave/**',
+      '**/.glyphweave/**',
       'examples/astro-blog/dist/**',
       'examples/astro-blog/.astro/**',
     ],

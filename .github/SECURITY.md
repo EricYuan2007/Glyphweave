@@ -24,4 +24,4 @@ Public files are selected from the current index and manifests, never old folder
 Output deletion requires a project-owned marker and safe paths. Generations are
 immutable; an atomic index replacement publishes a complete build. Old generations
 remain locally until `clean` and must never be deployed wholesale. `unlisted` is a
-listing policy, not authentication. See [security details](docs/security.md).
+listing policy, not authentication. See [security details](../docs/security.md).

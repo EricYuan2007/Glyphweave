@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sitePath, withoutSiteBase } from '../examples/astro-blog/src/lib/site-path.js'
+import { sitePath, withoutSiteBase } from '../../examples/astro-blog/src/lib/site-path.js'
 
 describe('site paths', () => {
   it('prefixes internal routes for a GitHub project site', () => {

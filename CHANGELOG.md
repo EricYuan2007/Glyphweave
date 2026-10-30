@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Consolidate the compiler and Astro packages; separate native packaging, tests, examples and contributor documentation. Remove legacy configuration migration and automatic deployment.
+
 - Adopt pnpm Action 6, ESLint 10 and Vitest 4 after compatibility checks; preserve
   underlying errors on output ownership failures. Limit automatic npm version PRs
   to minor/patch releases and require explicit major migrations.
@@ -20,7 +22,6 @@
 - Add cache corruption, input race, font/package/compiler and cross-process package tests.
 
 
-## Unreleased
 
 ### Fixed
 
@@ -45,7 +46,7 @@
 
 - Read artifact paths from `content-index.json`; do not hardcode `generated/posts`.
 - Heading IDs default to preserving compiler IDs. Unsupported cache is explicitly disabled.
-- See [migration notes](docs/migration.md) for configuration and output changes.
+- See [configuration contract](docs/configuration.md) for configuration and output changes.
 
 ## 0.1.0
 

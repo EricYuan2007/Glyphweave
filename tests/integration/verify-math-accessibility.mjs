@@ -5,8 +5,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
 import { chromium, firefox, webkit } from '@playwright/test'
-import { renderMathLayout } from '../packages/glyphweave/dist/math/index.js'
-const study = path.resolve('test-results/native-math')
+import { renderMathLayout } from '../../packages/glyphweave/dist/math/index.js'
+const study = path.resolve('dist/test-results/native-math')
 const binary = path.resolve('crates/typst-html/target/release/glyphweave-typst-html')
 const output = path.join(study, 'accessibility.html')
 execFileSync(binary, [
@@ -50,26 +50,22 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
   assert.equal(await page.locator('math').first().locator('mfrac mi').count(), 2)
   assert.equal(await page.locator('.gw-layout-ink[aria-hidden=true]').count(), 6)
   assert.equal(await page.locator('[data-gw-accessible-math][aria-label]').count(), 0)
-  const references = await page
-    .locator('a[href^="#"]')
-    .evaluateAll((ns) =>
-      ns.map((n) => ({
-        text: n.textContent,
-        exists: !!document.getElementById(n.getAttribute('href').slice(1)),
-      })),
-    )
+  const references = await page.locator('a[href^="#"]').evaluateAll((ns) =>
+    ns.map((n) => ({
+      text: n.textContent,
+      exists: !!document.getElementById(n.getAttribute('href').slice(1)),
+    })),
+  )
   assert(references.length === 2 && references.every((r) => r.exists))
   assert.match(references[0].text, /1$/)
   assert.match(references[1].text, /2$/)
-  const semantics = await page
-    .locator('.gw-layout-semantics')
-    .evaluateAll((ns) =>
-      ns.map((n) => ({
-        display: getComputedStyle(n).display,
-        visibility: getComputedStyle(n).visibility,
-        width: n.getBoundingClientRect().width,
-      })),
-    )
+  const semantics = await page.locator('.gw-layout-semantics').evaluateAll((ns) =>
+    ns.map((n) => ({
+      display: getComputedStyle(n).display,
+      visibility: getComputedStyle(n).visibility,
+      width: n.getBoundingClientRect().width,
+    })),
+  )
   assert(
     semantics.every((s) => s.display !== 'none' && s.visibility === 'visible' && s.width === 1),
   )
