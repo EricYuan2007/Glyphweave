@@ -31,8 +31,8 @@ jobs:
       - uses: ./.github/actions/setup-typst
       - run: pnpm build:native
         env: { RUSTUP_TOOLCHAIN: stable }
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm verify:demo && pnpm test:integration && pnpm test:package && pnpm test:native
-      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e --project=chromium
       - run: pnpm pack:packages
       - uses: actions/upload-artifact@v7
