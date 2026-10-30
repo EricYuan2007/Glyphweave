@@ -265,3 +265,7 @@ CI runs the normal checks on changes. Integration, native and browser validation
 `packages/` owns the two JavaScript packages, `crates/` owns the Rust engine, and `examples/` contains the minimal compiler input and Astro consumer. Tests live in `tests/unit`, `tests/integration`, `tests/browser`, `tests/benchmarks` and shared fixtures. `scripts/` contains native builds, packaging and cleanup. Contributor policies live in `.github/`.
 
 `pnpm clean --dry-run` lists generated outputs; `pnpm clean` removes outputs and browser reports, and `pnpm clean:cache` also removes rebuildable compiler caches and Cargo target files. Installed native binaries, source fixtures and author documents are retained.
+
+## Consumer deployment boundary
+
+Personal blog publishing belongs to the independent private [blog repository](https://github.com/EricYuan2007/blog). This repository builds and verifies Glyphweave packages; it holds no personal blog deployment credentials and does not trigger that repository. Consumers adopt framework updates explicitly through pinned package archives.
