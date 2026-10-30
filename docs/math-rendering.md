@@ -30,8 +30,6 @@ export default defineConfig({
 
 Set `strategy: 'svg-frame'` to render equations through Typst `html.frame`. The injected prelude marks each formula with `data-gw-math`, so the adapter does not depend on Typst's internal SVG classes. Source-backed fallback text and `inlineVerticalShift` apply only to this SVG mode.
 
-Configuration from Glyphweave's Typst 0.14 support is intentionally rejected. Replace `hybrid`, `typst-frame`, or `native-only` with `mathml` or `svg-frame`; remove `typst.wrapper.injectPrelude`, `failOnIgnoredEquation`, and top-level SVG options under `math`.
-
 ## Manifest
 
 Manifest schema version 2 records the selected renderer and counts MathML and SVG separately:

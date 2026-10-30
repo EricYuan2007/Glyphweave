@@ -1,6 +1,6 @@
 # 复杂公式与内容捕获
 
-Glyphweave 要求 Typst 0.15.0 或更高版本，默认使用 `math.strategy: "mathml"`。Typst 会把每个公式导出为语义化 MathML，HTML Adapter 再将其包装为 `.gw-math--inline` 或 `.gw-math--block`，不会添加重复的屏幕阅读器文本。
+Glyphweave 要求 Typst 0.15.0 或更高版本，默认使用 `math.strategy: "html-frame"`；下文的 `mathml` 是显式选择的浏览器排版模式。Typst 会把每个公式导出为语义化 MathML，HTML Adapter 再将其包装为 `.gw-math--inline` 或 `.gw-math--block`，不会添加重复的屏幕阅读器文本。
 
 ```html
 <span class="gw-math gw-math--inline" data-gw-renderer="native-mathml">
@@ -29,8 +29,6 @@ export default defineConfig({
 ```
 
 设置 `strategy: 'svg-frame'` 后，公式会通过 Typst `html.frame` 渲染。注入的 prelude 会用 `data-gw-math` 标记公式，Adapter 不再依赖 Typst 内部 SVG class。源公式 fallback 和 `inlineVerticalShift` 只作用于 SVG 模式。
-
-Typst 0.14 时代的配置会被明确拒绝。请把 `hybrid`、`typst-frame` 或 `native-only` 改成 `mathml` 或 `svg-frame`，删除 `typst.wrapper.injectPrelude`、`failOnIgnoredEquation`，并把 SVG 专属选项移动到 `math.svg`。
 
 ## Manifest
 
@@ -62,7 +60,7 @@ Manifest schema version 2 会记录最终 renderer，并分别统计 MathML 与 
 
 ## 原生 HTML 后端
 
-新增可选的 `math.strategy: 'html-frame'`：保留 Typst 的布局计算，由 Glyphweave 输出
+默认的 `math.strategy: 'html-frame'`：保留 Typst 的布局计算，由 Glyphweave 输出
 HTML/CSS 与字形字体，不引入 MathJax、KaTeX，也不经过 SVG/MathML 显示公式。
 需要单独构建 Rust 编译桥；支持范围、几何规则与限制见
-[原生数学渲染后端](../native-math-renderer.md)。默认策略保持不变。
+[原生数学渲染后端](../native-math-renderer.md)。原生桥通过 Cargo 构建，独立分发包可直接携带对应平台的预编译引擎。
