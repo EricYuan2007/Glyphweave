@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseTypstDiagnostics } from '@glyphweave/typst'
-import { defaultConfig, PdfTemplateSchema } from '@glyphweave/schema'
+import { parseTypstDiagnostics } from 'glyphweave/compiler'
+import { defaultConfig, PdfTemplateSchema } from 'glyphweave/schema'
 
 describe('PDF typography configuration', () => {
   it('keeps CJK and Latin roles separate, with readable defaults', () => {

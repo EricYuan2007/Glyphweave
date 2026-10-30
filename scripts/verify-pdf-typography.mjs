@@ -3,8 +3,8 @@ import { mkdtemp, readFile, writeFile, copyFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
-import { compileTypstPdf } from '../packages/typst/dist/index.js'
-import { PdfTemplateSchema } from '../packages/schema/dist/index.js'
+import { compileTypstPdf } from '../packages/glyphweave/dist/compiler/index.js'
+import { PdfTemplateSchema } from '../packages/glyphweave/dist/schema/index.js'
 
 // Real paged rendering tests live in integration, not in the compiler-free unit suite.
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-pdf-test-'))
@@ -21,7 +21,7 @@ try {
   const source = path.join(root, 'source.typ')
   const fixture = await readFile('tests/fixtures/pdf/typography.typ', 'utf8')
   await writeFile(source, fixture)
-  await copyFile('packages/typst/prelude/glyphweave-pdf.typ', path.join(root, 'prelude.typ'))
+  await copyFile('packages/glyphweave/prelude/glyphweave-pdf.typ', path.join(root, 'prelude.typ'))
   const tuple = (values) =>
     `(${values.map((v) => JSON.stringify(v)).join(',')}${values.length ? ',' : ''})`
   const args = `fonts: ${tuple(config.fonts)}, heading-fonts: ${tuple(config.headingFonts)}, mono-fonts: ${tuple(config.monoFonts)}`
@@ -91,7 +91,7 @@ try {
   for (let i = 0; i < 80; i++)
     assert(new RegExp(`ROW-${i}(?![0-9])`).test(text), `Missing table row ${i}`)
   assert(
-    text.replace(/\s/g, '').includes('packages/typst/prelude/glyphweave-pdf.typ'),
+    text.replace(/\s/g, '').includes('packages/glyphweave/prelude/glyphweave-pdf.typ'),
     'Wrapped path text changed',
   )
   const embedded = (await execa('pdffonts', [pdf])).stdout

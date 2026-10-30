@@ -49,7 +49,7 @@
 }
 
 #block(width: 180pt, stroke: 0.4pt + gray, inset: 4pt)[
-较长行内代码 `packages/typst/prelude/glyphweave-pdf.typ` 后面的中文需要保持可读。
+较长行内代码 `packages/glyphweave/prelude/glyphweave-pdf.typ` 后面的中文需要保持可读。
 ]
 
 #block(width: 180pt, stroke: 0.4pt + gray, inset: 4pt)[

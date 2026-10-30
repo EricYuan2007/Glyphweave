@@ -1,4 +1,22 @@
 <script>
+  // The demo owns its controls; the compiler emits highlighted, semantic code only.
+  document.querySelectorAll<HTMLPreElement>('pre[data-language]').forEach((pre) => {
+    const block = document.createElement('div')
+    block.className = 'gw-code-block'
+    const toolbar = document.createElement('div')
+    toolbar.className = 'gw-code-toolbar'
+    const label = document.createElement('span')
+    label.textContent = pre.dataset.language ?? 'Text'
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'gw-code-copy'
+    button.dataset.copyCode = ''
+    button.textContent = 'Copy'
+    button.setAttribute('aria-label', 'Copy code')
+    toolbar.append(label, button)
+    pre.replaceWith(block)
+    block.append(toolbar, pre)
+  })
   const resetTimers = new WeakMap<HTMLButtonElement, number>()
 
   const copyCode = async (code: string) => {

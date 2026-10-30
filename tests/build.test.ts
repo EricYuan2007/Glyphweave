@@ -2,9 +2,9 @@ import { mkdtemp, readFile, mkdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildAll, resolvePostOutputDir } from '@glyphweave/core'
-import { defaultConfig } from '@glyphweave/schema'
-import type { CompileInput } from '@glyphweave/typst'
+import { buildAll, resolvePostOutputDir } from 'glyphweave'
+import { defaultConfig } from 'glyphweave/schema'
+import type { CompileInput } from 'glyphweave/compiler'
 
 describe('build pipeline', () => {
   it('writes content, toc, manifest, and content-index artifacts', async () => {

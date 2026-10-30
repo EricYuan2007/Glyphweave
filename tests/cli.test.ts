@@ -4,7 +4,7 @@ import path from 'node:path'
 import { execa } from 'execa'
 import { describe, expect, it } from 'vitest'
 
-const cliPath = path.resolve('packages/cli/src/index.ts')
+const cliPath = path.resolve('packages/glyphweave/src/cli/index.ts')
 const repoRoot = path.resolve('.')
 
 describe('CLI', () => {

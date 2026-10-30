@@ -14,23 +14,23 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@glyphweave/core": [
-        "packages/core/src/index.ts"
+      "glyphweave": [
+        "packages/glyphweave/src/build/index.ts"
       ],
-      "@glyphweave/schema": [
-        "packages/schema/src/index.ts"
+      "glyphweave/schema": [
+        "packages/glyphweave/src/schema/index.ts"
       ],
-      "@glyphweave/html-adapter": [
-        "packages/html-adapter/src/index.ts"
+      "glyphweave/compiler": [
+        "packages/glyphweave/src/compiler/index.ts"
       ],
-      "@glyphweave/typst": [
-        "packages/typst/src/index.ts"
+      "glyphweave/html": [
+        "packages/glyphweave/src/html/index.ts"
       ],
-      "@glyphweave/astro": [
-        "packages/astro/src/index.ts"
+      "glyphweave/math": [
+        "packages/glyphweave/src/math/index.ts"
       ],
-      "@glyphweave/math-renderer": [
-        "packages/math-renderer/src/index.ts"
+      "glyphweave/artifacts": [
+        "packages/glyphweave/src/artifacts/index.ts"
       ]
     }
   },
@@ -46,6 +46,7 @@
     "node_modules",
     "dist",
     ".glyphweave",
-    "examples/astro-blog/dist"
+    "examples/astro-blog/dist",
+    "**/dist/**"
   ]
 }

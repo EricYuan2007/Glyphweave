@@ -2,8 +2,8 @@ import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import os from 'node:os'
 import path from 'node:path'
-import { buildAll, defaultConfig, prepareNativeEngine } from '../packages/core/dist/index.js'
-import { readGlyphweaveContentIndex, readGlyphweavePost } from '../packages/astro/dist/index.js'
+import { buildAll, defaultConfig, prepareNativeEngine } from '../packages/glyphweave/dist/build/index.js'
+import { readGlyphweaveContentIndex, readGlyphweavePost } from '../packages/glyphweave/dist/artifacts/index.js'
 // Integration fixtures live outside the workspace; prepare their engine explicitly.
 const nativeEngine = await prepareNativeEngine('glyphweave-typst-html', process.cwd())
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-real-'))

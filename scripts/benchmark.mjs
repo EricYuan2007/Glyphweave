@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
-import { buildAll, defaultConfig } from '../packages/core/dist/index.js'
+import { buildAll, defaultConfig } from '../packages/glyphweave/dist/build/index.js'
 const count = Number(process.argv[2] ?? 10)
 if (!Number.isInteger(count) || count < 1 || count > 1000) throw new Error('Count must be 1..1000')
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-benchmark-'))

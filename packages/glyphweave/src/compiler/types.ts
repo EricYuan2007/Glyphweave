@@ -1,0 +1,64 @@
+import type { GlyphweaveConfig, GlyphweaveDiagnostic } from '../schema/index.js'
+
+export interface TypstInfo {
+  binary: string
+  version: string
+}
+
+export interface CompileInput {
+  binary: string
+  inputPath: string
+  outputPath: string
+  cwd: string
+  creationTimestamp?: number
+  timeoutMs?: number
+  logPath?: string
+  rootPath?: string
+  wrapper?: TypstWrapperOptions
+}
+
+export interface CompileOutput {
+  outputPath: string
+  stdout: string
+  stderr: string
+  diagnostics?: GlyphweaveDiagnostic[]
+  preludeVersion?: string | null
+}
+
+export interface TypstHtmlWrapperOptions {
+  mathStrategy?: GlyphweaveConfig['math']['strategy']
+  nativeHtmlBinary?: string
+}
+
+export interface TypstPdfWrapperOptions {
+  injectTemplate?: boolean
+  profile?: 'editorial' | 'portable'
+  fontSize?: number
+  latinFonts?: string[]
+  headingFonts?: string[]
+  fonts?: string[]
+  monoFonts?: string[]
+  lang?: string
+  region?: string
+}
+
+export interface TypstWrapperOptions extends TypstHtmlWrapperOptions {
+  pdfTemplate?: TypstPdfWrapperOptions
+}
+
+export interface SourceFormula {
+  id: string
+  kind: 'inline' | 'block'
+  source: string
+  file: string
+  startLine: number
+  endLine: number
+  startColumn?: number
+  endColumn?: number
+}
+
+export interface TypstVersion {
+  major: number
+  minor: number
+  patch: number
+}

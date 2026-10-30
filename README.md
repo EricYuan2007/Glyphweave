@@ -1,7 +1,6 @@
 # Glyphweave
 
 [![CI](https://github.com/EricYuan2007/Glyphweave/actions/workflows/ci.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/ci.yml)
-[![Pages](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml/badge.svg)](https://github.com/EricYuan2007/Glyphweave/actions/workflows/pages.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
 ![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220)
 ![Typst](https://img.shields.io/badge/Typst-0.15.x-239dad)
@@ -119,7 +118,7 @@ source: 'index.typ'
 Create `glyphweave.config.ts`:
 
 ```ts
-import { defineConfig } from '@glyphweave/core'
+import { defineConfig } from 'glyphweave'
 
 export default defineConfig({
   content: {
@@ -245,4 +244,18 @@ Chinese:
 
 ## Project maintenance
 
-See the [documentation index](docs/README.md), [migration guide](docs/migration.md), [contribution guide](CONTRIBUTING.md), [security policy](SECURITY.md), [support](SUPPORT.md), and [changelog](CHANGELOG.md). Compiled packages are tested through local tarballs; this checkout does not imply a published npm release.
+See the [documentation index](docs/README.md), [configuration reference](docs/configuration.md), [contribution guide](CONTRIBUTING.md), [security policy](SECURITY.md), [support](SUPPORT.md), and [changelog](CHANGELOG.md). Compiled packages are tested through local tarballs; this checkout does not imply a published npm release.
+
+## Repository maintenance
+
+Keep maintained source in `packages/`, reusable build tools in `scripts/`, and behavioral regression fixtures in `tests/fixtures/`. Generated test output belongs in ignored `test-results/`; one-off experiments stay outside the repository. Historical research and audit reports remain available in Git history.
+
+Pages deploys the site artifact produced and tested by CI; it does not rebuild the demo. Native renderer regressions write only to `test-results/native-math/`.
+
+## Package boundaries
+
+`glyphweave` owns compiler orchestration, schema, HTML/math rendering and artifact IO. Its public subpaths are `/schema`, `/compiler`, `/html`, `/math`, `/artifacts`, `/browser`, and `/styles/*`. `@glyphweave/astro` provides `glyphweaveLoader` with a host transform callback; it does not impose publication policy.
+
+Native Rust code is split into `world`, `source` and `frame` modules. `pnpm build:native` creates the executable for the current platform; `pnpm pack` includes it in a platform-restricted archive. Consumers need Typst but never need Cargo for a normal build. Local archives are not registry releases.
+
+CI runs the normal checks on changes. Integration, native and browser validation plus platform archive creation run on manual dispatch; no workflow deploys the example automatically.

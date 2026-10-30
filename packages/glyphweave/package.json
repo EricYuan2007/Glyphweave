@@ -1,0 +1,67 @@
+{
+  "name": "glyphweave",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "prelude",
+    "styles",
+    "native"
+  ],
+  "bin": {
+    "glyphweave": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/build/index.d.ts",
+      "import": "./dist/build/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js"
+    },
+    "./compiler": {
+      "types": "./dist/compiler/index.d.ts",
+      "import": "./dist/compiler/index.js"
+    },
+    "./html": {
+      "types": "./dist/html/index.d.ts",
+      "import": "./dist/html/index.js"
+    },
+    "./math": {
+      "types": "./dist/math/index.d.ts",
+      "import": "./dist/math/index.js"
+    },
+    "./artifacts": {
+      "types": "./dist/artifacts/index.d.ts",
+      "import": "./dist/artifacts/index.js"
+    },
+    "./browser": {
+      "types": "./dist/math/browser.d.ts",
+      "import": "./dist/math/browser.js"
+    },
+    "./styles/*": "./styles/*"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1",
+    "zod": "4.6.7",
+    "execa": "^10.2.1",
+    "hast-util-sanitize": "^5.0.2",
+    "hast-util-to-html": "^9.0.5",
+    "rehype-parse": "^9.0.1",
+    "rehype-sanitize": "^6.0.0",
+    "shiki": "3.23.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.2.0",
+    "opentype.js": "2.0.0",
+    "commander": "^15.0.0",
+    "tinyglobby": "^0.2.17"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  }
+}

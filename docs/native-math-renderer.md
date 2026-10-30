@@ -15,7 +15,7 @@ pnpm build:native
 In the consuming project's `glyphweave.config.ts`:
 
 ```ts
-import { defineConfig } from '@glyphweave/core'
+import { defineConfig } from 'glyphweave'
 
 export default defineConfig({
   math: {
@@ -33,9 +33,9 @@ Run the usual `glyphweave build` and export current manifest assets with `export
 ## Ownership and data contract
 
 - `crates/typst-html`: pinned native compiler bridge. The existing equation wrapper requests a Typst frame. The bridge intercepts `HtmlNode::Frame` **before** the SVG encoder, only within equation wrappers. It preserves the rest of Typst's HTML/link encoding.
-- `packages/math-renderer`: validates layout v2, encodes glyph outlines in a generated font, and emits geometry CSS and semantic/source text alternatives.
-- `packages/html-adapter/src/native-math.ts`: validates one-to-one placeholders, sanitizes author content, then inserts renderer-owned markup and assets as a trusted transform.
-- `packages/core`: retains generation transactions, caches and atomic index replacement. The native executable bytes join the environment identity; renderer package bytes join the implementation identity.
+- `packages/glyphweave/src/math`: validates layout v2, encodes glyph outlines in a generated font, and emits geometry CSS and semantic/source text alternatives.
+- `packages/glyphweave/src/html/native-math.ts`: validates one-to-one placeholders, sanitizes author content, then inserts renderer-owned markup and assets as a trusted transform.
+- `packages/glyphweave/src/build`: retains generation transactions, caches and atomic index replacement. The native executable bytes join the environment identity; renderer package bytes join the implementation identity.
 
 The private compiler protocol is `glyphweave-typst-html ROOT INPUT OUTPUT [EPOCH]`. It writes `OUTPUT` and `OUTPUT.layout.json`. The sidecar includes a version/compiler identifier, font provenance, unique glyph outlines, and frames with `width`, `height`, `baseline`, `em`, text and drawing items. All geometry is in Typst points; outlines are normalized to a 1000-unit Y-up font grid. The adapter rejects mismatched, duplicate or missing frames.
 
@@ -65,7 +65,7 @@ The generated fonts are local derived assets. A font's permission bits are not a
 
 ## Validation and reproduction
 
-See `research/typst-html-renderer-2026-10-28/plan.md` for the preimplementation plan and `report.md` for actual results and exclusions. The 50 fixtures are a development corpus, not a blind benchmark. The comparison page uses Typst SVG only as a verification oracle, not as an input to the new backend.
+Maintained native-renderer regression fixtures live in Glyphweave `tests/fixtures/native-math/`. Run `pnpm test:native` in Glyphweave; generated files go to `test-results/native-math/`. The 50 formulas are a development corpus, not a blind benchmark.
 
 ```sh
 pnpm test
@@ -88,7 +88,7 @@ The native compiler records the equation’s original source span, including `$`
 For whole-formula highlighting and correct copying across prose and equations, initialize the small browser module once:
 
 ```ts
-import { installMathCopy } from '@glyphweave/math-renderer/browser'
+import { installMathCopy } from 'glyphweave/browser'
 installMathCopy()
 ```
 

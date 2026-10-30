@@ -5,16 +5,13 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "glyphweave": "tsx ../../packages/cli/src/index.ts",
+    "glyphweave": "tsx ../../packages/glyphweave/src/cli/index.ts",
     "build": "pnpm glyphweave build && node scripts/sync-glyphweave-public.mjs && astro build",
     "pagefind": "pagefind --site dist"
   },
   "dependencies": {
-    "@glyphweave/astro": "workspace:*",
-    "@glyphweave/core": "workspace:*",
-    "@glyphweave/schema": "workspace:*",
     "astro": "7.3.3",
     "pagefind": "1.5.2",
-    "@glyphweave/math-renderer": "workspace:*"
+    "glyphweave": "workspace:*"
   }
 }

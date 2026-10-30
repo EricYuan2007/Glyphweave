@@ -4,7 +4,7 @@ import {
   parseTypstDiagnostics,
   parseTypstVersion,
   scanSourceFormulasFromText,
-} from '@glyphweave/typst'
+} from 'glyphweave/compiler'
 
 describe('Typst math helpers', () => {
   it('scans inline and block source formulas while skipping raw code blocks', () => {

@@ -1,4 +1,4 @@
-import { defineConfig } from '@glyphweave/core'
+import { defineConfig } from 'glyphweave'
 
 const pagesBase = process.env.GITHUB_PAGES === 'true' ? '/Glyphweave' : ''
 

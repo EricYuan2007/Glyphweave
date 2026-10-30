@@ -2,8 +2,8 @@ import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { discoverPosts } from '@glyphweave/core'
-import { defaultConfig } from '@glyphweave/schema'
+import { discoverPosts } from 'glyphweave'
+import { defaultConfig } from 'glyphweave/schema'
 
 async function makeTempProject() {
   return mkdtemp(path.join(os.tmpdir(), 'glyphweave-discovery-'))
