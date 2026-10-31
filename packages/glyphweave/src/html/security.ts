@@ -1,7 +1,8 @@
+import { isLocalAbsoluteUrl } from '../urls.js'
+import type { Root, Element } from 'hast'
 import { visit } from 'unist-util-visit'
 import { defaultSchema } from 'rehype-sanitize'
 import { sanitize as sanitizeHast, type Schema } from 'hast-util-sanitize'
-import type { Root } from 'hast'
 import type { HastNode } from './types.js'
 
 const mathTags =
@@ -159,12 +160,11 @@ export function assertNoUnsafeProtocols(value: string) {
 }
 
 export function assertNoLocalAbsolutePaths(value: string) {
-  if (/^(?:\/(?:Users|home|private|tmp|etc|var)\/|~\/|file:|[A-Za-z]:[\\/])/i.test(value.trim()))
-    throw new Error(`Local absolute path detected: ${value}`)
+  if (isLocalAbsoluteUrl(value)) throw new Error(`Local absolute path detected: ${value}`)
 }
 
 export function rewriteLinks(root: HastNode) {
-  visit(root as Root, 'element', (node) => {
+  visit(root, 'element', (node) => {
     if (node.tagName !== 'a' || typeof node.properties.href !== 'string') return
     const href = node.properties.href
     assertNoLocalAbsolutePaths(href)
@@ -192,8 +192,8 @@ function safeStyle(value: string, tag: string) {
 }
 
 /** Sanitize HTML, MathML and the small static SVG subset emitted by Typst. */
-export function sanitize(root: HastNode) {
-  visit(root as Root, 'element', (node) => {
+export function sanitize(root: Root | Element) {
+  visit(root, 'element', (node) => {
     for (const [key, value] of Object.entries(node.properties)) {
       // The inherited HTML schema also allows width globally. Validate before
       // sanitizing so that generic allowance cannot bypass MathML dimensions.
@@ -225,7 +225,9 @@ export function sanitize(root: HastNode) {
         delete node.properties[key]
     }
   })
-  const clean = sanitizeHast({ type: 'root', children: root.children ?? [] } as Root, schema)
+  const clean = sanitizeHast({ type: 'root', children: root.children }, schema)
   if (clean.type !== 'root') throw new Error('Sanitizer returned an invalid fragment')
-  root.children = clean.children as HastNode[]
+  root.children = clean.children.filter(
+    (node): node is import('hast').ElementContent => node.type !== 'doctype',
+  )
 }

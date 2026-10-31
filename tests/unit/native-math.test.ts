@@ -1,9 +1,22 @@
+import { toHtml } from 'hast-util-to-html'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import opentype from 'opentype.js'
 import { describe, it, expect, vi } from 'vitest'
-import { renderMathLayout } from 'glyphweave/math'
+import { renderMathLayout as renderNodes } from 'glyphweave/math'
+const renderMathLayout = (input: unknown, url: string) => {
+  const result = renderNodes(input, url)
+  return {
+    ...result,
+    frames: new Map(
+      [...result.frames].map(([id, node]) => [
+        id,
+        toHtml(node, { characterReferences: { useNamedReferences: true } }),
+      ]),
+    ),
+  }
+}
 import { adaptTypstHtml } from 'glyphweave/html'
 import { defaultConfig } from 'glyphweave/schema'
 
@@ -50,7 +63,7 @@ describe('native Typst HTML renderer', () => {
     expect(r.css).toContain('width:1.2em;height:2em;vertical-align:-0.6em')
     expect(r.css).toContain('left:0.2em;top:1.4em')
     expect(r.css).toContain('top:0.8em;width:1.2em;height:0.05em')
-    expect(r.frames.get('gw-frame-0')).toContain('aria-label="x &lt; y"')
+    expect(r.frames.get('gw-frame-0')).toContain('aria-label="x < y"')
     expect(r.frames.get('gw-frame-0')).not.toMatch(/<(svg|canvas|script)\b/)
   })
   it('keeps one semantic formula and rejects executable or non-math markup', () => {
@@ -58,7 +71,7 @@ describe('native Typst HTML renderer', () => {
     const html = r.frames.get('gw-frame-0')!
     expect(html.match(/<math/g)).toHaveLength(1)
     expect(html).toContain('gw-layout-ink" aria-hidden="true"')
-    expect(html).toContain('<math aria-label="x &lt; y">')
+    expect(html).toContain('<math aria-label="x < y">')
     expect(html).not.toContain('role="math"')
     const bad = sample()
     bad.frames[0]!.semantics.math.tag = 'script'
@@ -70,10 +83,18 @@ describe('native Typst HTML renderer', () => {
   it('escapes selectable source without exposing internal glyphs or duplicate accessible math', () => {
     const layout = sample()
     layout.frames[0]!.semantics.source = '$ "</span><script>bad</script>" $'
+    const original = structuredClone(layout)
     const result = renderMathLayout(layout, './math.otf')
+    expect(layout).toEqual(original)
     const html = result.frames.get('gw-frame-0')!
-    expect(html).toContain('data-gw-typst-source="$ &quot;&lt;/span&gt;')
-    expect(html).not.toContain('<script>')
+    expect(html).toContain('data-gw-typst-source="$ &quot;</span>')
+    const tags = (node: import('hast').Element): string[] => [
+      node.tagName,
+      ...node.children.flatMap((child) => (child.type === 'element' ? tags(child) : [])),
+    ]
+    expect(tags(renderNodes(layout, './math.otf').frames.get('gw-frame-0')!)).not.toContain(
+      'script',
+    )
     expect(html.match(/<math/g)).toHaveLength(1)
     expect(html).toContain('class="gw-layout-source" aria-hidden="true"')
     expect(result.css).toContain('user-select:all')

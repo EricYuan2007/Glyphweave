@@ -1,26 +1,21 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { ManifestSchema, type GlyphweaveConfig } from '../schema/index.js'
+import { ManifestSchema } from '../schema/index.js'
 import { adaptTypstHtml } from '../html/index.js'
-import {
-  assertCapture,
-  createManifest,
-  expectedPdfPreludeVersion,
-  expectedPreludeVersion,
-} from './manifest.js'
-import type { BuildDependencies } from './types.js'
-import type { DiscoveredTypstPost } from './discovery.js'
+import { assertCapture, createManifest, expectedPreludeVersion } from './manifest.js'
+import type { BuildContext, DocumentPlan } from './context.js'
 
 /** Compile and adapt one article inside an unpublished generation. */
-export async function buildPost(
-  rootDir: string,
-  config: GlyphweaveConfig,
-  deps: BuildDependencies,
-  post: DiscoveredTypstPost,
-  outputDir: string,
-  typstVersion: string,
-  creationTimestamp: number,
-) {
+export async function buildPost(context: BuildContext, plan: DocumentPlan) {
+  const { rootDir, config, deps } = context
+  const { post, outputDir, creationTimestamp } = plan
+  const compileInput = {
+    creationTimestamp,
+    binary: config.typst.binary,
+    inputPath: post.sourcePath,
+    cwd: post.postDir,
+    rootPath: post.postDir,
+  }
   const outputRoot = path.resolve(rootDir, config.output.root)
   const logDir = path.join(outputRoot, 'logs')
   await mkdir(outputDir, { recursive: true })
@@ -30,17 +25,12 @@ export async function buildPost(
   const manifestPath = path.join(outputDir, 'manifest.json')
 
   const htmlCompile = await deps.compileHtml({
-    creationTimestamp,
-    binary: config.typst.binary,
-    inputPath: post.sourcePath,
+    ...compileInput,
     outputPath: rawPath,
-    cwd: post.postDir,
-    rootPath: post.postDir,
+
     wrapper: {
       mathStrategy: config.math.strategy,
-      nativeHtmlBinary: config.math.html.binary.includes('/')
-        ? path.resolve(rootDir, config.math.html.binary)
-        : config.math.html.binary,
+      nativeHtmlBinary: config.math.html.binary,
     },
     logPath: path.join(logDir, `${post.metadata.slug}.html.log`),
   })
@@ -64,25 +54,12 @@ export async function buildPost(
     pdfPath = path.join(outputDir, 'article.pdf')
     try {
       const pdfCompile = await deps.compilePdf({
-        creationTimestamp,
-        binary: config.typst.binary,
-        inputPath: post.sourcePath,
+        ...compileInput,
         outputPath: pdfPath,
-        cwd: post.postDir,
-        rootPath: post.postDir,
+
         logPath: path.join(logDir, `${post.metadata.slug}.pdf.log`),
         wrapper: {
-          pdfTemplate: {
-            injectTemplate: config.typst.pdf.template.enabled,
-            profile: config.typst.pdf.template.profile,
-            fontSize: config.typst.pdf.template.fontSize,
-            latinFonts: config.typst.pdf.template.latinFonts,
-            headingFonts: config.typst.pdf.template.headingFonts,
-            fonts: config.typst.pdf.template.fonts,
-            monoFonts: config.typst.pdf.template.monoFonts,
-            lang: config.typst.pdf.template.lang,
-            region: config.typst.pdf.template.region,
-          },
+          pdfTemplate: config.typst.pdf.template,
         },
       })
       adapted.diagnostics.push(...(pdfCompile.diagnostics ?? []))
@@ -93,23 +70,19 @@ export async function buildPost(
         severity: 'warning',
         message: String(error),
       })
-      await rm(pdfPath!, { force: true })
+      await rm(pdfPath, { force: true })
       pdfPath = null
     }
   }
 
-  const manifest = createManifest(
-    rootDir,
-    config,
+  const manifest = createManifest(context, {
     post,
-    typstVersion,
-    htmlCompile.preludeVersion ?? expectedPreludeVersion(config),
-    expectedPdfPreludeVersion(config),
-    adapted.rewrittenAssets,
-    adapted.capture,
-    adapted.diagnostics,
-    { rawPath, contentPath, tocPath, pdfPath },
-  )
+    preludeVersion: htmlCompile.preludeVersion ?? expectedPreludeVersion(config),
+    assets: adapted.rewrittenAssets,
+    capture: adapted.capture,
+    diagnostics: adapted.diagnostics,
+    paths: { rawPath, contentPath, tocPath, pdfPath },
+  })
   await writeFile(manifestPath, JSON.stringify(ManifestSchema.parse(manifest), null, 2))
   return manifest
 }

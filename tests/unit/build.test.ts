@@ -53,6 +53,7 @@ describe('build pipeline', () => {
     })
 
     expect(result.built).toHaveLength(1)
+    expect(result.built[0].manifest.sourcePath).toBe('content/typst-posts/basic-post/index.typ')
     const index = JSON.parse(
       await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'),
     )
@@ -66,7 +67,7 @@ describe('build pipeline', () => {
     })
     const capturedPdfInput = pdfInputs[0]!
     expect(capturedPdfInput.wrapper?.pdfTemplate).toMatchObject({
-      injectTemplate: true,
+      enabled: true,
       profile: 'editorial',
       fontSize: 10.5,
       latinFonts: ['Libertinus Serif'],

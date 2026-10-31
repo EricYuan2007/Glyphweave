@@ -21,7 +21,7 @@ await writeFile(
   `
 import { mkdir, writeFile } from 'node:fs/promises';
 import { buildAll, defaultConfig } from 'glyphweave';
-import { readGlyphweaveContentIndex, exportGlyphweaveAssets } from 'glyphweave/artifacts';
+import { readGlyphweaveContentIndex, openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts';
 await mkdir('content/typst-posts/demo', {recursive:true});
 await writeFile('content/typst-posts/demo/post.yaml', 'title: Demo\\nslug: demo\\ndescription: Demo\\ndate: "2026-09-05"\\nstatus: published\\nvisibility: public\\npdf: true\\n');
 await writeFile('content/typst-posts/demo/index.typ', '= Demo\\nInline $x + y$.\\n');
@@ -31,7 +31,7 @@ for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   if ((await buildAll(process.cwd(), config)).cache.reused !== 1) throw new Error('Installed cache did not hit');
   const index = await readGlyphweaveContentIndex(process.cwd());
   if (index.posts.length !== 1 || !index.posts[0].pdfPath) throw new Error('Incomplete artifacts');
-  await exportGlyphweaveAssets(process.cwd(), 'public/glyphweave/posts');
+  await exportGlyphweaveAssets(await openGlyphweaveSnapshot(process.cwd()), 'public/glyphweave/posts');
 }
 `,
 )

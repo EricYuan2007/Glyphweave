@@ -1,4 +1,3 @@
-import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
 import type { TocItem } from '../schema/index.js'
 import { isHeading, textContent } from './tree.js'
@@ -18,7 +17,7 @@ export function slugifyHeading(text: string): string {
 export function normalizeHeadingIds(root: HastNode, mode: HtmlAdapterOptions['headingIds']) {
   const used = new Set<string>()
   const redirects = new Map<string, string>()
-  visit(root as Root, 'element', (node: HastNode) => {
+  visit(root, 'element', (node) => {
     if (!node.properties) node.properties = {}
     const old = typeof node.properties.id === 'string' ? node.properties.id : undefined
     if (!old && !isHeading(node)) return
@@ -31,7 +30,7 @@ export function normalizeHeadingIds(root: HastNode, mode: HtmlAdapterOptions['he
     node.properties.id = next
     if (old && !redirects.has(old)) redirects.set(old, next)
   })
-  visit(root as Root, 'element', (node: HastNode) => {
+  visit(root, 'element', (node) => {
     if (!node.properties) return
     for (const key of ['href', 'xLinkHref']) {
       const value = node.properties[key]
@@ -51,7 +50,7 @@ export function normalizeHeadingIds(root: HastNode, mode: HtmlAdapterOptions['he
 
 export function extractToc(root: HastNode): TocItem[] {
   const toc: TocItem[] = []
-  visit(root as Root, 'element', (node: HastNode) => {
+  visit(root, 'element', (node) => {
     if (!isHeading(node)) return
     const depth = Number(node.tagName?.slice(1))
     if (depth < 1 || depth > 4) return

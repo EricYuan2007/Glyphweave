@@ -1,3 +1,4 @@
+import type { Element, ElementContent } from 'hast'
 import type { GlyphweaveConfig } from '../schema/index.js'
 import type { SourceFormula } from '../compiler/index.js'
 import { propertyValue } from './tree.js'
@@ -6,7 +7,7 @@ import type { HastNode } from './types.js'
 export function normalizeNativeMathml(root: HastNode) {
   let nativeMathml = 0
   const visitChildren = (node: HastNode) => {
-    if (!node.children) return
+    if (!('children' in node)) return
     for (let index = 0; index < node.children.length; index += 1) {
       const child = node.children[index]!
       if (child.type === 'element' && child.tagName === 'math') {
@@ -39,17 +40,15 @@ export function normalizeTypstFrameMath(
   let typstFrameSvg = 0
   let sourceFallbacks = 0
   const visitChildren = (node: HastNode) => {
+    if (!('children' in node)) return
     const children = node.children
-    if (!children) return
     for (let index = 0; index < children.length; index += 1) {
       const child = children[index]!
       const kind = glyphweaveMathKind(child)
-      const svg = kind ? child.children?.find(isSvg) : undefined
+      const svg = kind && child.type === 'element' ? child.children.find(isSvg) : undefined
       if (kind && svg) {
         const captured = propertyValue(child, 'data-gw-source')
-        const formula = captured
-          ? ({ source: captured } as SourceFormula)
-          : formulas[formulaIndex++]
+        const formula = captured ? { source: captured } : formulas[formulaIndex++]
         children[index] = createMathWrapper(svg, kind, formula, options?.svg)
         typstFrameSvg += 1
         if (formula && options?.svg.includeSourceFallback !== false) sourceFallbacks += 1
@@ -63,14 +62,14 @@ export function normalizeTypstFrameMath(
 }
 
 function createMathWrapper(
-  svg: HastNode,
+  svg: Element,
   kind: 'inline' | 'block',
-  formula: SourceFormula | undefined,
+  formula: Pick<SourceFormula, 'source'> | undefined,
   options: GlyphweaveConfig['math']['svg'] | undefined,
-): HastNode {
+): Element {
   const tagName = kind === 'inline' ? 'span' : 'div'
   const source = formula?.source
-  const children: import('hast').ElementContent[] = [svg as import('hast').Element]
+  const children: ElementContent[] = [svg]
   if (source && options?.includeSourceFallback !== false) {
     children.push({
       type: 'element',
@@ -103,6 +102,6 @@ function glyphweaveMathKind(node: HastNode): 'inline' | 'block' | null {
   return value === 'inline' || value === 'block' ? value : null
 }
 
-function isSvg(node: HastNode | undefined) {
+function isSvg(node: HastNode | undefined): node is Element {
   return node?.type === 'element' && node.tagName === 'svg'
 }

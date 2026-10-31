@@ -1,8 +1,7 @@
+import { isLocalAbsoluteUrl } from '../urls.js'
 import { z } from 'zod'
 
-const localAbsolutePathPattern = /^(?:\/Users\/|\/home\/|~\/|file:\/\/|[A-Za-z]:\\)/
-
-export const PostMetadataSchema = z.object({
+export const PostMetadataSchema = z.strictObject({
   title: z.string().min(1),
   slug: z
     .string()
@@ -21,7 +20,7 @@ export const PostMetadataSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .refine((value) => value == null || !localAbsolutePathPattern.test(value), {
+    .refine((value) => value == null || !isLocalAbsoluteUrl(value), {
       error: 'cover must not be a local absolute path',
     })
     .default(null),
@@ -30,7 +29,7 @@ export const PostMetadataSchema = z.object({
 
 // Resolve profile defaults once; explicit font choices remain authoritative.
 export const PdfTemplateSchema = z
-  .object({
+  .strictObject({
     enabled: z.boolean().default(true),
     profile: z.enum(['editorial', 'portable']).default('editorial'),
     fonts: z.array(z.string().trim().min(1)).min(1).optional(),
@@ -77,7 +76,7 @@ export const GlyphweaveConfigSchema = z
       .strictObject({
         binary: z.string().default('typst'),
         pdf: z
-          .object({
+          .strictObject({
             enabledByDefault: z.boolean().default(false),
             failure: z.enum(['error', 'warn']).default('error'),
             template: PdfTemplateSchema,

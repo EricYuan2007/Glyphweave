@@ -1,4 +1,3 @@
-import type { Root } from 'hast'
 import { visit } from 'unist-util-visit'
 import type { GlyphweaveCaptureReport, GlyphweaveDiagnostic } from '../schema/index.js'
 import type { SourceFormula } from '../compiler/index.js'
@@ -56,7 +55,7 @@ export function createCaptureReport(
       input.sourceFormulaCount !==
       input.nativeMathml + input.typstFrameSvg + (input.typstFrameHtml ?? 0),
   }
-  visit(root as Root, 'element', (node: HastNode) => {
+  visit(root, 'element', (node) => {
     if (isHeading(node)) content.headings += 1
     if (node.tagName === 'p') content.paragraphs += 1
     if (node.tagName === 'ul' || node.tagName === 'ol') content.lists += 1
@@ -85,7 +84,7 @@ export function createCaptureReport(
 
 function countListItems(node: HastNode): number {
   let count = 0
-  visit(node as Root, 'element', (child: HastNode) => {
+  visit(node, 'element', (child) => {
     if (child !== node && child.tagName === 'li') count += 1
   })
   return count

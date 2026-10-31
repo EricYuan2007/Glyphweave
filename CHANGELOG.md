@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Use one validated artifact snapshot for post reads, Astro loading and resource export; reject mixed generations and index/manifest mismatches. Post reads and copying are snapshot methods; export takes a snapshot.
+- Preserve resource URL query/fragment suffixes and encoded names; reject unknown article metadata and nested PDF configuration. Compiler PDF options use the same `enabled` field as configuration.
+- Prepare immutable build contexts and document plans; propagate unexpected cache I/O failures while retaining transactional rollback.
+- Render typed HAST math frames directly, separate layout/font/render modules, and use typed Rust layout serialization with per-export font-instance memoization.
+- Upgrade both packages together. `renderMathLayout().frames` now contains HAST elements rather than HTML strings. No old-signature adapters are shipped.
+
 ## Unreleased
 
 - Consolidate the compiler and Astro packages; separate native packaging, tests, examples and contributor documentation. Remove legacy configuration migration and automatic deployment.
@@ -20,8 +28,6 @@
 - Move the minimal starter into `examples/minimal`, remove duplicate root runtime dependencies
   and superseded audit documents, and maintain cache/acceptance guidance.
 - Add cache corruption, input race, font/package/compiler and cross-process package tests.
-
-
 
 ### Fixed
 

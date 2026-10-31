@@ -1,7 +1,9 @@
+import { syncBuiltinESMExports } from 'node:module'
+import fs from 'node:fs/promises'
 import { mkdtemp, mkdir, writeFile, readFile, rm, stat, utimes, symlink } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { buildAll, resolvePostOutputDir, type BuildDependencies } from 'glyphweave'
 import { defaultConfig } from 'glyphweave/schema'
 
@@ -75,6 +77,8 @@ describe('transactional incremental cache', () => {
         await readFile(path.join(third, name)),
       )
     }
+    f.config.cache.enabled = true
+    expect((await f.run()).cache).toMatchObject({ compiled: 0, reused: 2 })
   })
   it.each(['index.typ', 'included.typ', 'asset.svg', 'refs.bib'])(
     'invalidates only the affected article for %s bytes even with preserved mtime',
@@ -113,6 +117,23 @@ describe('transactional incremental cache', () => {
       expect((await f.run()).cache.compiled).toBe(1)
     },
   )
+  it('propagates destination I/O errors and preserves the committed index', async () => {
+    const f = await fixture()
+    await f.run()
+    const indexPath = path.join(f.root, '.glyphweave/content-index.json')
+    const before = await readFile(indexPath)
+    const failure = Object.assign(new Error('disk full during reuse'), { code: 'ENOSPC' })
+    const copy = vi.spyOn(fs, 'cp').mockRejectedValueOnce(failure)
+    syncBuiltinESMExports()
+    try {
+      await expect(f.run()).rejects.toThrow('disk full during reuse')
+      expect(await readFile(indexPath)).toEqual(before)
+    } finally {
+      copy.mockRestore()
+      syncBuiltinESMExports()
+    }
+  })
+
   it('does not cache optional PDF failures', async () => {
     const f = await fixture()
     f.config.typst.pdf.failure = 'warn'

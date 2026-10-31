@@ -1,5 +1,6 @@
+import type { Root, Element } from 'hast'
 import { codeToHast } from 'shiki'
-import { propertyValue, rawTextContent } from './tree.js'
+import { propertyValue, textContent } from './tree.js'
 import type { HastNode } from './types.js'
 
 const languageAliases: Record<string, string> = {
@@ -21,11 +22,15 @@ const languageLabels: Record<string, string> = {
 }
 
 export async function highlightCodeBlocks(root: HastNode) {
-  const blocks: Array<{ parent: HastNode; index: number; code: HastNode }> = []
+  const blocks: Array<{ parent: Root | Element; index: number; code: Element }> = []
 
   const collect = (node: HastNode) => {
-    for (const [index, child] of (node.children ?? []).entries()) {
-      const code = child.tagName === 'pre' ? child.children?.find(isCode) : undefined
+    if (!('children' in node)) return
+    for (const [index, child] of node.children.entries()) {
+      const code =
+        child.type === 'element' && child.tagName === 'pre'
+          ? child.children.find(isCode)
+          : undefined
       if (code) blocks.push({ parent: node, index, code })
       else collect(child)
     }
@@ -35,25 +40,26 @@ export async function highlightCodeBlocks(root: HastNode) {
   for (const block of blocks) {
     const sourceLanguage = propertyValue(block.code, 'data-lang') ?? 'text'
     const language = languageAliases[sourceLanguage] ?? sourceLanguage
-    const highlighted = await highlight(rawTextContent(block.code), language)
-    block.parent.children![block.index] = createCodeBlock(
+    const highlighted = await highlight(textContent(block.code), language)
+    block.parent.children[block.index] = createCodeBlock(
       highlighted,
       languageLabels[language] ?? language,
     )
   }
 }
 
-async function highlight(source: string, language: string): Promise<HastNode> {
-  try {
-    const root = await codeToHast(source, { lang: language, theme: 'github-light' })
-    return root.children[0] as HastNode
-  } catch {
-    const root = await codeToHast(source, { lang: 'text', theme: 'github-light' })
-    return root.children[0] as HastNode
-  }
+async function highlight(source: string, language: string): Promise<Element> {
+  const root = await codeToHast(source, { lang: language, theme: 'github-light' }).catch(() =>
+    codeToHast(source, { lang: 'text', theme: 'github-light' }),
+  )
+  const pre = root.children.find(
+    (node): node is Element => node.type === 'element' && node.tagName === 'pre',
+  )
+  if (!pre) throw new Error('Highlighter produced no code block')
+  return pre
 }
 
-function createCodeBlock(pre: HastNode, label: string): HastNode {
+function createCodeBlock(pre: Element, label: string): Element {
   pre.properties = {
     ...pre.properties,
     className: ['shiki', 'github-light', 'gw-code-pre'],
@@ -67,6 +73,6 @@ function createCodeBlock(pre: HastNode, label: string): HastNode {
   return pre
 }
 
-function isCode(node: HastNode) {
+function isCode(node: HastNode): node is Element {
   return node.type === 'element' && node.tagName === 'code'
 }

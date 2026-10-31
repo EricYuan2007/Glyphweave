@@ -39,9 +39,9 @@ await fs.writeFile(
   ),
 )
 
-const { exportGlyphweaveAssets } =
+const { exportGlyphweaveAssets, openGlyphweaveSnapshot } =
   await import('../../../packages/glyphweave/dist/artifacts/index.js')
-await exportGlyphweaveAssets(root, 'public/glyphweave')
+await exportGlyphweaveAssets(await openGlyphweaveSnapshot(root), 'public/glyphweave')
 const published = await fs.readFile(path.join(root, '.glyphweave/content-index.json'), 'utf8')
 const original = await fs.readFile(path.join(post, 'index.typ'), 'utf8')
 await fs.writeFile(path.join(post, 'index.typ'), '$ cancel(x) $')

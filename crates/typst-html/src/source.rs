@@ -1,4 +1,4 @@
-use crate::frame::{attribute, find_element};
+use crate::html::{attribute, find_element};
 use typst::syntax::{Span, SyntaxKind};
 use typst_html::{HtmlAttr, HtmlElement, HtmlNode};
 // Source spans come from the evaluated equation, never from repr(content).

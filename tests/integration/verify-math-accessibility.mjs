@@ -1,3 +1,4 @@
+import { toHtml } from 'hast-util-to-html'
 /* global document, getComputedStyle */
 import assert from 'node:assert/strict'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -33,7 +34,7 @@ await writeFile(path.join(study, 'accessibility.otf'), rendered.font)
 await writeFile(path.join(study, 'accessibility.css'), rendered.css)
 let html = await readFile(output, 'utf8')
 html = html.replace(/<span data-gw-layout="(gw-frame-\d+)"[^>]*><\/span>/g, (_, id) =>
-  rendered.frames.get(id),
+  toHtml(rendered.frames.get(id)),
 )
 html = html.replace('</head>', '<link rel="stylesheet" href="accessibility.css"></head>')
 await writeFile(output, html)

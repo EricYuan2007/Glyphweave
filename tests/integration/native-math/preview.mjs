@@ -1,3 +1,4 @@
+import { toHtml } from 'hast-util-to-html'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 /* global URL */
@@ -10,7 +11,7 @@ await fs.writeFile(new URL('math.otf', root), rendered.font)
 await fs.writeFile(new URL('math.css', root), rendered.css)
 let html = await fs.readFile(new URL('raw.html', root), 'utf8')
 html = html.replace(/<span data-gw-layout="(gw-frame-\d+)"[^>]*><\/span>/g, (_, id) =>
-  rendered.frames.get(id),
+  toHtml(rendered.frames.get(id)),
 )
 html = html.replace(
   '</head>',

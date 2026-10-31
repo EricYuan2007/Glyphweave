@@ -1,5 +1,4 @@
 import { prepareNativeMath } from './native-math.js'
-import type { Root } from 'hast'
 import { readFile } from 'node:fs/promises'
 import { toHtml } from 'hast-util-to-html'
 import rehypeParse from 'rehype-parse'
@@ -13,12 +12,12 @@ import { normalizeNativeMathml, normalizeTypstFrameMath } from './math.js'
 import { rewriteLinks, sanitize } from './security.js'
 import { extractBody } from './tree.js'
 import { normalizeQuoteAttributions } from './typography.js'
-import type { HastNode, HtmlAdapterInput, HtmlAdapterOutput } from './types.js'
+import type { HtmlAdapterInput, HtmlAdapterOutput } from './types.js'
 
 export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapterOutput> {
   const raw = await readFile(input.rawHtmlPath, 'utf-8')
 
-  const root = unified().use(rehypeParse, { fragment: false }).parse(raw) as HastNode
+  const root = unified().use(rehypeParse, { fragment: false }).parse(raw)
   const body = extractBody(root)
   const source = await readFile(input.post.sourcePath, 'utf-8')
   const sourceFormulas = scanSourceFormulasFromText(source, input.post.sourcePath)
@@ -59,7 +58,7 @@ export async function adaptTypstHtml(input: HtmlAdapterInput): Promise<HtmlAdapt
         children: [],
       })
     : ''
-  const contentHtml = stylesheet + toHtml({ type: 'root', children: body.children ?? [] } as Root)
+  const contentHtml = stylesheet + toHtml({ type: 'root', children: body.children ?? [] })
 
   return {
     contentHtml: `<div class="${input.options.scopeClass}">${contentHtml}</div>`,

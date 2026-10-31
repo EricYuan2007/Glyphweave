@@ -1,3 +1,4 @@
+import { isWithin } from '../paths.js'
 import { createHash } from 'node:crypto'
 import { readFile, realpath } from 'node:fs/promises'
 import path from 'node:path'
@@ -23,7 +24,7 @@ export async function discoverPosts(
   rootDir: string,
   config: GlyphweaveConfig,
 ): Promise<DiscoveredTypstPost[]> {
-  const contentRoot = path.resolve(rootDir, config.content.root)
+  const contentRoot = path.resolve(await realpath(rootDir), config.content.root)
   const metadataPaths = await glob(config.content.pattern, {
     cwd: contentRoot,
     absolute: true,
@@ -38,8 +39,7 @@ export async function discoverPosts(
       const sourcePath = path.resolve(postDir, metadata.source ?? 'index.typ')
       const actualSource = await realpath(sourcePath)
       const actualPost = await realpath(postDir)
-      const relativeSource = path.relative(actualPost, actualSource)
-      if (relativeSource.startsWith('..') || path.isAbsolute(relativeSource))
+      if (!isWithin(actualPost, actualSource))
         throw new Error(`Source escapes post directory: ${metadata.source}`)
       const source = await readFile(sourcePath, 'utf-8')
       return {

@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { LayoutSchema, renderMathLayout } from '../math/index.js'
-import { unified } from 'unified'
-import rehypeParse from 'rehype-parse'
+import { LayoutSchema } from '../math/layout.js'
+import { renderValidatedMath } from '../math/render.js'
 import type { RewrittenAsset } from '../schema/index.js'
 import type { HastNode, HtmlAdapterInput } from './types.js'
 import { classList, propertyValue } from './tree.js'
@@ -15,13 +14,14 @@ export async function prepareNativeMath(root: HastNode, input: HtmlAdapterInput)
     JSON.parse(await readFile(`${input.rawHtmlPath}.layout.json`, 'utf8')),
   )
   const ids = new Set(layout.frames.map((frame) => frame.id))
-  if (ids.size !== layout.frames.length) throw new Error('Duplicate native frame ids')
   const seen = new Set<string>()
   function visit(node: HastNode, mathKind?: string) {
+    if (node.type !== 'element' && node.type !== 'root') return
     const kind = propertyValue(node, 'data-gw-math') || mathKind
     const id = propertyValue(node, 'data-gw-layout')
     if (id) {
       if (
+        node.type !== 'element' ||
         node.tagName !== 'span' ||
         !['inline', 'block'].includes(kind ?? '') ||
         !ids.has(id) ||
@@ -31,7 +31,11 @@ export async function prepareNativeMath(root: HastNode, input: HtmlAdapterInput)
       seen.add(id)
       node.properties = { ...node.properties, className: [`gw-native-placeholder-${id}`] }
     }
-    if (propertyValue(node, 'data-gw-math') && ['inline', 'block'].includes(kind ?? '')) {
+    if (
+      node.type === 'element' &&
+      propertyValue(node, 'data-gw-math') &&
+      ['inline', 'block'].includes(kind ?? '')
+    ) {
       node.properties = {
         ...node.properties,
         className: ['gw-math', `gw-math--${kind}`],
@@ -42,7 +46,7 @@ export async function prepareNativeMath(root: HastNode, input: HtmlAdapterInput)
   }
   visit(root)
   if (seen.size !== ids.size) throw new Error('Native math sidecar and HTML do not match')
-  const result = renderMathLayout(layout, './font.otf')
+  const result = renderValidatedMath(layout, './font.otf')
   const digest = (bytes: string | Uint8Array) =>
     createHash('sha256').update(bytes).digest('hex').slice(0, 20)
   const fontName = `gw-math-${digest(result.font)}.otf`
@@ -69,16 +73,16 @@ export async function prepareNativeMath(root: HastNode, input: HtmlAdapterInput)
     apply(body: HastNode) {
       const inserted = new Set<string>()
       function replace(node: HastNode) {
+        if (!('children' in node)) return
         for (const child of node.children ?? []) {
           const marker = classList(child).find((cls) => cls.startsWith('gw-native-placeholder-'))
-          if (marker) {
+          if (marker && child.type === 'element') {
             const id = marker.slice('gw-native-placeholder-'.length)
-            const html = result.frames.get(id)
-            if (!html || inserted.has(id))
+            const frame = result.frames.get(id)
+            if (!frame || inserted.has(id))
               throw new Error('Invalid sanitized native math placeholder')
             inserted.add(id)
-            const fragment = unified().use(rehypeParse, { fragment: true }).parse(html) as HastNode
-            child.children = fragment.children
+            child.children = [frame]
             child.properties = { ...child.properties, className: ['gw-native-frame'] }
           } else replace(child)
         }

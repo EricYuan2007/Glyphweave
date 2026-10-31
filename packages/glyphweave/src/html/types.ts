@@ -1,4 +1,4 @@
-import type { Root, RootContent, Properties } from 'hast'
+import type { Root, RootContent } from 'hast'
 import type {
   GlyphweaveCaptureReport,
   GlyphweaveConfig,
@@ -32,10 +32,4 @@ export interface HtmlAdapterOutput {
   diagnostics: GlyphweaveDiagnostic[]
 }
 
-/** HAST union with optional conveniences for recursive, discriminant-checked transforms. */
-export type HastNode = (Root | RootContent) & {
-  tagName?: string
-  value?: string
-  properties?: Properties
-  children?: HastNode[]
-}
+export type HastNode = Root | RootContent

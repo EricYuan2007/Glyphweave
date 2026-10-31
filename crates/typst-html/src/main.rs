@@ -1,10 +1,12 @@
 //! Native Typst frame export. Visible math never passes through SVG or MathML.
 mod frame;
+mod html;
+mod layout;
 mod source;
 mod world;
 use anyhow::{Context, Result, anyhow, bail};
 use frame::Export;
-use serde_json::json;
+use layout::WireLayout;
 use source::capture_sources;
 use std::{fs, path::PathBuf};
 use typst_as_lib::{TypstEngine, typst_kit_options::TypstKitFontOptions};
@@ -63,9 +65,11 @@ fn run() -> Result<()> {
     fs::write(&args[3], html)?;
     fs::write(
         format!("{}.layout.json", args[3]),
-        serde_json::to_vec(
-            &json!({"version":2,"compiler":"typst-0.15.1","glyphs":export.glyphs,"frames":export.frames,"fonts":export.fonts}),
-        )?,
+        serde_json::to_vec(&WireLayout {
+            version: 2,
+            compiler: "typst-0.15.1",
+            data: &export.layout,
+        })?,
     )?;
     Ok(())
 }

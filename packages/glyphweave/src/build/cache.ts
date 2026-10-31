@@ -1,24 +1,40 @@
+import { isWithin } from '../paths.js'
+import { z } from 'zod'
 import { cp, lstat, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { ContentIndexSchema, ManifestSchema, type GlyphweaveManifest } from '../schema/index.js'
-import { hash, snapshotTree } from './fingerprint.js'
+import { hash, snapshotTree, InvalidTree } from './fingerprint.js'
 
-export interface CacheEntry {
-  key: string
-  directory: string
-  files: Record<string, string>
-}
-export interface BuildCache {
-  version: 1
-  entries: Record<string, CacheEntry>
+const CacheSchema = z.strictObject({
+  version: z.literal(1),
+  entries: z.record(
+    z.string(),
+    z.strictObject({
+      key: z.string(),
+      directory: z.string(),
+      files: z.record(z.string(), z.string()),
+    }),
+  ),
+})
+export type BuildCache = z.infer<typeof CacheSchema>
+export type CacheEntry = BuildCache['entries'][string]
+class InvalidCache extends Error {}
+function isCacheMiss(error: unknown) {
+  return (
+    error instanceof InvalidCache ||
+    error instanceof InvalidTree ||
+    error instanceof SyntaxError ||
+    error instanceof z.ZodError ||
+    ['ENOENT', 'ENOTDIR', 'EISDIR', 'ELOOP'].includes((error as NodeJS.ErrnoException)?.code ?? '')
+  )
 }
 
 async function confined(root: string, candidate: string) {
   const resolved = path.resolve(root, candidate)
-  const relative = path.relative(await realpath(root), await realpath(resolved))
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative))
-    throw new Error('Cache path escapes generation')
-  if ((await lstat(resolved)).isSymbolicLink()) throw new Error('Cache links are not reusable')
+  if (!isWithin(await realpath(root), await realpath(resolved)))
+    throw new InvalidCache('Cache path escapes generation')
+  if ((await lstat(resolved)).isSymbolicLink())
+    throw new InvalidCache('Cache links are not reusable')
   return resolved
 }
 
@@ -28,16 +44,13 @@ export async function readCache(rootDir: string, output: string): Promise<BuildC
     const index = ContentIndexSchema.parse(
       JSON.parse(await readFile(path.join(output, 'content-index.json'), 'utf8')),
     )
-    if (!index.cachePath) throw new Error('No cache')
     const cachePath = await confined(
       path.join(output, 'generations'),
       path.resolve(rootDir, index.cachePath),
     )
-    const cache = JSON.parse(await readFile(cachePath, 'utf8')) as BuildCache
-    if (cache.version !== 1 || !cache.entries || typeof cache.entries !== 'object')
-      throw new Error('Unknown cache')
-    return cache
-  } catch {
+    return CacheSchema.parse(JSON.parse(await readFile(cachePath, 'utf8')))
+  } catch (error) {
+    if (!isCacheMiss(error)) throw error
     return { version: 1, entries: {} }
   }
 }
@@ -67,12 +80,8 @@ export async function reusePost(
     )
     const rebase = (file: string) => {
       const relative = path.relative(source, path.resolve(rootDir, file))
-      if (
-        relative.startsWith('..') ||
-        path.isAbsolute(relative) ||
-        !files[relative.replace(/\\/g, '/')]
-      )
-        throw new Error('Invalid cached manifest path')
+      if (!isWithin(source, path.resolve(rootDir, file)) || !files[relative.replace(/\\/g, '/')])
+        throw new InvalidCache('Invalid cached manifest path')
       return path.relative(rootDir, path.join(destination, relative)).replace(/\\/g, '/')
     }
     manifest.html = {
@@ -85,11 +94,12 @@ export async function reusePost(
     manifest.createdAt = new Date().toISOString()
     await cp(source, destination, { recursive: true, errorOnExist: true, force: false })
     if (hash(JSON.stringify(await snapshotTree(destination))) !== hash(JSON.stringify(files)))
-      throw new Error('Cache changed during copy')
+      throw new InvalidCache('Cache changed during copy')
     await writeFile(path.join(destination, 'manifest.json'), JSON.stringify(manifest, null, 2))
     return manifest
-  } catch {
+  } catch (error) {
     await rm(destination, { recursive: true, force: true })
+    if (!isCacheMiss(error)) throw error
     return undefined
   }
 }

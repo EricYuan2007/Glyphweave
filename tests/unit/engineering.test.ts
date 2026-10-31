@@ -6,6 +6,7 @@ import { buildAll, clean, loadConfig, prepareOutput, resolvePostOutputDir } from
 import { defaultConfig, GlyphweaveConfigSchema } from 'glyphweave/schema'
 import {
   exportGlyphweaveAssets,
+  openGlyphweaveSnapshot,
   publishedPosts,
   readGlyphweaveContentIndex,
 } from 'glyphweave/artifacts'
@@ -99,10 +100,10 @@ describe('engineering contracts', () => {
     const f = await fixture()
     await f.metadata('pdf: true')
     await buildAll(f.root, mathmlConfig(), f.deps)
-    await exportGlyphweaveAssets(f.root, 'public/glyphweave/posts')
+    await exportGlyphweaveAssets(await openGlyphweaveSnapshot(f.root), 'public/glyphweave/posts')
     await f.metadata('pdf: true', visibility, status)
     await buildAll(f.root, mathmlConfig(), f.deps)
-    await exportGlyphweaveAssets(f.root, 'public/glyphweave/posts')
+    await exportGlyphweaveAssets(await openGlyphweaveSnapshot(f.root), 'public/glyphweave/posts')
     await expect(
       access(path.join(f.root, 'public/glyphweave/posts/demo/article.pdf')),
     ).rejects.toThrow()
@@ -151,6 +152,8 @@ describe('engineering contracts', () => {
       { capture: { report: false } },
       { html: { sanitize: false } },
       { typst: { htmlFeatures: false } },
+      { typst: { pdf: { unexpectedOption: true } } },
+      { typst: { pdf: { template: { fontSzie: 12 } } } },
       { typo: true },
     ]) {
       expect(() => GlyphweaveConfigSchema.parse(input)).toThrow()
@@ -196,6 +199,54 @@ describe('engineering contracts', () => {
         options: mathmlConfig().html,
       }),
     ).rejects.toThrow('escapes')
+  })
+
+  it('keeps an opened snapshot coherent after another generation commits', async () => {
+    const f = await fixture()
+    await f.metadata('pdf: true')
+    await buildAll(f.root, mathmlConfig(), f.deps)
+    const old = await openGlyphweaveSnapshot(f.root)
+    await buildAll(f.root, mathmlConfig(), {
+      ...f.deps,
+      compileHtml: async ({ outputPath }) => {
+        await writeFile(outputPath, '<p>New generation</p>')
+        return { outputPath, stdout: '', stderr: '' }
+      },
+    })
+    expect(old.readPost('demo').contentHtml).toContain('Demo')
+    expect((await openGlyphweaveSnapshot(f.root)).readPost('demo').contentHtml).toContain(
+      'New generation',
+    )
+    await old.copyAssets(['demo'], path.join(f.root, 'snapshot-export'))
+    expect(await readFile(path.join(f.root, 'snapshot-export/demo/article.pdf'), 'utf8')).toBe(
+      'synthetic PDF',
+    )
+    await expect(old.copyAssets(['unknown'], path.join(f.root, 'snapshot-export'))).rejects.toThrow(
+      'not found',
+    )
+  })
+
+  it('rejects index/manifest disagreement and mixed generations before export', async () => {
+    const f = await fixture()
+    await f.metadata('pdf: true')
+    await buildAll(f.root, mathmlConfig(), f.deps)
+    const before = await readGlyphweaveContentIndex(f.root)
+    await buildAll(f.root, mathmlConfig(), f.deps)
+    const index = await readGlyphweaveContentIndex(f.root)
+    const indexPath = path.join(f.root, '.glyphweave/content-index.json')
+    const changed = structuredClone(index)
+    changed.posts[0].contentHtmlPath = before.posts[0].contentHtmlPath
+    await writeFile(indexPath, JSON.stringify(changed))
+    await expect(openGlyphweaveSnapshot(f.root)).rejects.toThrow('escapes')
+    changed.posts = before.posts
+    await writeFile(indexPath, JSON.stringify(changed))
+    await expect(openGlyphweaveSnapshot(f.root)).rejects.toThrow('escapes')
+    await writeFile(indexPath, JSON.stringify(index))
+    const manifestPath = path.join(f.root, index.posts[0].manifestPath)
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+    manifest.html.contentPath = manifest.html.rawPath
+    await writeFile(manifestPath, JSON.stringify(manifest))
+    await expect(openGlyphweaveSnapshot(f.root)).rejects.toThrow('disagree')
   })
 
   it('rejects corrupt or unknown artifact versions', async () => {

@@ -14,7 +14,8 @@ Use two TypeScript packages (`glyphweave` and `@glyphweave/astro`) plus the nati
 Rust compiler bridge in `crates/typst-html`. Within `glyphweave`, `build/` owns
 generation/commit and compiler orchestration; `html/` takes a minimal post context,
 has no dependency on `build/`, and owns constrained HTML transforms. Compiler calls
-are injected in tests. `artifacts/` owns validated readers and resource export;
+are injected in tests. A prepared build context holds frozen configuration and explicit
+compiler identity providers; document plans capture paths, input hashes and timestamps. `artifacts/` owns validated readers and resource export;
 `@glyphweave/astro` loads those artifacts into Astro without invoking compilation.
 The current module boundaries and default `html-frame` rendering path are described
 in [Architecture](../architecture.md).
@@ -23,8 +24,9 @@ in [Architecture](../architecture.md).
 standalone publication selection; hosts can choose different inputs for previews.
 
 Build under `.glyphweave/generations/<id>/`. Validate the index and manifests, then
-rename a temporary index over `content-index.json`. Readers hold one snapshot and
-follow its paths. Keep old generations until explicit clean so in-flight readers
+rename a temporary index over `content-index.json`. `openGlyphweaveSnapshot` validates generation containment and index/manifest agreement
+before returning content and resource access. Astro, host reads and exports share this
+boundary and follow one snapshot. Keep old generations until explicit clean so in-flight readers
 remain valid. Serialize writers with a lock; never steal a potentially live lock.
 Clean is an administrative operation and must not run alongside readers.
 

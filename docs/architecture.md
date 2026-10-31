@@ -49,7 +49,7 @@ The public entrypoints are declared in
 | `schema/`     | `glyphweave/schema`     | Validate configuration, metadata, manifests and indexes; infer their TypeScript types.                      |
 | `compiler/`   | `glyphweave/compiler`   | Run Typst CLI or the native bridge; stage wrappers; collect diagnostics and compiler/font/package identity. |
 | `html/`       | `glyphweave/html`       | Sanitize and normalize HTML, headings, math and code; rewrite article resources and produce a TOC.          |
-| `math/`       | `glyphweave/math`       | Validate native layout data and render HTML/CSS plus subset font resources.                                 |
+| `math/`       | `glyphweave/math`       | Validate native layout data and render HAST frames, CSS and subset font resources.                          |
 | `build/`      | `glyphweave`            | Discover inputs, orchestrate document compilation, validate cache reuse and commit a complete generation.   |
 | `artifacts/`  | `glyphweave/artifacts`  | Read validated index snapshots and post content; select published posts and export current resources.       |
 | `cli/`        | `glyphweave` executable | Expose `build`, `clean`, `inspect` and `doctor` commands using the core APIs.                               |
@@ -106,6 +106,8 @@ post.yaml + index.typ + includes/assets
 
 The default store is `.glyphweave/`. Each article's files live below
 `generations/<id>/generated/posts/<slug>/`. `build-post.ts` handles one article;
+`context.ts` prepares frozen configuration, compiler identities and per-document plans;
+`buildGeneration` only orchestrates reuse/compilation, validation and index writing.
 `cache.ts`, `fingerprint.ts`, `manifest.ts`, `content-index.ts` and `output.ts`
 separate reuse, identity, artifact descriptions, indexing and output ownership.
 `compiler/environment.ts` fingerprints Typst, fonts and packages. HTML and PDF
@@ -128,20 +130,54 @@ the HTML, omits that PDF and records a diagnostic; that result is not cached for
 reuse. `exportGlyphweaveAssets` stages only current, publishable manifest resources
 and replaces an owned destination under `public/` with rollback on failure.
 
+### Reading a validated snapshot
+
+```ts
+import {
+  openGlyphweaveSnapshot,
+  publishedPosts,
+  exportGlyphweaveAssets,
+} from 'glyphweave/artifacts'
+
+const snapshot = await openGlyphweaveSnapshot(process.cwd())
+const routes = publishedPosts(snapshot.index)
+const post = snapshot.readPost(routes[0].slug)
+await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
+// Preview hosts may copy their own selection into an empty staging directory:
+// await snapshot.copyAssets(selectedSlugs, stagingDirectory)
+```
+
+The snapshot reads the index once, resolves its generation through `cachePath`,
+and validates every manifest, slug, content/TOC/PDF reference and asset boundary
+before returning. Content and TOCs are loaded during opening. Copy/export uses
+that same generation even if a newer index commits. `readGlyphweaveContentIndex`
+reads metadata only and does not validate referenced artifacts.
+
+The 0.3 API replaces standalone post reading and copying with `snapshot.readPost`
+and `snapshot.copyAssets`; export now takes the snapshot. Consumers must update
+these calls when upgrading. No legacy signature adapters are provided.
+
 ## Native mathematical layout and PDF
 
 The default `math.strategy` is **`html-frame`**; `mathml` and `svg-frame` are explicit
 alternatives. [`crates/typst-html/src`](../crates/typst-html/src) contains:
 
 - `main.rs`: executable arguments, compilation and HTML/layout output.
-- `frame.rs`: extraction of Typst frames, glyphs, geometry and font data.
+- `frame.rs`: extraction of Typst frames, glyphs, geometry and font data; font-instance identity and permission checks are cached within one export.
+- `layout.rs`: serializable structs/enums for the native wire protocol.
+- `html.rs`: shared HTML attribute lookup and traversal.
 - `source.rs`: capture of equation source representations.
 - `world.rs`: controlled file access and deterministic compilation time.
 
 The native executable embeds the Typst Rust compiler and writes raw HTML plus a
 `.layout.json` sidecar. `html/native-math.ts` validates that sidecar through
 `math/`, prepares fonts/styles and inserts the renderer-owned output after author
-HTML sanitization. Visible `html-frame` equations use Typst geometry rendered as
+HTML sanitization. `math/layout.ts` validates the process boundary once;
+`math/font.ts` owns OpenType creation and deterministic SFNT normalization;
+`math/render.ts` produces typed HAST nodes and CSS. The adapter inserts those nodes
+directly, without reparsing generated HTML strings. Public `renderMathLayout` accepts
+unknown layout data and returns `Map<string, Element>` frames, CSS and font bytes.
+Visible `html-frame` equations use Typst geometry rendered as
 HTML/CSS and glyph fonts; MathML provides accessible semantics. The ordinary Typst
 CLI compiles PDFs independently and also serves the alternative HTML strategies.
 
@@ -156,7 +192,7 @@ See [native math](native-math-renderer.md) and [PDF typography](pdf-typography.m
 ## Astro and consuming sites
 
 [`@glyphweave/astro`](../packages/astro/src/index.ts) provides `glyphweaveLoader`.
-It reads one index snapshot, validates artifact paths, loads HTML and headings,
+It opens the shared validated artifact snapshot, loads HTML and headings,
 parses collection data and computes entry digests. An optional `transform` maps
 these values to the host site's collection shape.
 
@@ -169,8 +205,10 @@ or copy their assets. Pages, navigation, search and deployment belong to the hos
 
 ## Trust boundaries and verification
 
-Authors and executable TypeScript configuration are trusted. The adapter constrains
-HTML/MathML/static SVG, URLs, resource paths and numeric styles. Code highlighting
+Authors and executable TypeScript configuration are trusted. All configuration objects, including PDF templates, reject unknown fields.
+The adapter constrains HTML/MathML/static SVG, URLs, resource paths and numeric styles.
+Resource URLs preserve the full query/fragment suffix and encode filename components.
+`paths.ts` provides component-aware containment; `urls.ts` provides filesystem-URL recognition. Code highlighting
 and native formula insertion are subsequent trusted transforms. Raw HTML, layout
 sidecars and logs are diagnostic/intermediate files, not deployment inputs.
 Lexical formula counts are hints; strict capture rejects compiler-confirmed loss.
