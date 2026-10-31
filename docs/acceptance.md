@@ -1,11 +1,11 @@
 # Acceptance
 
-Run these from a clean checkout with Node 26.13+, pnpm 12.16.1 and Typst 0.15.1:
+Run these from a clean checkout with Node 26.13+, pnpm 12.16.1 and Typst 0.15.1, Poppler (`pdffonts`) and the documented PDF fonts:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm check
-pnpm run audit
+pnpm security:check
 pnpm run verify:demo
 pnpm test:integration
 pnpm test:package
@@ -25,7 +25,7 @@ pnpm benchmark 100
 - Standalone tarball installation runs the CLI and produces HTML/PDF with both renderers.
 - Browser tests cover mathematical content, valid anchors, page overflow, keyboard
   lightbox dismissal and real search results in Chromium, Firefox, WebKit and mobile.
-- Linux CI inspects PDF pages and embedded CJK/monospace fonts before deployment.
+- Integration acceptance inspects PDF pages and embedded CJK/monospace fonts; this repository does not deploy personal sites.
 - The site exports only the current snapshot. No raw HTML or generation directory is deployed.
 
 ## Manual release checks

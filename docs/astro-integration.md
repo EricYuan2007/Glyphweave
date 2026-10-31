@@ -53,3 +53,12 @@ await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
 Custom hosts should keep one snapshot for content and asset copying throughout a build. Use `snapshot.readPost(slug)` and `snapshot.copyAssets(selectedSlugs, stagingDirectory)`; the latter preserves the host's preview selection. See [the snapshot contract](architecture.md#reading-a-validated-snapshot).
 
 See [configuration reference](configuration.md) for current output and configuration contracts.
+
+## Host-selected snapshots (0.4)
+
+Use `buildDocuments` with `documentInput` for host-owned publication policies. Each
+index entry carries an `id` and opaque `data`. A host loader `transform` validates
+that data and constructs its own Astro schema. Pass `indexPath: result.snapshot.indexPath`
+for a static build, or a `snapshot` callback returning a validated snapshot when the
+host coordinates preview updates. With the callback, the loader does not install its
+own index watcher; the host publishes resources first and triggers reload afterward.

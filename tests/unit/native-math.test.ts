@@ -149,7 +149,7 @@ describe('native Typst HTML renderer', () => {
     config.math.strategy = 'html-frame'
     const result = await adaptTypstHtml({
       rawHtmlPath,
-      post: { metadata: { slug: 'math' }, sourcePath, postDir: root },
+      post: { id: 'math', sourcePath, postDir: root },
       outputDir: root,
       publicBasePath: '/docs/posts',
       options: config.html,
@@ -167,7 +167,7 @@ describe('native Typst HTML renderer', () => {
     await expect(
       adaptTypstHtml({
         rawHtmlPath,
-        post: { metadata: { slug: 'math' }, sourcePath, postDir: root },
+        post: { id: 'math', sourcePath, postDir: root },
         outputDir: root,
         publicBasePath: '/docs/posts',
         options: config.html,

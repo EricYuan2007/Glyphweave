@@ -1,3 +1,4 @@
+import { PostMetadataSchema } from '../schema/index.js'
 import { defaultConfig } from '../schema/index.js'
 import { buildDocuments } from './build.js'
 import { discoverPosts, type DiscoveredTypstPost } from './discovery.js'
@@ -19,4 +20,19 @@ export async function buildAll(root: string, config = defaultConfig(), deps?: Bu
     deps,
   )
   return { ...result, skipped }
+}
+
+export function publishedPosts(
+  index: import('../schema/index.js').GlyphweaveContentIndex,
+  listedOnly = false,
+) {
+  return index.posts
+    .map((post) => ({ ...post, ...PostMetadataSchema.parse(post.data) }))
+    .filter(
+      (post) =>
+        post.status === 'published' &&
+        post.visibility !== 'private' &&
+        (!listedOnly || post.visibility === 'public'),
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
 }

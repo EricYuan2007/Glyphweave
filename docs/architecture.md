@@ -51,7 +51,7 @@ The public entrypoints are declared in
 | `html/`       | `glyphweave/html`       | Sanitize and normalize HTML, headings, math and code; rewrite article resources and produce a TOC.          |
 | `math/`       | `glyphweave/math`       | Validate native layout data and render HAST frames, CSS and subset font resources.                          |
 | `build/`      | `glyphweave`            | Discover inputs, orchestrate document compilation, validate cache reuse and commit a complete generation.   |
-| `artifacts/`  | `glyphweave/artifacts`  | Read validated index snapshots and post content; select published posts and export current resources.       |
+| `artifacts/`  | `glyphweave/artifacts`  | Read validated index snapshots and document content; export exactly the selected resources.                 |
 | `cli/`        | `glyphweave` executable | Expose `build`, `clean`, `inspect` and `doctor` commands using the core APIs.                               |
 
 `glyphweave/browser` exposes optional formula selection/copy enhancement from
@@ -85,13 +85,13 @@ and has no build-time dependency on InkStack or a personal blog repository.
 ## Build flow, publication and commit
 
 [`buildDocuments`](../packages/glyphweave/src/build/build.ts) builds the documents
-returned by its caller. It does not choose publication states.
+returned by its caller. `DocumentInput` contains an ID, source/metadata paths and hashes, input directory, creation timestamp, PDF flag and opaque `data`. `documentInput` resolves paths and hashes; no blog title/date/status fields or post.yaml are required. It does not choose publication states.
 [`buildAll`](../packages/glyphweave/src/build/build-all.ts), used by the CLI, adds the
 standalone publishing policy: discover articles and select published, non-private
 posts. Hosts can supply their own document selection for previews.
 
 ```text
-post.yaml + index.typ + includes/assets
+host document selection + source + includes/assets
   -> validate output ownership and acquire the output lock
   -> load documents and validate slugs and compiler environment
   -> create generations/<id>/
@@ -121,23 +121,20 @@ Writers are serialized with an output lock. Clean validates output ownership and
 acquires that lock; callers must also stop readers before deleting the store.
 See [incremental caching](cache.md) for invalidation and reproducibility details.
 
-`publishedPosts(index, true)` selects published/public posts for listings and
+`publishedPosts(index, true)` from the root `glyphweave` entrypoint selects published/public posts for listings and
 search. Published/unlisted posts may have direct routes but stay out of those
-lists. Private, draft and archived posts are excluded from production asset export.
+lists. The standalone build excludes private, draft and archived posts. Resource export itself copies the supplied snapshot selection without applying blog policy.
 The consuming site owns route and search generation; the Astro loader does not
 independently filter the supplied index. A PDF failure configured as `warn` keeps
 the HTML, omits that PDF and records a diagnostic; that result is not cached for
-reuse. `exportGlyphweaveAssets` stages only current, publishable manifest resources
+reuse. `exportGlyphweaveAssets` stages only current snapshot resources
 and replaces an owned destination under `public/` with rollback on failure.
 
 ### Reading a validated snapshot
 
 ```ts
-import {
-  openGlyphweaveSnapshot,
-  publishedPosts,
-  exportGlyphweaveAssets,
-} from 'glyphweave/artifacts'
+import { openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts'
+import { publishedPosts } from 'glyphweave'
 
 const snapshot = await openGlyphweaveSnapshot(process.cwd())
 const routes = publishedPosts(snapshot.index)
@@ -153,9 +150,15 @@ before returning. Content and TOCs are loaded during opening. Copy/export uses
 that same generation even if a newer index commits. `readGlyphweaveContentIndex`
 reads metadata only and does not validate referenced artifacts.
 
-The 0.3 API replaces standalone post reading and copying with `snapshot.readPost`
-and `snapshot.copyAssets`; export now takes the snapshot. Consumers must update
-these calls when upgrading. No legacy signature adapters are provided.
+Version 0.4 returns `{ built, cache, snapshot, typstVersion }` directly from `buildDocuments`.
+`snapshot.indexPath` references its immutable generation and can be passed to another
+process or loader even after the live index advances. Index schema v2 stores `id`
+and opaque `data` separately from artifact paths, plus the output store boundary.
+`compilerEnvironment(root, config, hasDocuments)` exposes an environment identity for
+host-level caching; hosts do not hash or resolve native executables themselves.
+Empty selections skip compiler detection. PDF embedding checks live in the compiler
+and use `pdffonts`; warning-mode failures omit the invalid PDF and disable reuse.
+No previous document/index signatures or compatibility adapters are provided.
 
 ## Native mathematical layout and PDF
 

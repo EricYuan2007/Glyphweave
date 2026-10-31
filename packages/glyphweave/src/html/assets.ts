@@ -163,7 +163,7 @@ async function rewriteLocalResource(
   if (previous) return previous.publicPath + suffix
   const output = path.join(input.outputDir, 'assets', relativeToAssets)
   const publicPath = `${input.publicBasePath.replace(/\/$/, '')}/posts/${
-    input.post.metadata.slug
+    input.post.id
   }/assets/${relativeToAssets.split(path.sep).map(encodeURIComponent).join('/')}`
   await mkdir(path.dirname(output), { recursive: true })
   await copyFile(realSource, output)

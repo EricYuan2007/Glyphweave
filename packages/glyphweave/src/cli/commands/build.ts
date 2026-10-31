@@ -26,12 +26,12 @@ export function registerBuildCommand(program: Command) {
         for (const diagnostic of built.manifest.diagnostics) {
           if (diagnostic.severity !== 'info')
             console.warn(
-              `${diagnostic.severity} [${diagnostic.code}] ${built.post.metadata.slug}: ${diagnostic.message}`,
+              `${diagnostic.severity} [${diagnostic.code}] ${built.post.id}: ${diagnostic.message}`,
             )
         }
         const math = built.manifest.capture.math
         console.log(
-          `✓ ${built.post.metadata.slug}: html ready, toc ready, math ${math.renderedCount}/${math.sourceFormulaCount} rendered (${math.nativeMathml} MathML, ${math.typstFrameSvg} SVG)`,
+          `✓ ${built.post.id}: html ready, toc ready, math ${math.renderedCount}/${math.sourceFormulaCount} rendered (${math.nativeMathml} MathML, ${math.typstFrameSvg} SVG)`,
         )
       }
     })

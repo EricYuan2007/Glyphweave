@@ -19,3 +19,5 @@ export type {
 } from './types.js'
 
 export { createCompilerIdentity } from './environment.js'
+
+export { verifyPdf } from './pdf.js'

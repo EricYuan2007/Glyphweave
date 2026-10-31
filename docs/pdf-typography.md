@@ -15,3 +15,5 @@ The template owns text-frame calibration, CJK/Latin spacing, heading and display
 Run `pnpm test:integration` after building the packages and installing Typst plus Poppler. [The PDF verifier](../tests/integration/verify-pdf-typography.mjs) checks measured text/heading/display spacing, natural math, hyphenation, cross-page table rows and embedded fonts against [the maintained fixture](../tests/fixtures/pdf/typography.typ). It creates disposable output outside the source tree.
 
 Fonts must be installed separately. Their original license and embedding conditions remain applicable; choosing a profile does not distribute proprietary system fonts with the repository.
+
+PDF compilation verifies embedded fonts with Poppler `pdffonts`. Install Poppler alongside Typst for PDF builds. Empty and HTML-only document selections do not invoke this check. A verification failure follows `typst.pdf.failure`; `warn` omits the invalid PDF and disables cache reuse for that document.

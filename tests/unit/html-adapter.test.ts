@@ -41,6 +41,10 @@ async function makePost(
     rawHtmlPath,
     outputDir,
     post: {
+      id: 'demo',
+      creationTimestamp: 0,
+      pdf: false,
+      data: {},
       metadata: {
         title: 'Demo',
         slug: 'demo',

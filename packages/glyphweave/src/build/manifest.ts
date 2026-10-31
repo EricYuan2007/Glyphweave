@@ -11,7 +11,7 @@ import {
   GLYPHWEAVE_HTML_PRELUDE_VERSION,
   GLYPHWEAVE_PDF_PRELUDE_VERSION,
 } from '../compiler/index.js'
-import type { DiscoveredTypstPost } from './discovery.js'
+import type { DocumentInput } from './document.js'
 
 export const GLYPHWEAVE_VERSION: string = JSON.parse(
   readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
@@ -28,7 +28,7 @@ export function expectedPdfPreludeVersion(config: GlyphweaveConfig) {
 export function createManifest(
   context: BuildContext,
   input: {
-    post: DiscoveredTypstPost
+    post: DocumentInput
     preludeVersion: string | null
     assets: GlyphweaveManifest['assets']
     capture: GlyphweaveCaptureReport
@@ -50,7 +50,7 @@ export function createManifest(
       preludeVersion,
       pdfPreludeVersion: paths.pdfPath ? expectedPdfPreludeVersion(config) : null,
     },
-    slug: post.metadata.slug,
+    slug: post.id,
     sourcePath: relative(rootDir, post.sourcePath),
     metadataPath: relative(rootDir, post.metadataPath),
     sourceHash: post.sourceHash,

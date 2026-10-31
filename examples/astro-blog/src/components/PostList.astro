@@ -1,9 +1,9 @@
 ---
-import type { GlyphweaveContentIndex } from 'glyphweave/schema'
+import type { publishedPosts } from 'glyphweave'
 import { sitePath } from '../lib/site-path'
 
 interface Props {
-  posts: GlyphweaveContentIndex['posts']
+  posts: ReturnType<typeof publishedPosts>
   showDescription?: boolean
 }
 

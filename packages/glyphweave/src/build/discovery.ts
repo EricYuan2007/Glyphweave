@@ -1,4 +1,4 @@
-import { isWithin } from '../paths.js'
+import { documentInput, type DocumentInput } from './document.js'
 import { createHash } from 'node:crypto'
 import { readFile, realpath } from 'node:fs/promises'
 import path from 'node:path'
@@ -10,14 +10,8 @@ import {
   type GlyphweavePostMetadata,
 } from '../schema/index.js'
 
-export interface DiscoveredTypstPost {
+export interface DiscoveredTypstPost extends DocumentInput {
   metadata: GlyphweavePostMetadata
-  postDir: string
-  metadataPath: string
-  sourcePath: string
-  assetDir?: string
-  sourceHash: string
-  metadataHash: string
 }
 
 export async function discoverPosts(
@@ -37,19 +31,17 @@ export async function discoverPosts(
       const metadata = PostMetadataSchema.parse(YAML.parse(rawMetadata))
       const postDir = path.dirname(metadataPath)
       const sourcePath = path.resolve(postDir, metadata.source ?? 'index.typ')
-      const actualSource = await realpath(sourcePath)
-      const actualPost = await realpath(postDir)
-      if (!isWithin(actualPost, actualSource))
-        throw new Error(`Source escapes post directory: ${metadata.source}`)
-      const source = await readFile(sourcePath, 'utf-8')
       return {
+        ...(await documentInput({
+          id: metadata.slug,
+          sourcePath,
+          metadataPath,
+          directory: postDir,
+          creationTimestamp: Math.floor(Date.parse(metadata.updated ?? metadata.date) / 1000),
+          pdf: metadata.pdf ?? config.typst.pdf.enabledByDefault,
+          data: metadata,
+        })),
         metadata,
-        postDir,
-        metadataPath,
-        sourcePath,
-        assetDir: path.join(postDir, 'assets'),
-        sourceHash: sha256(source),
-        metadataHash: sha256(rawMetadata),
       } satisfies DiscoveredTypstPost
     }),
   )

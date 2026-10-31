@@ -32,7 +32,7 @@ export async function buildPost(context: BuildContext, plan: DocumentPlan) {
       mathStrategy: config.math.strategy,
       nativeHtmlBinary: config.math.html.binary,
     },
-    logPath: path.join(logDir, `${post.metadata.slug}.html.log`),
+    logPath: path.join(logDir, `${post.id}.html.log`),
   })
   const adapted = await adaptTypstHtml({
     rawHtmlPath: rawPath,
@@ -48,7 +48,7 @@ export async function buildPost(context: BuildContext, plan: DocumentPlan) {
   await writeFile(contentPath, adapted.contentHtml)
   await writeFile(tocPath, JSON.stringify(adapted.toc, null, 2))
 
-  const pdfEnabled = post.metadata.pdf ?? config.typst.pdf.enabledByDefault
+  const pdfEnabled = post.pdf
   let pdfPath: string | null = null
   if (pdfEnabled) {
     pdfPath = path.join(outputDir, 'article.pdf')
@@ -57,11 +57,12 @@ export async function buildPost(context: BuildContext, plan: DocumentPlan) {
         ...compileInput,
         outputPath: pdfPath,
 
-        logPath: path.join(logDir, `${post.metadata.slug}.pdf.log`),
+        logPath: path.join(logDir, `${post.id}.pdf.log`),
         wrapper: {
           pdfTemplate: config.typst.pdf.template,
         },
       })
+      await deps.verifyPdf?.(pdfPath)
       adapted.diagnostics.push(...(pdfCompile.diagnostics ?? []))
     } catch (error) {
       if (config.typst.pdf.failure === 'error') throw error

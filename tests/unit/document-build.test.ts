@@ -2,7 +2,13 @@ import { afterEach, expect, it } from 'vitest'
 import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { buildDocuments, discoverPosts, defaultConfig, type BuildDependencies } from 'glyphweave'
+import {
+  buildDocuments,
+  documentInput,
+  discoverPosts,
+  defaultConfig,
+  type BuildDependencies,
+} from 'glyphweave'
 
 const roots: string[] = []
 afterEach(async () => {
@@ -40,7 +46,7 @@ it('compiles exactly the host-selected documents without changing their publicat
   const index = JSON.parse(
     await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf8'),
   )
-  expect(index.posts[0]).toMatchObject({ status: 'draft', visibility: 'private' })
+  expect(index.posts[0].data).toMatchObject({ status: 'draft', visibility: 'private' })
 })
 it('rejects duplicate document destinations before invoking the compiler', async () => {
   const { root, config, docs, deps } = await fixture()
@@ -64,4 +70,36 @@ it('preserves the committed generation if the host selection changes during comp
     buildDocuments(root, config, async () => (++reads === 1 ? docs : []), deps),
   ).rejects.toThrow('Posts changed during build')
   expect(await readFile(index, 'utf8')).toBe(previous)
+})
+
+it('builds an empty snapshot without a compiler installation', async () => {
+  const { root, config, deps } = await fixture()
+  deps.typstInfo = async () => {
+    throw new Error('Compiler must not be called')
+  }
+  const result = await buildDocuments(root, config, async () => [], deps)
+  expect(result.typstVersion).toBe('unused')
+  expect(result.snapshot.index.posts).toEqual([])
+})
+it('accepts neutral documents and keeps an immutable reference across later builds', async () => {
+  const { root, config, deps } = await fixture()
+  // Each document owns its input directory; compiler outputs are outside it.
+  await mkdir(path.join(root, 'manual'))
+  const file = path.join(root, 'manual/main.typ')
+  await writeFile(file, '= Manual')
+  const load = async () => [
+    await documentInput({
+      id: 'manual',
+      sourcePath: file,
+      creationTimestamp: 0,
+      pdf: false,
+      data: { section: 42 },
+    }),
+  ]
+  const first = await buildDocuments(root, config, load, deps)
+  await buildDocuments(root, config, async () => [], deps)
+  const { openGlyphweaveSnapshot } = await import('glyphweave/artifacts')
+  const stable = await openGlyphweaveSnapshot(root, first.snapshot.indexPath)
+  expect(stable.index.posts[0].data).toEqual({ section: 42 })
+  expect((await stable.readPost('manual')).contentHtml).toContain('Draft')
 })

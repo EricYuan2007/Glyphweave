@@ -56,7 +56,7 @@ export async function prepareNativeMath(root: HastNode, input: HtmlAdapterInput)
   const directory = path.join(input.outputDir, 'assets')
   await mkdir(directory, { recursive: true })
   const assets: RewrittenAsset[] = []
-  const publicDirectory = `${input.publicBasePath.replace(/\/$/, '')}/posts/${input.post.metadata.slug}/assets`
+  const publicDirectory = `${input.publicBasePath.replace(/\/$/, '')}/posts/${input.post.id}/assets`
   for (const [name, value] of [
     [fontName, result.font],
     [cssName, css],
