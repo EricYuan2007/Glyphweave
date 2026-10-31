@@ -4,10 +4,11 @@ Run Glyphweave before Astro:
 
 ```bash
 pnpm glyphweave build
+node scripts/sync-glyphweave-public.mjs
 pnpm astro build
 ```
 
-The example site reads `.glyphweave/content-index.json`, then loads each post's `content.html` and `toc.json` during static generation. The post page injects the sanitized fragment inside:
+The example opens a validated artifact snapshot during static generation. The shared reader validates manifests, generation boundaries and index references before exposing HTML and TOCs. `@glyphweave/astro` uses the same reader and retains its previous store if a reload fails. The post page injects the sanitized fragment inside:
 
 ```astro
 <article class="glyphweave-content" data-pagefind-body>
@@ -40,5 +41,15 @@ pnpm --filter example-astro-blog exec astro preview --host 127.0.0.1 --port 4321
 ## Asset Publishing
 
 Glyphweave emits public paths using `output.publicBasePath`, but static frameworks still need the files in their public directory. The example handles this with `scripts/sync-glyphweave-public.mjs`, which copies generated assets and PDFs into `public/glyphweave` before `astro build`.
+
+The sync script opens a snapshot and exports its selected resources:
+
+```ts
+import { openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts'
+const snapshot = await openGlyphweaveSnapshot(process.cwd())
+await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
+```
+
+Custom hosts should keep one snapshot for content and asset copying throughout a build. Use `snapshot.readPost(slug)` and `snapshot.copyAssets(selectedSlugs, stagingDirectory)`; the latter preserves the host's preview selection. See [the snapshot contract](architecture.md#reading-a-validated-snapshot).
 
 See [configuration reference](configuration.md) for current output and configuration contracts.

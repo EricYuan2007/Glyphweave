@@ -4,7 +4,7 @@
 
 ## Build and enable
 
-Rust 1.92 or newer is required to build the native executable. Workspace builds prepare it automatically using Cargo; subsequent builds reuse Cargo’s compilation cache. A prebuilt `glyphweave-typst-html` on PATH or `math.html.binary` avoids the Rust requirement. Development was tested with Rust 1.99.1; Cargo.lock pins the compiler libraries. The executable embeds Typst 0.15.1 and its standard fonts. The ordinary Typst CLI remains required for PDF output and environment checks and may be any compatible version from 0.15.0 onward.
+Rust 1.92 or newer is required to build the native executable. Run `pnpm build:native` explicitly; subsequent native builds reuse Cargo’s compilation cache. Ordinary document builds never invoke Cargo. A prebuilt `glyphweave-typst-html` on PATH or `math.html.binary` avoids the Rust requirement. Development was tested with Rust 1.99.1; Cargo.lock pins the compiler libraries. The executable embeds Typst 0.15.1 and its standard fonts. The ordinary Typst CLI remains required for PDF output and environment checks and may be any compatible version from 0.15.0 onward.
 
 ```sh
 pnpm install
@@ -28,7 +28,7 @@ export default defineConfig({
 })
 ```
 
-Run the usual `glyphweave build` and export current manifest assets with `exportGlyphweaveAssets`. Generated CSS, font and font notices are declared in each manifest. Consumers must copy all manifest assets, not just images. No browser script is needed. Changing back to `mathml` or `svg-frame` restores the previous backend.
+Run the usual `glyphweave build` and open one `openGlyphweaveSnapshot(root)` and export it with `exportGlyphweaveAssets(snapshot, destination)`. Generated CSS, font and font notices are declared in each manifest. Consumers must copy all manifest assets, not just images. No browser script is needed. Changing back to `mathml` or `svg-frame` restores the previous backend.
 
 ## Ownership and data contract
 
@@ -59,7 +59,7 @@ The visible glyph layer is hidden from accessibility APIs. Protocol v2 also carr
 
 Use `#math.equation($ (a+b)/2 $, alt: "a 加 b 的和除以二")` for an author-written explanation and `#set text(lang: "zh")` for the language. Author `alt` becomes the MathML accessible name; without it, native structural semantics remain available. This is Presentation MathML, not inferred Content MathML: ambiguous notation still benefits from an author description. Actual speech and navigation depend on the browser/screen reader pair. Automated checks verify Chromium's platform accessibility tree and all three engines' semantic DOM; VoiceOver/NVDA/JAWS end-to-end speech has not been manually certified.
 
-Font loading is required for visual output; no client font-failure UI is shipped. Copying original Typst source is not implemented. Wide expressions scroll rather than automatically reflow. Forced-color mode uses system foreground colors for glyphs and rules.
+Font loading is required for visual output; no client font-failure UI is shipped. Original Typst source is selectable; the optional browser module below supports copying mixed prose and equations. Wide expressions scroll rather than automatically reflow. Forced-color mode uses system foreground colors for glyphs and rules.
 
 The generated fonts are local derived assets. A font's permission bits are not a replacement for its license; check the emitted font notices before redistribution.
 
@@ -75,7 +75,9 @@ pnpm test:package
 pnpm test:native
 ```
 
-`pnpm test:native` builds the native bridge and fixtures, then runs the browser and integration checks. Detailed verification scripts live in that research directory: `integration.mjs` exercises cache/export/rollback, `geometry.mjs` measures actual browser glyph baselines and origins, and `compare.mjs` creates the 50-pair visual gallery. `check.mjs` checks all formulas in Chromium/Firefox/WebKit at two viewport widths. These scripts require the native binary, generated fixtures and installed Playwright browsers; they are not silently substituted for ordinary unit tests.
+`pnpm test:native` builds the native bridge and fixtures, then runs the browser and integration checks in `tests/integration/native-math/`: `integration.mjs` exercises cache/export/rollback, `geometry.mjs` measures glyph baselines and origins in Chromium/Firefox/WebKit at two viewport widths, and `preview.mjs` generates the 50-formula gallery. `tests/integration/verify-math-accessibility.mjs` checks semantic DOM and Chromium's accessibility tree. These checks require the native binary and installed Playwright browsers.
+
+The native `layout.rs` serializable types and TypeScript `math/layout.ts` validator define opposite sides of the process boundary. The real-compiler fixtures exercise that contract. Font identities, embedding permissions and notices are computed once per font instance during export. `renderMathLayout` returns HAST frame elements; consumers that need strings serialize them with `hast-util-to-html`. The HTML adapter inserts the elements directly. Font generation and SFNT normalization live in `math/font.ts`; geometry and semantic node generation live in `math/render.ts`.
 
 ## Serif defaults
 

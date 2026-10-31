@@ -180,19 +180,32 @@ All CLI commands accept `--root <dir>` for operating on a project directory othe
 ```text
 .glyphweave/
   content-index.json
-  generated/
-    posts/
-      hnsw-search-notes/
-        raw.html
-        content.html
-        toc.json
-        manifest.json
-        article.pdf
-        assets/
-  logs/
+  generations/<id>/
+    cache.json
+    content-index.json
+    generated/posts/<slug>/
+      raw.html
+      content.html
+      toc.json
+      manifest.json
+      article.pdf
+      assets/
+    logs/
 ```
 
 Only `content.html` is intended for HTML injection. `raw.html` is diagnostic output and should not be rendered directly.
+
+Open one validated snapshot for a site's content and resource export:
+
+```ts
+import { openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts'
+const snapshot = await openGlyphweaveSnapshot(process.cwd())
+const post = snapshot.readPost('hnsw-search-notes')
+await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
+```
+
+The 0.3 package API uses snapshot methods for post reads and host-selected asset copying.
+See [the artifact contract](docs/architecture.md#reading-a-validated-snapshot) for custom hosts.
 
 ## Astro Integration
 

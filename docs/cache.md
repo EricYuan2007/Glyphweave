@@ -28,7 +28,8 @@ The committed content index references its generation's `cache.json`. A hit requ
 matching input key and complete SHA-256 artifact inventory, followed by copying
 and verifying artifacts into a new generation and rebasing manifest paths. No hard
 links or old-generation routes are published. Missing, malformed or damaged cache
-entries fall back to compilation. PDF warning failures are never cached, so a later
+entries fall back to compilation. Unexpected filesystem errors, including permission
+and disk-write failures, abort the build and retain the previous index. PDF warning failures are never cached, so a later
 build retries them. Deleted/private/unpublished articles disappear from the new index.
 
 Source/config discovery, article bytes and the compiler environment are checked again
@@ -50,10 +51,10 @@ Generation paths and manifest `createdAt` change on each build; HTML, TOC, resou
 and PDF bytes are the reproducibility boundary on the same toolchain/environment.
 
 `pnpm test:integration` checks real Typst cached/full HTML, TOC and PDF byte equality
-for MathML and SVG, plus include invalidation. `pnpm test:package` checks actual
+for all three renderers, plus include invalidation. `pnpm test:package` checks actual
 installed tarballs and reuse across CLI processes. `pnpm benchmark 100` measures cold,
 warm, one-article change and forced builds, including environment hashing. Its simple
 formula fixture is a reproducible comparison, not a general throughput guarantee.
 
-Supported validation targets are Node 26.13+/24 and Typst 0.15.x on Linux/macOS.
+Supported validation targets are Node >=26.13.0 <27 and Typst 0.15.x on Linux/macOS.
 Typst HTML export remains experimental; inspect representative content before releasing.

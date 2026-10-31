@@ -61,4 +61,4 @@ Strict capture fails on compiler-confirmed content loss. Source formula counts a
 ## Native HTML backend
 
 `math.strategy: 'html-frame'` uses Typst's own layout with Glyphweave's HTML/font
-backend, without MathJax or KaTeX. This is the default; workspace builds prepare the native compiler bridge automatically. See [setup, geometry, validation and limitations](native-math-renderer.md).
+backend, without MathJax or KaTeX. This is the default; developers prepare the native compiler bridge with `pnpm build:native`. See [setup, geometry, validation and limitations](native-math-renderer.md).
