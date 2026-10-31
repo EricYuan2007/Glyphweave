@@ -18,6 +18,8 @@ pnpm astro build
 </article>
 ```
 
+工作区示例在 Astro 的 `prerender` 环境中将 `glyphweave` 保留为外部 Node 依赖。它按包的位置读取版本、Typst prelude 和原生程序，不能随预渲染代码一起搬进站点输出目录。该设置只作用于静态生成，浏览器脚本和公开资源仍正常打包与导出。
+
 示例站提供：
 
 - 首页文章列表。

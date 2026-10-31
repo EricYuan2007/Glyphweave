@@ -20,6 +20,8 @@ Generated image and PDF assets use `/glyphweave/posts/<slug>/...` public paths. 
 
 ## Example Site
 
+The workspace example keeps `glyphweave` external in Astro's `prerender` environment. Its Node modules read package-relative version, prelude and native-engine files, so bundling the linked package into the site's output would relocate those paths. This setting only affects static generation; browser scripts and public assets are still bundled and exported normally.
+
 The included `examples/astro-blog` site demonstrates:
 
 - A homepage that lists generated Typst posts.
