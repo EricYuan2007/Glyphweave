@@ -10,9 +10,17 @@ back on core, and source-count heuristics rejected valid Typst programs.
 
 ## Decision
 
-Keep the six-package build-time architecture. Core owns generation/commit and
-compiler orchestration. The adapter takes a minimal post context, has no dependency
-on core, and owns constrained HTML transforms. Compiler calls are injected in tests.
+Use two TypeScript packages (`glyphweave` and `@glyphweave/astro`) plus the native
+Rust compiler bridge in `crates/typst-html`. Within `glyphweave`, `build/` owns
+generation/commit and compiler orchestration; `html/` takes a minimal post context,
+has no dependency on `build/`, and owns constrained HTML transforms. Compiler calls
+are injected in tests. `artifacts/` owns validated readers and resource export;
+`@glyphweave/astro` loads those artifacts into Astro without invoking compilation.
+The current module boundaries and default `html-frame` rendering path are described
+in [Architecture](../architecture.md).
+
+`buildDocuments` compiles caller-selected documents. `buildAll` adds the CLI's
+standalone publication selection; hosts can choose different inputs for previews.
 
 Build under `.glyphweave/generations/<id>/`. Validate the index and manifests, then
 rename a temporary index over `content-index.json`. Readers hold one snapshot and
