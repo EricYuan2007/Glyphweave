@@ -14,13 +14,15 @@ export async function hashFile(file: string) {
   return digest.digest('hex')
 }
 
+export class InvalidTree extends Error {}
+
 /** Content-based inventory: addition, removal, bytes and link targets affect the result. */
 export async function snapshotTree(root: string): Promise<Record<string, string>> {
   const files: Record<string, string> = {}
   const actualRoot = await realpath(root)
   async function walk(directory: string, ancestors: Set<string>) {
     const actual = await realpath(directory)
-    if (ancestors.has(actual)) throw new Error(`Cyclic directory link: ${directory}`)
+    if (ancestors.has(actual)) throw new InvalidTree(`Cyclic directory link: ${directory}`)
     const next = new Set([...ancestors, actual])
     for (const name of (await readdir(directory)).sort()) {
       const file = path.join(directory, name)
@@ -30,13 +32,13 @@ export async function snapshotTree(root: string): Promise<Record<string, string>
         const target = await realpath(file)
         const rel = path.relative(actualRoot, target)
         if (rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel))
-          throw new Error(`Input link escapes article: ${file}`)
+          throw new InvalidTree(`Input link escapes article: ${file}`)
         files[`${relative}/@link`] = hash(target)
         if ((await lstat(target)).isDirectory()) await walk(file, next)
         else files[relative] = await hashFile(file)
       } else if (stat.isDirectory()) await walk(file, next)
       else if (stat.isFile()) files[relative] = await hashFile(file)
-      else throw new Error(`Unsupported input file: ${file}`)
+      else throw new InvalidTree(`Unsupported input file: ${file}`)
     }
   }
   await walk(root, new Set())
@@ -69,21 +71,6 @@ export async function implementationIdentity(rootDir: string) {
 }
 
 /** The native bridge embeds Typst and bundled fonts; hash its actual executable bytes. */
-export async function nativeRendererIdentity(binary: string, rootDir: string) {
-  const candidates =
-    binary.includes('/') || binary.includes('\\')
-      ? [path.resolve(rootDir, binary)]
-      : (process.env.PATH ?? '')
-          .split(path.delimiter)
-          .map((directory) => path.join(directory, binary))
-  for (const file of candidates) {
-    try {
-      return hash(await readFile(file))
-    } catch (error) {
-      if (!['ENOENT', 'EISDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error
-    }
-  }
-  throw new Error(
-    `Native HTML renderer not found: ${binary}. Build it with pnpm build:native and set math.html.binary.`,
-  )
+export async function nativeRendererIdentity(binary: string) {
+  return hashFile(binary)
 }

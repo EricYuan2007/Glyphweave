@@ -5,11 +5,12 @@ function isWhitespace(node: HastNode): boolean {
 }
 
 export function normalizeQuoteAttributions(root: HastNode): void {
-  const children = root.children ?? []
+  if (!('children' in root)) return
+  const children = root.children
 
   for (let index = 0; index < children.length; index += 1) {
     const quote = children[index]
-    if (quote.tagName !== 'blockquote') continue
+    if (quote.type !== 'element' || quote.tagName !== 'blockquote') continue
 
     let attributionIndex = index + 1
     while (attributionIndex < children.length && isWhitespace(children[attributionIndex])) {
@@ -17,7 +18,7 @@ export function normalizeQuoteAttributions(root: HastNode): void {
     }
 
     const attribution = children[attributionIndex]
-    if (attribution?.tagName !== 'p') continue
+    if (attribution?.type !== 'element' || attribution.tagName !== 'p') continue
     const firstText = attribution.children
       ?.find((child) => child.type === 'text')
       ?.value?.trimStart()
@@ -28,7 +29,7 @@ export function normalizeQuoteAttributions(root: HastNode): void {
       type: 'element',
       tagName: 'footer',
       properties: { className: ['gw-quote-attribution'] },
-      children: (attribution.children ?? []) as import('hast').ElementContent[],
+      children: attribution.children,
     })
     children.splice(attributionIndex, 1)
   }

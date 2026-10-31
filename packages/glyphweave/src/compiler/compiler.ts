@@ -133,7 +133,7 @@ function shouldUseHtmlWrapper(wrapper: TypstHtmlWrapperOptions | undefined) {
 }
 
 function shouldUsePdfWrapper(wrapper: TypstPdfWrapperOptions | undefined) {
-  return wrapper?.injectTemplate !== false
+  return wrapper?.enabled !== false
 }
 
 function pdfTemplateArguments(template: TypstPdfWrapperOptions | undefined) {

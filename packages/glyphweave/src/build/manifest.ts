@@ -1,3 +1,4 @@
+import type { BuildContext } from './context.js'
 import path from 'node:path'
 import { readFileSync } from 'node:fs'
 import type {
@@ -25,17 +26,18 @@ export function expectedPdfPreludeVersion(config: GlyphweaveConfig) {
 }
 
 export function createManifest(
-  rootDir: string,
-  config: GlyphweaveConfig,
-  post: DiscoveredTypstPost,
-  typstVersion: string,
-  preludeVersion: string | null,
-  pdfPreludeVersion: string | null,
-  assets: GlyphweaveManifest['assets'],
-  capture: GlyphweaveCaptureReport,
-  diagnostics: GlyphweaveDiagnostic[],
-  paths: { rawPath: string; contentPath: string; tocPath: string; pdfPath: string | null },
+  context: BuildContext,
+  input: {
+    post: DiscoveredTypstPost
+    preludeVersion: string | null
+    assets: GlyphweaveManifest['assets']
+    capture: GlyphweaveCaptureReport
+    diagnostics: GlyphweaveDiagnostic[]
+    paths: { rawPath: string; contentPath: string; tocPath: string; pdfPath: string | null }
+  },
 ): GlyphweaveManifest {
+  const { rootDir, config, typstVersion } = context
+  const { post, preludeVersion, assets, capture, diagnostics, paths } = input
   return {
     schemaVersion: 2,
     generator: 'glyphweave',
@@ -46,7 +48,7 @@ export function createManifest(
       features: config.math.strategy === 'mathml' ? ['html', 'mathml'] : ['html'],
       mathRenderer: config.math.strategy,
       preludeVersion,
-      pdfPreludeVersion: paths.pdfPath ? pdfPreludeVersion : null,
+      pdfPreludeVersion: paths.pdfPath ? expectedPdfPreludeVersion(config) : null,
     },
     slug: post.metadata.slug,
     sourcePath: relative(rootDir, post.sourcePath),

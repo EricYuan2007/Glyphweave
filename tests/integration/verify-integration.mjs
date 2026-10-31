@@ -7,10 +7,7 @@ import {
   defaultConfig,
   prepareNativeEngine,
 } from '../../packages/glyphweave/dist/build/index.js'
-import {
-  readGlyphweaveContentIndex,
-  readGlyphweavePost,
-} from '../../packages/glyphweave/dist/artifacts/index.js'
+import { openGlyphweaveSnapshot } from '../../packages/glyphweave/dist/artifacts/index.js'
 // Integration fixtures live outside the workspace; prepare their engine explicitly.
 const nativeEngine = await prepareNativeEngine('glyphweave-typst-html', process.cwd())
 const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-real-'))
@@ -62,8 +59,8 @@ for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   await buildAll(root, config)
   await writeFile(path.join(dir, 'included.typ'), `Included $x + 1$. Changed ${strategy}.\n`)
   assert.equal((await buildAll(root, config)).cache.compiled, 1)
-  const index = await readGlyphweaveContentIndex(root)
-  const post = await readGlyphweavePost(root, index.posts[0])
+  const snapshot = await openGlyphweaveSnapshot(root)
+  const post = snapshot.readPost(snapshot.index.posts[0].slug)
   const count = result.built[0].manifest.capture.math.renderedCount
   if (count !== 4) throw new Error(`Expected 4 rendered formulas, got ${count}`)
   if (!post.contentHtml.includes('href="#intro"')) throw new Error('Broken Typst cross reference')

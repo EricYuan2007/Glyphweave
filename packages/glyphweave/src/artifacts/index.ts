@@ -16,9 +16,13 @@ import {
   ManifestSchema,
   TocItemSchema,
   type GlyphweaveContentIndex,
+  type GlyphweaveManifest,
+  type TocItem,
 } from '../schema/index.js'
 
-/** Validate a build-time artifact snapshot; all paths in it belong to one committed generation. */
+import { isWithin } from '../paths.js'
+
+/** Read index metadata only. Use openGlyphweaveSnapshot to consume its artifacts. */
 export async function readGlyphweaveContentIndex(
   rootDir: string,
   indexPath = '.glyphweave/content-index.json',
@@ -26,6 +30,101 @@ export async function readGlyphweaveContentIndex(
   return ContentIndexSchema.parse(
     JSON.parse(await readFile(path.resolve(rootDir, indexPath), 'utf8')),
   )
+}
+
+type Post = GlyphweaveContentIndex['posts'][number]
+export interface LoadedPost extends Post {
+  contentHtml: string
+  toc: TocItem[]
+  manifest: GlyphweaveManifest
+}
+export type GlyphweaveSnapshot = Awaited<ReturnType<typeof openGlyphweaveSnapshot>>
+
+/** Resolve one index and validate every referenced artifact before exposing the snapshot. */
+export async function openGlyphweaveSnapshot(
+  rootDir: string,
+  indexPath = '.glyphweave/content-index.json',
+) {
+  const root = await realpath(rootDir)
+  const indexFile = path.resolve(root, indexPath)
+  const output = await realpath(path.dirname(indexFile))
+  if (!isWithin(root, output)) throw new Error('Artifact output escapes project')
+  const index = await readGlyphweaveContentIndex(root, indexFile)
+  const resolveArtifact = async (file: string, boundary: string) => {
+    const full = await realpath(path.resolve(root, file))
+    if (!isWithin(boundary, full)) throw new Error(`Artifact escapes snapshot boundary: ${file}`)
+    return full
+  }
+  const cacheFile = await resolveArtifact(index.cachePath, path.join(output, 'generations'))
+  const generation = path.dirname(cacheFile)
+  if (
+    path.dirname(generation) !== path.join(output, 'generations') ||
+    path.basename(cacheFile) !== 'cache.json'
+  )
+    throw new Error('Index must reference one generation cache')
+  const posts = new Map<string, LoadedPost>()
+  const resources = new Map<string, { source: string; name: string }[]>()
+  for (const post of index.posts) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug) || posts.has(post.slug))
+      throw new Error(`Invalid or duplicate snapshot slug: ${post.slug}`)
+    const manifestFile = await resolveArtifact(post.manifestPath, generation)
+    const boundary = path.dirname(manifestFile)
+    const manifest = ManifestSchema.parse(JSON.parse(await readFile(manifestFile, 'utf8')))
+    if (manifest.slug !== post.slug) throw new Error('Manifest slug mismatch')
+    const content = await resolveArtifact(post.contentHtmlPath, boundary)
+    const toc = await resolveArtifact(post.tocPath, boundary)
+    await resolveArtifact(manifest.html.rawPath, boundary)
+    if (
+      content !== (await resolveArtifact(manifest.html.contentPath, boundary)) ||
+      toc !== (await resolveArtifact(manifest.html.tocPath, boundary)) ||
+      manifest.pdf.enabled !== Boolean(manifest.pdf.path) ||
+      post.pdfPath !== manifest.pdf.path
+    )
+      throw new Error('Index and manifest artifact paths disagree')
+    const files = []
+    for (const asset of manifest.assets) {
+      const assets = path.join(boundary, 'assets')
+      const source = await resolveArtifact(asset.output, assets)
+      const logical = path.resolve(root, asset.output)
+      if (!isWithin(assets, logical)) throw new Error('Asset escapes post assets')
+      files.push({ source, name: `assets/${path.relative(assets, logical)}` })
+    }
+    if (manifest.pdf.path)
+      files.push({
+        source: await resolveArtifact(manifest.pdf.path, boundary),
+        name: 'article.pdf',
+      })
+    posts.set(post.slug, {
+      ...post,
+      manifest,
+      contentHtml: await readFile(content, 'utf8'),
+      toc: TocItemSchema.array().parse(JSON.parse(await readFile(toc, 'utf8'))),
+    })
+    resources.set(post.slug, files)
+  }
+  return {
+    rootDir: root,
+    index,
+    readPost(slug: string): LoadedPost {
+      const post = posts.get(slug)
+      if (!post) throw new Error(`Post not found in snapshot: ${slug}`)
+      return post
+    },
+    async copyAssets(slugs: readonly string[], destination: string) {
+      for (const slug of slugs) {
+        const files = resources.get(slug)
+        if (!files) throw new Error(`Post not found in snapshot: ${slug}`)
+        for (const file of files) {
+          const source = await resolveArtifact(file.source, generation)
+          const target = path.resolve(destination, slug, file.name)
+          if (!isWithin(path.resolve(destination), target))
+            throw new Error('Invalid artifact destination')
+          await mkdir(path.dirname(target), { recursive: true })
+          await copyFile(source, target)
+        }
+      }
+    },
+  }
 }
 
 /** Published unlisted posts have routes but are absent from navigation/search. */
@@ -40,33 +139,9 @@ export function publishedPosts(index: GlyphweaveContentIndex, listedOnly = false
     .sort((a, b) => b.date.localeCompare(a.date))
 }
 
-async function artifactPath(rootDir: string, relative: string) {
-  const root = await realpath(rootDir)
-  const full = await realpath(path.resolve(root, relative))
-  const rel = path.relative(root, full)
-  if (!rel || rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel))
-    throw new Error(`Artifact escapes project: ${relative}`)
-  return full
-}
-
-export async function readGlyphweavePost(
-  rootDir: string,
-  post: GlyphweaveContentIndex['posts'][number],
-) {
-  const contentHtml = await readFile(await artifactPath(rootDir, post.contentHtmlPath), 'utf8')
-  const toc = TocItemSchema.array().parse(
-    JSON.parse(await readFile(await artifactPath(rootDir, post.tocPath), 'utf8')),
-  )
-  return { ...post, contentHtml, toc }
-}
-
 /** Export only resources in the current publishable manifest. Never enumerate old generations. */
-export async function exportGlyphweaveAssets(
-  rootDir: string,
-  destination: string,
-  indexPath?: string,
-) {
-  const root = await realpath(rootDir)
+export async function exportGlyphweaveAssets(snapshot: GlyphweaveSnapshot, destination: string) {
+  const root = snapshot.rootDir
   const target = path.resolve(root, destination)
   const rel = path.relative(root, target)
   if (!rel.startsWith(`public${path.sep}`) || rel.split(path.sep).includes('..'))
@@ -86,14 +161,11 @@ export async function exportGlyphweaveAssets(
   }
   const stage = `${target}.stage-${randomUUID()}`
   const backup = `${target}.backup-${randomUUID()}`
-  const index = await readGlyphweaveContentIndex(root, indexPath)
   await mkdir(stage)
   try {
-    await copyGlyphweaveAssets(
-      root,
-      publishedPosts(index),
+    await snapshot.copyAssets(
+      publishedPosts(snapshot.index).map((post) => post.slug),
       stage,
-      path.dirname(path.resolve(root, indexPath ?? '.glyphweave/content-index.json')),
     )
     await writeFile(path.join(stage, '.glyphweave-public'), 'glyphweave')
     let backedUp = false
@@ -112,50 +184,5 @@ export async function exportGlyphweaveAssets(
     if (backedUp) await rm(backup, { recursive: true })
   } finally {
     await rm(stage, { recursive: true, force: true })
-  }
-}
-
-/** Copy exactly the host-selected documents into an empty, caller-owned staging directory. */
-export async function copyGlyphweaveAssets(
-  root: string,
-  posts: GlyphweaveContentIndex['posts'],
-  destination: string,
-  artifactRoot: string,
-): Promise<void> {
-  destination = path.resolve(destination)
-  const boundary = await realpath(artifactRoot)
-  const containedArtifact = async (relative: string) => {
-    const full = await artifactPath(root, relative)
-    const rel = path.relative(boundary, full)
-    if (!rel || rel.startsWith('..') || path.isAbsolute(rel))
-      throw new Error('Artifact escapes generation root')
-    return full
-  }
-  for (const post of posts) {
-    const manifest = ManifestSchema.parse(
-      JSON.parse(await readFile(await containedArtifact(post.manifestPath), 'utf8')),
-    )
-    if (manifest.slug !== post.slug) throw new Error('Manifest slug mismatch')
-    const files = manifest.assets.map((asset) => {
-      const relative = path.relative(
-        path.join(path.dirname(manifest.html.contentPath), 'assets'),
-        asset.output,
-      )
-      if (relative.startsWith('..') || path.isAbsolute(relative))
-        throw new Error('Invalid manifest asset path')
-      return { source: asset.output, name: `assets/${relative}` }
-    })
-    if (manifest.pdf.enabled && manifest.pdf.path)
-      files.push({ source: manifest.pdf.path, name: 'article.pdf' })
-    for (const file of files) {
-      const output = path.resolve(destination, post.slug, file.name)
-      if (
-        !output.startsWith(`${destination}${path.sep}`) ||
-        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)
-      )
-        throw new Error('Invalid artifact destination')
-      await mkdir(path.dirname(output), { recursive: true })
-      await copyFile(await containedArtifact(file.source), output)
-    }
   }
 }

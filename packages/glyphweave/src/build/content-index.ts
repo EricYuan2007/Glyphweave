@@ -5,13 +5,13 @@ import {
   type GlyphweaveConfig,
   type GlyphweaveContentIndex,
 } from '../schema/index.js'
-import type { BuiltPost } from './build.js'
+import type { BuiltPost } from './types.js'
 
 export async function writeContentIndex(
   rootDir: string,
   config: GlyphweaveConfig,
   built: BuiltPost[],
-  cachePath?: string,
+  cachePath: string,
 ) {
   const posts: GlyphweaveContentIndex['posts'] = built.map(({ post, manifest }) => {
     const pdfPath = manifest.pdf.path

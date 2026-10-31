@@ -1,7 +1,11 @@
+use crate::html::{attribute, find_element};
+use crate::layout::{
+    Command, FontNotice, Glyph, Item, Layout, LayoutFrame, SemanticChild, SemanticNode, Semantics,
+};
 use anyhow::{Result, anyhow, bail};
-use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use typst::text::FontInstance;
 use typst::{
     layout::{Frame, FrameItem, Transform},
     visualize::{Geometry, LineCap, Paint},
@@ -9,35 +13,51 @@ use typst::{
 use typst_html::{HtmlAttr, HtmlElement, HtmlNode};
 #[derive(Default)]
 struct Outline {
-    commands: Vec<Value>,
+    commands: Vec<Command>,
     scale: f64,
 }
 impl ttf_parser::OutlineBuilder for Outline {
     fn move_to(&mut self, x: f32, y: f32) {
-        self.commands
-            .push(json!({"op":"M","x":x as f64*self.scale,"y":y as f64*self.scale}));
+        self.commands.push(Command::M {
+            x: x as f64 * self.scale,
+            y: y as f64 * self.scale,
+        });
     }
     fn line_to(&mut self, x: f32, y: f32) {
-        self.commands
-            .push(json!({"op":"L","x":x as f64*self.scale,"y":y as f64*self.scale}));
+        self.commands.push(Command::L {
+            x: x as f64 * self.scale,
+            y: y as f64 * self.scale,
+        });
     }
     fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-        self.commands.push(json!({"op":"Q","x1":x1 as f64*self.scale,"y1":y1 as f64*self.scale,"x":x as f64*self.scale,"y":y as f64*self.scale}));
+        self.commands.push(Command::Q {
+            x1: x1 as f64 * self.scale,
+            y1: y1 as f64 * self.scale,
+            x: x as f64 * self.scale,
+            y: y as f64 * self.scale,
+        });
     }
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-        self.commands.push(json!({"op":"C","x1":x1 as f64*self.scale,"y1":y1 as f64*self.scale,"x2":x2 as f64*self.scale,"y2":y2 as f64*self.scale,"x":x as f64*self.scale,"y":y as f64*self.scale}));
+        self.commands.push(Command::C {
+            x1: x1 as f64 * self.scale,
+            y1: y1 as f64 * self.scale,
+            x2: x2 as f64 * self.scale,
+            y2: y2 as f64 * self.scale,
+            x: x as f64 * self.scale,
+            y: y as f64 * self.scale,
+        });
     }
     fn close(&mut self) {
-        self.commands.push(json!({"op":"Z"}));
+        self.commands.push(Command::Z);
     }
 }
 #[derive(Default)]
 pub(crate) struct Export {
-    pub(crate) glyphs: Vec<Value>,
+    pub(crate) layout: Layout,
     lookup: HashMap<String, usize>,
-    pub(crate) frames: Vec<Value>,
-    pub(crate) fonts: Vec<Value>,
+    font_instances: HashMap<FontInstance, String>,
 }
+
 fn paint(p: &Paint) -> Result<String> {
     match p {
         Paint::Solid(c) => Ok(c.to_hex().to_string()),
@@ -65,30 +85,11 @@ const MATH_ATTRS: &[&str] = &[
     "linethickness",
     "notation",
 ];
-pub(crate) fn attribute(e: &HtmlElement, name: &str) -> Option<String> {
-    e.attrs
-        .0
-        .iter()
-        .find(|(k, _)| k.resolve().as_ref() == name)
-        .map(|(_, v)| v.to_string())
-}
-pub(crate) fn find_element<'a>(
-    e: &'a HtmlElement,
-    predicate: &impl Fn(&HtmlElement) -> bool,
-) -> Option<&'a HtmlElement> {
-    if predicate(e) {
-        return Some(e);
-    }
-    e.children.iter().find_map(|n| match n {
-        HtmlNode::Element(c) => find_element(c, predicate),
-        _ => None,
-    })
-}
-fn semantic_node(e: &HtmlElement, depth: usize) -> Result<Value> {
+fn semantic_node(e: &HtmlElement, depth: usize) -> Result<SemanticNode> {
     if depth > 64 {
         bail!("Mathematical semantics exceeds depth limit");
     }
-    let attrs: serde_json::Map<String, Value> = e
+    let attrs = e
         .attrs
         .0
         .iter()
@@ -96,29 +97,76 @@ fn semantic_node(e: &HtmlElement, depth: usize) -> Result<Value> {
             let key = k.resolve().to_string();
             MATH_ATTRS
                 .contains(&key.as_str())
-                .then(|| (key, json!(v.to_string())))
+                .then(|| (key, v.to_string()))
         })
         .collect();
     let mut children = vec![];
     for child in &e.children {
         match child {
-            HtmlNode::Text(t, _) => children.push(json!(t.to_string())),
-            HtmlNode::Element(c) => children.push(semantic_node(c, depth + 1)?),
+            HtmlNode::Text(t, _) => children.push(SemanticChild::Text(t.to_string())),
+            HtmlNode::Element(c) => {
+                children.push(SemanticChild::Element(semantic_node(c, depth + 1)?))
+            }
             HtmlNode::Tag(_) => {}
             HtmlNode::Frame(_) => {
                 bail!("Embedded frames have no mathematical semantics; use supported math content")
             }
         }
     }
-    Ok(json!({"tag":e.tag.resolve().to_string(),"attrs":attrs,"children":children}))
+    Ok(SemanticNode {
+        tag: e.tag.resolve().to_string(),
+        attrs,
+        children,
+    })
 }
 impl Export {
+    fn font_identity(&mut self, instance: &FontInstance) -> Result<String> {
+        if let Some(identity) = self.font_instances.get(instance) {
+            return Ok(identity.clone());
+        }
+        let font = instance.font();
+        let digest = Sha256::digest(font.data().as_slice())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let identity = format!("{}:{}:{:?}", digest, font.index(), instance.variations());
+        if let Some(os2) = instance.ttf().tables().os2
+            && (matches!(
+                os2.permissions(),
+                Some(ttf_parser::os2::Permissions::Restricted)
+            ) || !os2.is_subsetting_allowed()
+                || !os2.is_outline_embedding_allowed())
+        {
+            bail!(
+                "Font does not permit outline subsetting: {}",
+                font.info().family
+            );
+        }
+        let family = font.info().family.to_string();
+        {
+            let license = instance
+                .ttf()
+                .names()
+                .into_iter()
+                .filter(|n| matches!(n.name_id, 0 | 13 | 14))
+                .filter_map(|n| n.to_string())
+                .collect::<Vec<_>>()
+                .join("\n");
+            let notice = FontNotice { family, license };
+            if !self.layout.fonts.contains(&notice) {
+                self.layout.fonts.push(notice);
+            }
+        }
+        self.font_instances
+            .insert(instance.clone(), identity.clone());
+        Ok(identity)
+    }
     fn frame(
         &mut self,
         frame: &Frame,
         x: f64,
         y: f64,
-        marks: &mut Vec<Value>,
+        marks: &mut Vec<Item>,
         text: &mut String,
     ) -> Result<()> {
         for (pos, item) in frame.items() {
@@ -136,37 +184,7 @@ impl Export {
                     }
                     text.push_str(&t.text);
                     let color = paint(&t.fill)?;
-                    let font = t.font.font();
-                    let digest = Sha256::digest(font.data().as_slice())
-                        .iter()
-                        .map(|byte| format!("{byte:02x}"))
-                        .collect::<String>();
-                    let instance = format!("{}:{}:{:?}", digest, font.index(), t.font.variations());
-                    if let Some(os2) = t.font.ttf().tables().os2
-                        && (matches!(
-                            os2.permissions(),
-                            Some(ttf_parser::os2::Permissions::Restricted)
-                        ) || !os2.is_subsetting_allowed()
-                            || !os2.is_outline_embedding_allowed())
-                    {
-                        bail!(
-                            "Font does not permit outline subsetting: {}",
-                            font.info().family
-                        );
-                    }
-                    let family = font.info().family.to_string();
-                    if !self.fonts.iter().any(|f| f["family"] == family) {
-                        let license = t
-                            .font
-                            .ttf()
-                            .names()
-                            .into_iter()
-                            .filter(|n| matches!(n.name_id, 0 | 13 | 14))
-                            .filter_map(|n| n.to_string())
-                            .collect::<Vec<_>>()
-                            .join("\n");
-                        self.fonts.push(json!({"family":family,"license":license}));
-                    }
+                    let instance = self.font_identity(&t.font)?;
                     let (mut cx, mut cy) = (px, py);
                     for g in &t.glyphs {
                         let key = format!("{}:{}", instance, g.id);
@@ -188,13 +206,21 @@ impl Export {
                             {
                                 bail!("Glyph has no supported vector outline: {}", g.id);
                             }
-                            let i = self.glyphs.len();
-                            self.glyphs
-                                .push(json!({"key":key,"commands":path.commands}));
+                            let i = self.layout.glyphs.len();
+                            self.layout.glyphs.push(Glyph {
+                                key: key.clone(),
+                                commands: path.commands,
+                            });
                             self.lookup.insert(key, i);
                             i
                         };
-                        marks.push(json!({"kind":"glyph","glyph":id,"x":cx+g.x_offset.at(t.size).to_pt(),"y":cy-g.y_offset.at(t.size).to_pt(),"size":t.size.to_pt(),"color":color}));
+                        marks.push(Item::Glyph {
+                            glyph: id,
+                            x: cx + g.x_offset.at(t.size).to_pt(),
+                            y: cy - g.y_offset.at(t.size).to_pt(),
+                            size: t.size.to_pt(),
+                            color: color.clone(),
+                        });
                         cx += g.x_advance.at(t.size).to_pt();
                         cy -= g.y_advance.at(t.size).to_pt();
                     }
@@ -217,10 +243,26 @@ impl Export {
                         } else {
                             (px - w / 2.0, py + dy.min(0.0), w, dy.abs())
                         };
-                        marks.push(json!({"kind":"rect","x":rx,"y":ry,"width":rw,"height":rh,"color":paint(&stroke.paint)?}));
+                        marks.push(Item::Rect {
+                            x: rx,
+                            y: ry,
+                            width: rw,
+                            height: rh,
+                            color: paint(&stroke.paint)?,
+                        });
                     }
                     Geometry::Rect(size) if s.stroke.is_none() => {
-                        marks.push(json!({"kind":"rect","x":px,"y":py,"width":size.x.to_pt(),"height":size.y.to_pt(),"color":paint(s.fill.as_ref().ok_or_else(||anyhow!("Rectangle has no fill"))?)?}));
+                        marks.push(Item::Rect {
+                            x: px,
+                            y: py,
+                            width: size.x.to_pt(),
+                            height: size.y.to_pt(),
+                            color: paint(
+                                s.fill
+                                    .as_ref()
+                                    .ok_or_else(|| anyhow!("Rectangle has no fill"))?,
+                            )?,
+                        });
                     }
                     _ => bail!("Unsupported mathematical shape; refusing partial output"),
                 },
@@ -249,7 +291,12 @@ impl Export {
                 })?;
             let math = find_element(marker, &|e| e.tag.resolve().as_ref() == "math")
                 .ok_or_else(|| anyhow!("Equation did not produce mathematical semantics"))?;
-            let value = json!({"source":attribute(elem,"data-gw-typst-source"),"math":semantic_node(math,0)?,"alt":attribute(marker,"aria-label"),"lang":attribute(marker,"lang").unwrap_or_else(||"en".into())});
+            let value = Semantics {
+                source: attribute(elem, "data-gw-typst-source"),
+                math: semantic_node(math, 0)?,
+                alt: attribute(marker, "aria-label"),
+                lang: attribute(marker, "lang").unwrap_or_else(|| "en".into()),
+            };
             elem.children.retain(|n| match n {
                 HtmlNode::Element(e) => {
                     find_element(e, &|c| attribute(c, "data-gw-semantic").is_some()).is_none()
@@ -267,11 +314,22 @@ impl Export {
                     if !f.anchors.is_empty() {
                         bail!("Anchored mathematics requires anchor export");
                     }
-                    let id = format!("gw-frame-{}", self.frames.len());
+                    let id = format!("gw-frame-{}", self.layout.frames.len());
                     let mut items = vec![];
                     let mut text = String::new();
                     self.frame(&f.inner, 0.0, 0.0, &mut items, &mut text)?;
-                    self.frames.push(json!({"id":id,"width":f.inner.width().to_pt(),"height":f.inner.height().to_pt(),"baseline":f.inner.baseline().to_pt(),"em":f.text_size.to_pt(),"text":text,"items":items,"semantics":semantic.clone().ok_or_else(||anyhow!("Math frame has no semantic owner"))?}));
+                    self.layout.frames.push(LayoutFrame {
+                        id: id.clone(),
+                        width: f.inner.width().to_pt(),
+                        height: f.inner.height().to_pt(),
+                        baseline: f.inner.baseline().to_pt(),
+                        em: f.text_size.to_pt(),
+                        text,
+                        items,
+                        semantics: semantic
+                            .clone()
+                            .ok_or_else(|| anyhow!("Math frame has no semantic owner"))?,
+                    });
                     let mut placeholder = HtmlElement::new(typst_html::tag::span).with_attr(
                         HtmlAttr::intern("data-gw-layout").map_err(|e| anyhow!("{e}"))?,
                         id,

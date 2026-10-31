@@ -66,23 +66,43 @@ async function makePost(
 }
 
 describe('HTML adapter', () => {
-  it('externalizes Typst embedded images only when they match owned source assets', async () => {
-    const svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0H10V10Z"/></svg>'
+  it('preserves full URL suffixes, encoded filenames and dot-prefixed asset names', async () => {
     const fixture = await makePost(
-      `<html><body><h1>Demo</h1><p><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="diagram"></p></body></html>`,
+      '<img src="assets/..figure%20one.svg?v=1#panel"><img srcset="assets/..figure%20one.svg?v=2#other 2x">',
     )
-    await writeFile(path.join(fixture.post.assetDir!, 'diagram.svg'), svg)
+    await writeFile(path.join(fixture.post.assetDir!, '..figure one.svg'), '<svg/>')
     const output = await adaptTypstHtml({
       ...fixture,
-      publicBasePath: '/InkStack/glyphweave',
+      publicBasePath: '/glyphweave',
       options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
     })
-    expect(output.contentHtml).toContain('src="/InkStack/glyphweave/posts/demo/assets/diagram.svg"')
-    expect(output.contentHtml).not.toContain('data:')
-    expect(await readFile(path.join(fixture.outputDir, 'assets/diagram.svg'), 'utf8')).toBe(svg)
+    expect(output.contentHtml).toContain('..figure%20one.svg?v=1#panel')
+    expect(output.contentHtml).toContain('..figure%20one.svg?v=2#other 2x')
     expect(output.rewrittenAssets).toHaveLength(1)
   })
+
+  it.each(['diagram.svg', '图示 #1.svg'])(
+    'externalizes owned embedded images with filename %s',
+    async (filename) => {
+      const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><path d="M0 0H10V10Z"/></svg>'
+      const fixture = await makePost(
+        `<html><body><h1>Demo</h1><p><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="diagram"></p></body></html>`,
+      )
+      await writeFile(path.join(fixture.post.assetDir!, filename), svg)
+      const output = await adaptTypstHtml({
+        ...fixture,
+        publicBasePath: '/InkStack/glyphweave',
+        options: { headingIds: 'stable', scopeClass: 'glyphweave-content' },
+      })
+      expect(output.contentHtml).toContain(
+        `src="/InkStack/glyphweave/posts/demo/assets/${encodeURIComponent(filename)}"`,
+      )
+      expect(output.contentHtml).not.toContain('data:')
+      expect(await readFile(path.join(fixture.outputDir, 'assets', filename), 'utf8')).toBe(svg)
+      expect(output.rewrittenAssets).toHaveLength(1)
+    },
+  )
 
   it.each([
     ['data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=', 'byte-identical source'],

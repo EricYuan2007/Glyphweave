@@ -1,18 +1,9 @@
+import { isWithin } from '../paths.js'
 import { lstat, readdir, mkdir, open, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { GlyphweaveConfig } from '../schema/index.js'
 
 export const OWNER_FILE = '.glyphweave-owner.json'
-
-export function isWithin(parent: string, target: string) {
-  const relative = path.relative(parent, target)
-  return (
-    relative !== '' &&
-    relative !== '..' &&
-    !relative.startsWith(`..${path.sep}`) &&
-    !path.isAbsolute(relative)
-  )
-}
 
 /** Reject aliases, symlinks, project ancestors and source/output overlap before any mutation. */
 export async function validateOutputRoot(rootDir: string, config: GlyphweaveConfig) {
