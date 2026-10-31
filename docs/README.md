@@ -12,7 +12,7 @@
 ## Contributors
 
 - [Contributing](../.github/CONTRIBUTING.md)
-- [Architecture](architecture.md)
+- [Architecture](architecture.md) / [架构](zh-CN/architecture.md)
 - [HTML adapter](adapter.md)
 - [Security model](security.md) / [Private reporting](../.github/SECURITY.md)
 - [Acceptance](acceptance.md)
