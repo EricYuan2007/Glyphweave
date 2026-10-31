@@ -204,7 +204,7 @@ const post = snapshot.readPost('hnsw-search-notes')
 await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
 ```
 
-The 0.3 package API uses snapshot methods for post reads and host-selected asset copying.
+The 0.4 API accepts neutral host-selected documents with opaque data and returns a validated snapshot with an immutable indexPath. Compiler identity and PDF embedding checks remain inside Glyphweave.
 See [the artifact contract](docs/architecture.md#reading-a-validated-snapshot) for custom hosts.
 
 ## Astro Integration

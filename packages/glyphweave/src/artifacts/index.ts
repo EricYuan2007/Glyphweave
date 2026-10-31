@@ -47,9 +47,10 @@ export async function openGlyphweaveSnapshot(
 ) {
   const root = await realpath(rootDir)
   const indexFile = path.resolve(root, indexPath)
-  const output = await realpath(path.dirname(indexFile))
-  if (!isWithin(root, output)) throw new Error('Artifact output escapes project')
   const index = await readGlyphweaveContentIndex(root, indexFile)
+  const output = await realpath(path.resolve(root, index.outputRoot))
+  if (!isWithin(root, output)) throw new Error('Artifact output escapes project')
+  if (!isWithin(output, await realpath(indexFile))) throw new Error('Index escapes output')
   const resolveArtifact = async (file: string, boundary: string) => {
     const full = await realpath(path.resolve(root, file))
     if (!isWithin(boundary, full)) throw new Error(`Artifact escapes snapshot boundary: ${file}`)
@@ -65,12 +66,12 @@ export async function openGlyphweaveSnapshot(
   const posts = new Map<string, LoadedPost>()
   const resources = new Map<string, { source: string; name: string }[]>()
   for (const post of index.posts) {
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug) || posts.has(post.slug))
-      throw new Error(`Invalid or duplicate snapshot slug: ${post.slug}`)
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.id) || posts.has(post.id))
+      throw new Error(`Invalid or duplicate snapshot slug: ${post.id}`)
     const manifestFile = await resolveArtifact(post.manifestPath, generation)
     const boundary = path.dirname(manifestFile)
     const manifest = ManifestSchema.parse(JSON.parse(await readFile(manifestFile, 'utf8')))
-    if (manifest.slug !== post.slug) throw new Error('Manifest slug mismatch')
+    if (manifest.slug !== post.id) throw new Error('Manifest slug mismatch')
     const content = await resolveArtifact(post.contentHtmlPath, boundary)
     const toc = await resolveArtifact(post.tocPath, boundary)
     await resolveArtifact(manifest.html.rawPath, boundary)
@@ -94,16 +95,23 @@ export async function openGlyphweaveSnapshot(
         source: await resolveArtifact(manifest.pdf.path, boundary),
         name: 'article.pdf',
       })
-    posts.set(post.slug, {
+    posts.set(post.id, {
       ...post,
       manifest,
       contentHtml: await readFile(content, 'utf8'),
       toc: TocItemSchema.array().parse(JSON.parse(await readFile(toc, 'utf8'))),
     })
-    resources.set(post.slug, files)
+    resources.set(post.id, files)
   }
+  const generationIndex = await readGlyphweaveContentIndex(
+    root,
+    await resolveArtifact(path.join(generation, 'content-index.json'), generation),
+  )
+  if (JSON.stringify(generationIndex) !== JSON.stringify(index))
+    throw new Error('Live index disagrees with immutable generation')
   return {
     rootDir: root,
+    indexPath: path.join(generation, 'content-index.json'),
     index,
     readPost(slug: string): LoadedPost {
       const post = posts.get(slug)
@@ -125,18 +133,6 @@ export async function openGlyphweaveSnapshot(
       }
     },
   }
-}
-
-/** Published unlisted posts have routes but are absent from navigation/search. */
-export function publishedPosts(index: GlyphweaveContentIndex, listedOnly = false) {
-  return index.posts
-    .filter(
-      (post) =>
-        post.status === 'published' &&
-        post.visibility !== 'private' &&
-        (!listedOnly || post.visibility === 'public'),
-    )
-    .sort((a, b) => b.date.localeCompare(a.date))
 }
 
 /** Export only resources in the current publishable manifest. Never enumerate old generations. */
@@ -164,7 +160,7 @@ export async function exportGlyphweaveAssets(snapshot: GlyphweaveSnapshot, desti
   await mkdir(stage)
   try {
     await snapshot.copyAssets(
-      publishedPosts(snapshot.index).map((post) => post.slug),
+      snapshot.index.posts.map((post) => post.id),
       stage,
     )
     await writeFile(path.join(stage, '.glyphweave-public'), 'glyphweave')

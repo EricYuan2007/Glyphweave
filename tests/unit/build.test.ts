@@ -57,7 +57,7 @@ describe('build pipeline', () => {
     const index = JSON.parse(
       await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'),
     )
-    expect(index.posts[0].slug).toBe('basic-post')
+    expect(index.posts[0].id).toBe('basic-post')
     expect(index.posts[0].publicPdfPath).toBe('/glyphweave/posts/basic-post/article.pdf')
     expect(pdfInputs).toHaveLength(1)
     expect(result.built[0]!.manifest.diagnostics).toContainEqual({
@@ -200,12 +200,12 @@ describe('build pipeline', () => {
     const index = JSON.parse(
       await readFile(path.join(root, '.glyphweave/content-index.json'), 'utf-8'),
     )
-    expect(result.built.map(({ post }) => post.metadata.slug)).toEqual(['public-post'])
+    expect(result.built.map(({ post }) => post.id)).toEqual(['public-post'])
     expect(result.skipped.map((post) => post.metadata.slug).sort()).toEqual([
       'archived-post',
       'private-post',
     ])
-    expect(index.posts.map((post: { slug: string }) => post.slug)).toEqual(['public-post'])
+    expect(index.posts.map((post: { id: string }) => post.id)).toEqual(['public-post'])
   })
 
   it('keeps HTML artifacts when optional PDF generation warns', async () => {
@@ -296,6 +296,13 @@ describe('build pipeline', () => {
 
   it('rejects Typst versions older than 0.15 before compiling posts', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-build-old-typst-'))
+    const directory = path.join(root, 'content/typst-posts/old')
+    await mkdir(directory, { recursive: true })
+    await writeFile(path.join(directory, 'index.typ'), '= Old')
+    await writeFile(
+      path.join(directory, 'post.yaml'),
+      "title: Old\nslug: old\ndescription: Old compiler\ndate: '2026-01-01'\nstatus: published\nvisibility: public\n",
+    )
 
     await expect(
       buildAll(root, mathmlConfig(), {

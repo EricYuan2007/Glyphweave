@@ -2,7 +2,7 @@ import path from 'node:path'
 import { assertSupportedTypst } from '../compiler/index.js'
 import type { GlyphweaveConfig } from '../schema/index.js'
 import type { BuildDependencies } from './types.js'
-import type { DiscoveredTypstPost } from './discovery.js'
+import type { DocumentInput } from './document.js'
 import { prepareNativeEngine } from './native-engine.js'
 import {
   hash,
@@ -24,24 +24,26 @@ export async function prepareBuildContext(
   config: GlyphweaveConfig,
   generation: string,
   deps: BuildDependencies,
-  loadDocuments: () => Promise<DiscoveredTypstPost[]>,
+  loadDocuments: () => Promise<DocumentInput[]>,
 ) {
   const posts = structuredClone(await loadDocuments())
   const slugs = new Set<string>()
   for (const post of posts) {
-    const slug = post.metadata.slug
+    const slug = post.id
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slugs.has(slug))
       throw new Error(`Invalid or duplicate document slug: ${slug}`)
     slugs.add(slug)
   }
-  const typst = await deps.typstInfo(config.typst.binary)
-  assertSupportedTypst(typst.version)
-  const identify = deps.cacheIdentity
+  const hasDocuments = posts.length > 0
+  const typst = hasDocuments
+    ? await deps.typstInfo(config.typst.binary)
+    : { binary: config.typst.binary, version: 'unused' }
+  if (hasDocuments) assertSupportedTypst(typst.version)
+  const identify = hasDocuments ? deps.cacheIdentity : undefined
   const enabled = config.cache.enabled && Boolean(identify)
   const environment = identify ? await identify(config.typst.binary) : ''
   // Native HTML layout and semantics come from one embedded compiler. The CLI
   // builds PDF independently; requiring its exact patch version adds no safety.
-  const hasDocuments = posts.length > 0
   const nativeBinary =
     config.math.strategy === 'html-frame' && hasDocuments
       ? await prepareNativeEngine(config.math.html.binary, rootDir)
@@ -73,25 +75,19 @@ export async function prepareBuildContext(
 }
 export type BuildContext = Awaited<ReturnType<typeof prepareBuildContext>>
 
-export async function planDocument(context: BuildContext, post: DiscoveredTypstPost) {
+export async function planDocument(context: BuildContext, post: DocumentInput) {
   const { rootDir } = context
-  const outputDir = path.resolve(
-    rootDir,
-    context.config.output.root,
-    'generated/posts',
-    post.metadata.slug,
-  )
+  const outputDir = path.resolve(rootDir, context.config.output.root, 'generated/posts', post.id)
   const snapshot = hash(JSON.stringify(await snapshotTree(post.postDir)))
   const epoch = context.epoch
-  const creationTimestamp =
-    epoch === undefined
-      ? Math.floor(Date.parse(post.metadata.updated ?? post.metadata.date) / 1000)
-      : Number(epoch)
+  const creationTimestamp = epoch === undefined ? post.creationTimestamp : Number(epoch)
   if (!Number.isSafeInteger(creationTimestamp) || creationTimestamp < 0)
     throw new Error('Invalid build creation timestamp')
   const key = hash(
     JSON.stringify({
       snapshot,
+      data: post.data,
+      pdf: post.pdf,
       source: post.sourcePath,
       config: { ...context.stableConfig, cache: undefined },
       environment: context.environment,
@@ -108,7 +104,7 @@ export type DocumentPlan = Awaited<ReturnType<typeof planDocument>>
 export async function validateBuildInputs(
   context: BuildContext,
   plans: DocumentPlan[],
-  loadDocuments: () => Promise<DiscoveredTypstPost[]>,
+  loadDocuments: () => Promise<DocumentInput[]>,
 ) {
   const { rootDir, config, identify } = context
   // Validate inputs again before committing the generation, including changes made during reuse.

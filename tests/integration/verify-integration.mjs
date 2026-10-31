@@ -60,7 +60,7 @@ for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   await writeFile(path.join(dir, 'included.typ'), `Included $x + 1$. Changed ${strategy}.\n`)
   assert.equal((await buildAll(root, config)).cache.compiled, 1)
   const snapshot = await openGlyphweaveSnapshot(root)
-  const post = snapshot.readPost(snapshot.index.posts[0].slug)
+  const post = snapshot.readPost(snapshot.index.posts[0].id)
   const count = result.built[0].manifest.capture.math.renderedCount
   if (count !== 4) throw new Error(`Expected 4 rendered formulas, got ${count}`)
   if (!post.contentHtml.includes('href="#intro"')) throw new Error('Broken Typst cross reference')

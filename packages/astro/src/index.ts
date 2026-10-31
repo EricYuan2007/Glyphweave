@@ -1,6 +1,10 @@
 import path from 'node:path'
 import type { Loader } from 'astro/loaders'
-import { openGlyphweaveSnapshot, type LoadedPost } from 'glyphweave/artifacts'
+import {
+  openGlyphweaveSnapshot,
+  type LoadedPost,
+  type GlyphweaveSnapshot,
+} from 'glyphweave/artifacts'
 import type { GlyphweaveContentIndex } from 'glyphweave/schema'
 import { createTaskQueue } from './task-queue.js'
 
@@ -8,6 +12,7 @@ type Post = GlyphweaveContentIndex['posts'][number]
 export function glyphweaveLoader(options: {
   rootDir: string
   indexPath?: string
+  snapshot?: () => Promise<GlyphweaveSnapshot>
   transform?: (
     post: Post,
     loaded: LoadedPost,
@@ -26,12 +31,13 @@ export function glyphweaveLoader(options: {
     name: 'glyphweave',
     load: async ({ store, parseData, generateDigest, watcher, logger, config }) => {
       const load = async () => {
-        const snapshot = await openGlyphweaveSnapshot(options.rootDir, indexPath)
+        const snapshot = await (options.snapshot?.() ??
+          openGlyphweaveSnapshot(options.rootDir, indexPath))
         const entries = []
         for (const post of snapshot.index.posts) {
-          const loaded = snapshot.readPost(post.slug)
+          const loaded = snapshot.readPost(post.id)
           const view = options.transform?.(post, loaded, config.base) ?? {
-            data: post,
+            data: { ...post.data, ...post },
             html: loaded.contentHtml,
             headings: loaded.toc.map((item) => ({
               depth: item.depth,
@@ -39,9 +45,9 @@ export function glyphweaveLoader(options: {
               slug: item.id,
             })),
           }
-          const data = await parseData({ id: post.slug, data: view.data })
+          const data = await parseData({ id: post.id, data: view.data })
           entries.push({
-            id: post.slug,
+            id: post.id,
             data,
             digest: generateDigest(
               JSON.stringify([loaded.manifest, data, view.html, view.headings]),
@@ -56,6 +62,7 @@ export function glyphweaveLoader(options: {
       const queue = createTaskQueue(load, (error) =>
         logger.error(`Glyphweave update failed; previous snapshot retained: ${String(error)}`),
       )
+      if (options.snapshot) return
       watcher?.add(indexPath)
       const update = (file: string) => {
         if (path.resolve(file) === indexPath) void queue.enqueue()

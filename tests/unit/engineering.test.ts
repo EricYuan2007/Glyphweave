@@ -1,3 +1,4 @@
+import { publishedPosts } from 'glyphweave'
 import { access, mkdir, mkdtemp, readFile, realpath, symlink, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -7,7 +8,6 @@ import { defaultConfig, GlyphweaveConfigSchema } from 'glyphweave/schema'
 import {
   exportGlyphweaveAssets,
   openGlyphweaveSnapshot,
-  publishedPosts,
   readGlyphweaveContentIndex,
 } from 'glyphweave/artifacts'
 import { adaptTypstHtml } from 'glyphweave/html'

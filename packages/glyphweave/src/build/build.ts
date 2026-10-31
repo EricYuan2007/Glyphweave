@@ -1,3 +1,4 @@
+import { openGlyphweaveSnapshot } from '../artifacts/index.js'
 import { createCompilerIdentity } from '../compiler/index.js'
 import { snapshotTree } from './fingerprint.js'
 import {
@@ -13,9 +14,9 @@ import { lockOutput, ownOutput, OWNER_FILE, validateOutputRoot } from './output.
 import { mkdir, rm, writeFile, readFile, rename, realpath } from 'node:fs/promises'
 import path from 'node:path'
 import { defaultConfig, type GlyphweaveConfig } from '../schema/index.js'
-import { compileTypstHtml, compileTypstPdf, detectTypst } from '../compiler/index.js'
+import { compileTypstHtml, compileTypstPdf, detectTypst, verifyPdf } from '../compiler/index.js'
 import { writeContentIndex } from './content-index.js'
-import type { DiscoveredTypstPost } from './discovery.js'
+import type { DocumentInput } from './document.js'
 import { buildPost } from './build-post.js'
 import type { BuildDependencies, BuildDocumentsResult, BuiltPost } from './types.js'
 export type { BuildDependencies, BuildDocumentsResult, BuildAllResult, BuiltPost } from './types.js'
@@ -23,6 +24,7 @@ export type { BuildDependencies, BuildDocumentsResult, BuildAllResult, BuiltPost
 function defaultBuildDependencies(): BuildDependencies {
   return {
     typstInfo: detectTypst,
+    verifyPdf,
     compileHtml: compileTypstHtml,
     compilePdf: compileTypstPdf,
     cacheIdentity: createCompilerIdentity(),
@@ -32,8 +34,8 @@ function defaultBuildDependencies(): BuildDependencies {
 async function buildGeneration(
   context: BuildContext,
   output: string,
-  loadDocuments: () => Promise<DiscoveredTypstPost[]>,
-): Promise<BuildDocumentsResult> {
+  loadDocuments: () => Promise<DocumentInput[]>,
+): Promise<Omit<BuildDocumentsResult, 'snapshot'>> {
   const { rootDir, config, enabled } = context
   const outputRoot = path.resolve(rootDir, config.output.root)
   await mkdir(outputRoot, { recursive: true })
@@ -46,14 +48,14 @@ async function buildGeneration(
   for (const plan of plans) {
     const { post, outputDir, key } = plan
     const reused = enabled
-      ? await reusePost(rootDir, output, outputDir, previous.entries[post.metadata.slug], key)
+      ? await reusePost(rootDir, output, outputDir, previous.entries[post.id], key)
       : undefined
     const manifest = reused ?? (await buildPost(context, plan))
     if (reused) cache.reused++
     else cache.compiled++
     built.push({ post, manifest })
     if (context.identify && !manifest.diagnostics.some((d) => d.code === 'glyphweave-pdf-failed')) {
-      next.entries[post.metadata.slug] = {
+      next.entries[post.id] = {
         key,
         directory: path.relative(rootDir, outputDir),
         files: await snapshotTree(outputDir),
@@ -67,8 +69,9 @@ async function buildGeneration(
     config,
     built,
     path.relative(rootDir, path.join(outputRoot, 'cache.json')),
+    path.relative(rootDir, output),
   )
-  return { built, cache }
+  return { built, cache, typstVersion: context.typstVersion }
 }
 
 /** Build an immutable generation and atomically replace the index only after complete success.
@@ -77,7 +80,7 @@ async function buildGeneration(
 export async function buildDocuments(
   rootDir: string,
   config = defaultConfig(),
-  loadDocuments: () => Promise<DiscoveredTypstPost[]>,
+  loadDocuments: () => Promise<DocumentInput[]>,
   deps: BuildDependencies = defaultBuildDependencies(),
 ): Promise<BuildDocumentsResult> {
   rootDir = await realpath(rootDir)
@@ -95,10 +98,14 @@ export async function buildDocuments(
     const index = ContentIndexSchema.parse(
       JSON.parse(await readFile(path.join(generation, 'content-index.json'), 'utf8')),
     )
+    const snapshot = await openGlyphweaveSnapshot(
+      rootDir,
+      path.join(generation, 'content-index.json'),
+    )
     await writeFile(temporaryIndex, JSON.stringify(index, null, 2), { flag: 'wx' })
     await rename(temporaryIndex, path.join(output, 'content-index.json'))
     committed = true
-    return result
+    return { ...result, snapshot }
   } catch (error) {
     throw new Error(
       `Build failed; previous index preserved: ${error instanceof Error ? error.message : error}`,
@@ -136,7 +143,7 @@ export async function resolvePostOutputDir(
       await readFile(path.resolve(rootDir, config.output.root, 'content-index.json'), 'utf8'),
     ),
   )
-  const post = index.posts.find((post) => post.slug === slug)
+  const post = index.posts.find((post) => post.id === slug)
   if (!post) throw new Error(`Post not found in current generation: ${slug}`)
   return path.dirname(path.resolve(rootDir, post.manifestPath))
 }

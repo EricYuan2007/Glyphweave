@@ -89,16 +89,13 @@ post.yaml + index.typ + includes/assets
 
 构建失败会保留上一份权威索引，并删除本次未提交的构建目录；成功的历史构建保留到显式清理，使持有旧快照的读取操作可以完成。消费者必须沿同一个索引快照中的路径读取，不能扫描历史目录或猜测输出路径。输出锁串行化写入。清理会检查目录归属并取得输出锁，调用方还须先停止读取操作。缓存失效与可复现性规则见[增量缓存](cache.md)。
 
-`publishedPosts(index, true)` 为列表和搜索选择 published/public 文章。published/unlisted 可以拥有直接路由，但不进入这些列表；private、draft、archived 不进入生产资源导出。路由和搜索由消费产物的网站生成，Astro 加载器本身不会再次筛选传入索引的发布状态。PDF 失败策略为 `warn` 时保留 HTML、移除该 PDF 并记录诊断，这次结果不会作为缓存复用。`exportGlyphweaveAssets` 只暂存当前可发布 manifest 引用的资源，再替换 `public/` 下有归属标记的目标目录，失败时回滚。
+`publishedPosts(index, true)` 为列表和搜索选择 published/public 文章。published/unlisted 可以拥有直接路由，但不进入这些列表；独立 CLI 构建排除 private、draft、archived，通用资源导出本身不作发布筛选。路由和搜索由消费产物的网站生成，Astro 加载器本身不会再次筛选传入索引的发布状态。PDF 失败策略为 `warn` 时保留 HTML、移除该 PDF 并记录诊断，这次结果不会作为缓存复用。`exportGlyphweaveAssets` 只暂存当前快照 manifest 引用的资源，再替换 `public/` 下有归属标记的目标目录，失败时回滚。
 
 ### 统一产物快照
 
 ```ts
-import {
-  openGlyphweaveSnapshot,
-  publishedPosts,
-  exportGlyphweaveAssets,
-} from 'glyphweave/artifacts'
+import { openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts'
+import { publishedPosts } from 'glyphweave'
 
 const snapshot = await openGlyphweaveSnapshot(process.cwd())
 const routes = publishedPosts(snapshot.index)
@@ -110,7 +107,7 @@ await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
 
 快照只读取一次索引，通过 `cachePath` 固定所属 generation，在返回前校验全部 manifest、slug、正文/目录/PDF 引用与资源边界，并加载正文和目录。之后的新构建不会改变该快照读取、复制和导出的 generation。`readGlyphweaveContentIndex` 仅读取索引元数据，不验证引用产物。
 
-0.3 API 用 `snapshot.readPost` 和 `snapshot.copyAssets` 取代分散的正文读取与复制函数；导出函数改为接收快照。消费方升级时需要更新调用，不提供旧签名兼容层。
+读取与资源复制使用 `snapshot.readPost`、`snapshot.copyAssets`；导出函数接收快照。0.4 的文档输入和索引契约见下节，不提供旧签名兼容层。
 
 ## 原生公式布局与 PDF
 
@@ -138,3 +135,11 @@ await exportGlyphweaveAssets(snapshot, 'public/glyphweave/posts')
 作者和可执行的 TypeScript 配置属于受信输入。配置的所有嵌套对象（包括 PDF 模板）都拒绝未知字段。资源 URL 保留完整查询参数和片段，并对文件名分段编码；`paths.ts` 统一按路径段检查包含关系，`urls.ts` 统一识别文件系统 URL。适配器约束 HTML/MathML/静态 SVG、URL、资源路径与数值样式；代码高亮和原生公式插入是后续受信转换。原始 HTML、布局辅助文件和日志是诊断或中间产物，不作为部署输入。词法公式数量仅提供提示，严格捕获模式依据编译器确认的内容丢失失败。参见[安全模型](security.md)和[构建与发布决策](../decisions/0001-build-and-publication-contract.md)。
 
 `tests/unit/` 覆盖 schema、编排和失败路径；`tests/integration/` 验证真实编译器、PDF、原生布局及独立安装包；`tests/browser/` 验证示例站；`tests/fixtures/` 存放测试文档；基准程序位于 `tests/benchmarks/`。CI 在 PR 和 main 推送时运行常规 `check`，额外的原生编译、包和浏览器集成任务由手动 workflow dispatch 触发。验证命令见[验收说明](../acceptance.md)。
+
+## 0.4 文档边界
+
+`DocumentInput` 只包含文档 ID、输入路径及哈希、创建时间、PDF 开关和不透明 `data`，由 `documentInput` 构造，不要求博客字段或 post.yaml。宿主选择文档；独立 CLI 的 `buildAll` 与根入口 `publishedPosts` 才应用博客发布策略。索引 v2 将 `id`、`data` 和产物引用分开。
+
+`buildDocuments` 直接返回已验证的 `snapshot`、缓存统计和 Typst 版本。`snapshot.indexPath` 是不可变代的稳定索引引用，可传给 Astro 子进程；宿主不复制索引。`compilerEnvironment` 提供完整编译身份；空文档构建不探测 Typst。PDF 字体嵌入由编译器调用 pdffonts 检查。资源导出不额外过滤发布状态，完整复制输入快照中选定的资源。
+
+Astro loader 可接受 `snapshot` 回调，此时不自行监听实时索引，由宿主在资源就绪后触发加载。旧接口和索引不提供兼容层。

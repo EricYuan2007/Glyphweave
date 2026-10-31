@@ -81,22 +81,13 @@ export const ManifestSchema = z.object({
 })
 
 export const ContentIndexSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
+  outputRoot: z.string(),
   cachePath: z.string(),
   posts: z.array(
     z.object({
       id: z.string(),
-      slug: z.string(),
-      title: z.string(),
-      description: z.string(),
-      date: z.string(),
-      updated: z.string().optional(),
-      tags: z.array(z.string()),
-      status: z.enum(['draft', 'published', 'archived']),
-      visibility: z.enum(['public', 'unlisted', 'private']),
-      language: z.string(),
-      cover: z.string().nullable().default(null),
-      canonicalUrl: z.url().nullable().default(null),
+      data: z.record(z.string(), z.unknown()),
       contentHtmlPath: z.string(),
       tocPath: z.string(),
       pdfPath: z.string().nullable(),

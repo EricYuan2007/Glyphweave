@@ -14,7 +14,7 @@ export interface HtmlAdapterOptions {
 
 export interface HtmlAdapterInput {
   rawHtmlPath: string
-  post: { metadata: { slug: string }; sourcePath: string; postDir: string; assetDir?: string }
+  post: { id: string; sourcePath: string; postDir: string; assetDir?: string }
   outputDir: string
   publicBasePath: string
   options: HtmlAdapterOptions
