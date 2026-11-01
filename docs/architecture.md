@@ -186,10 +186,13 @@ CLI compiles PDFs independently and also serves the alternative HTML strategies.
 
 Developers explicitly run `pnpm build:native` to build and copy the executable into
 `packages/glyphweave/native/<platform>-<arch>/`. Normal document builds resolve an
-explicit binary path, PATH executable or bundled native binary; they do not invoke
-Cargo automatically. `pnpm pack:packages` compiles the TypeScript packages and
-packages the prepared native executable for the current OS/architecture. A matching
-prebuilt archive lets consumers use the default renderer without a Rust toolchain.
+explicit binary path, custom PATH command or the platform's bundled native binary;
+they do not invoke Cargo automatically. The default resolves the actual native
+file rather than the npm launcher, preserving executable-byte cache identity.
+`pnpm pack:packages` compiles the TypeScript packages and validates and packages the
+selected native targets. See [native distribution](native-distribution.md) for
+Linux ABI, source receipts and multi-platform assembly. A matching prebuilt archive
+lets consumers use the default renderer without a Rust toolchain.
 See [native math](native-math-renderer.md) and [PDF typography](pdf-typography.md).
 
 ## Astro and consuming sites

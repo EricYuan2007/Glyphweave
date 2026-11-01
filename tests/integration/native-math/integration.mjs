@@ -15,7 +15,9 @@ await fs.writeFile(
 )
 const cfg = defaultConfig()
 cfg.math.strategy = 'html-frame'
-cfg.math.html.binary = path.resolve('crates/typst-html/target/release/glyphweave-typst-html')
+cfg.math.html.binary = path.resolve(
+  `packages/glyphweave/native/${process.platform}-${process.arch}/glyphweave-typst-html`,
+)
 const first = await buildAll(root, cfg)
 const second = await buildAll(root, cfg)
 console.log(

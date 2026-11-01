@@ -1,7 +1,16 @@
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile, chmod } from 'node:fs/promises'
 import path from 'node:path'
 import { execa } from 'execa'
+import {
+  inspectNative,
+  parsePlatforms,
+  nativeSourceDigest,
+  validateReceipt,
+} from './lib/native-artifacts.mjs'
 const root = process.cwd()
+const platforms = parsePlatforms(
+  process.env.GLYPHWEAVE_NATIVE_PLATFORMS ?? `${process.platform}-${process.arch}`,
+)
 const output = path.resolve(process.argv[2] ?? 'dist/packages')
 await mkdir(output, { recursive: true })
 const packageNames = ['glyphweave', 'astro']
@@ -19,14 +28,30 @@ try {
     const target = path.join(stage, name)
     const metadata = JSON.parse(await readFile(path.join(source, 'package.json'), 'utf8'))
     await mkdir(target)
-    for (const file of metadata.files)
+    for (const file of metadata.files.filter((file) => file !== 'native'))
       await cp(path.join(source, file), path.join(target, file), { recursive: true })
     if (name === 'glyphweave') {
-      const binary = `native/${process.platform}-${process.arch}/glyphweave-typst-html${process.platform === 'win32' ? '.exe' : ''}`
-      await chmod(path.join(target, binary), 0o755)
-      metadata.bin['glyphweave-typst-html'] = `./${binary}`
-      metadata.os = [process.platform]
-      metadata.cpu = [process.arch]
+      const inventory = {}
+      const sourceSha256 = await nativeSourceDigest(path.join(root, 'crates/typst-html'))
+      for (const platform of platforms) {
+        inventory[platform] = await inspectNative(path.join(source, 'native'), platform)
+        const receipt = JSON.parse(
+          await readFile(path.join(source, 'native', platform, 'build.json'), 'utf8'),
+        )
+        validateReceipt(receipt, platform, inventory[platform], sourceSha256)
+        inventory[platform] = { ...inventory[platform], sourceSha256, rustc: receipt.rustc }
+        await cp(path.join(source, 'native', platform), path.join(target, 'native', platform), {
+          recursive: true,
+        })
+        await chmod(path.join(target, 'native', platform, 'glyphweave-typst-html'), 0o755)
+      }
+      await writeFile(
+        path.join(target, 'native/manifest.json'),
+        JSON.stringify({ version: 1, platforms: inventory }, null, 2) + '\n',
+      )
+      await chmod(path.join(target, 'bin/native.mjs'), 0o755)
+      metadata.os = [...new Set(platforms.map((platform) => platform.split('-')[0]))]
+      metadata.cpu = [...new Set(platforms.map((platform) => platform.split('-')[1]))]
     }
     for (const [dependency, version] of Object.entries(metadata.dependencies ?? {})) {
       if (version.startsWith('workspace:')) {

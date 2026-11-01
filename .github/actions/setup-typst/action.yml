@@ -8,10 +8,15 @@ runs:
         set -euo pipefail
         tool_dir="$(mktemp -d)"
         trap 'rm -rf -- "$tool_dir"' EXIT
-        curl --fail --location --retry 3 --connect-timeout 20 --max-time 120 https://github.com/typst/typst/releases/download/v0.15.1/typst-x86_64-unknown-linux-musl.tar.xz --output "$tool_dir/typst.tar.xz"
-        printf '%s  %s\n' 'a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c' "$tool_dir/typst.tar.xz" | sha256sum --check
+        case "$(uname -m)" in
+          x86_64) triple=x86_64-unknown-linux-musl; digest=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c ;;
+          aarch64) triple=aarch64-unknown-linux-musl; digest=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee ;;
+          *) echo 'Unsupported Linux architecture' >&2; exit 1 ;;
+        esac
+        curl --fail --location --retry 3 --connect-timeout 20 --max-time 120 "https://github.com/typst/typst/releases/download/v0.15.1/typst-${triple}.tar.xz" --output "$tool_dir/typst.tar.xz"
+        printf '%s  %s\n' "$digest" "$tool_dir/typst.tar.xz" | sha256sum --check
         tar -xf "$tool_dir/typst.tar.xz" -C "$tool_dir"
-        sudo install "$tool_dir/typst-x86_64-unknown-linux-musl/typst" /usr/local/bin/typst
+        sudo install "$tool_dir/typst-${triple}/typst" /usr/local/bin/typst
         test "$(typst --version | awk '{print $2}')" = '0.15.1'
         packages=(fonts-noto-cjk fonts-dejavu-core poppler-utils)
         apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
@@ -30,16 +35,15 @@ runs:
         fi
         sudo apt-get "${apt_options[@]}" install --yes --no-download "${packages[@]}"
         typst fonts
-    - name: Prepare current stable Rust for native Typst
+    - name: Prepare pinned Rust for native Typst
       shell: bash
       run: |
-        rustup update stable --no-self-update
-        echo 'RUSTUP_TOOLCHAIN=stable' >> "$GITHUB_ENV"
+        rustup toolchain install 1.99.1 --profile minimal --no-self-update
     - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           crates/typst-html/target
-        key: native-${{ runner.os }}-${{ hashFiles('crates/typst-html/Cargo.lock', 'crates/typst-html/Cargo.toml', 'crates/typst-html/src/**/*.rs') }}
-        restore-keys: native-${{ runner.os }}-
+        key: native-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'crates/typst-html/Cargo.lock', 'crates/typst-html/Cargo.toml', 'crates/typst-html/src/**/*.rs') }}
+        restore-keys: native-${{ runner.os }}-${{ runner.arch }}-

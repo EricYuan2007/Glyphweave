@@ -8,7 +8,9 @@ import { execFileSync } from 'node:child_process'
 import { chromium, firefox, webkit } from '@playwright/test'
 import { renderMathLayout } from '../../packages/glyphweave/dist/math/index.js'
 const study = path.resolve('dist/test-results/native-math')
-const binary = path.resolve('crates/typst-html/target/release/glyphweave-typst-html')
+const binary = path.resolve(
+  `packages/glyphweave/native/${process.platform}-${process.arch}/glyphweave-typst-html`,
+)
 const output = path.join(study, 'accessibility.html')
 execFileSync(binary, [
   path.resolve('tests/fixtures/native-math'),

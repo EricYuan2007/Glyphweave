@@ -1,16 +1,18 @@
 {
   "name": "glyphweave",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "license": "MIT",
   "files": [
+    "bin",
     "dist",
     "prelude",
     "styles",
     "native"
   ],
   "bin": {
-    "glyphweave": "./dist/cli/index.js"
+    "glyphweave": "./dist/cli/index.js",
+    "glyphweave-typst-html": "./bin/native.mjs"
   },
   "exports": {
     ".": {
