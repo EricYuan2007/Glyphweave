@@ -16,6 +16,8 @@
 - [HTML adapter](adapter.md)
 - [Security model](security.md) / [Private reporting](../.github/SECURITY.md)
 - [Acceptance](acceptance.md)
+- [Native distribution and Linux](native-distribution.md)
+- [Local Linux acceptance record](linux-validation.md)
 - [Architecture decisions](decisions/0001-build-and-publication-contract.md)
 - [Changelog](../CHANGELOG.md)
 

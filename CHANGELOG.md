@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 (unreleased)
+
+- Assemble explicit macOS ARM64 / Linux ARM64 / Linux x64 native targets with architecture, source and binary digest checks.
+- Resolve the platform's real executable for compilation/cache identity; preserve PID and signals in the installed native launcher.
+- Pin Rust 1.99.1 and extend isolated package/native regression gates to Linux ARM64 and x64. No registry publication is implied.
+
 ## 0.3.0
 
 - Use one validated artifact snapshot for post reads, Astro loading and resource export; reject mixed generations and index/manifest mismatches. Post reads and copying are snapshot methods; export takes a snapshot.

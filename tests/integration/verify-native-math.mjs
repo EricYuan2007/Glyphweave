@@ -5,9 +5,14 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 const root = process.cwd()
 const study = path.join(root, 'dist/test-results/native-math')
 const run = (binary, args) => execFileSync(binary, args, { cwd: root, stdio: 'inherit' })
-run('cargo', ['build', '--release', '--locked', '--manifest-path', 'crates/typst-html/Cargo.toml'])
+if (process.argv.slice(2).some((arg) => arg !== '--prebuilt'))
+  throw new Error('Use --prebuilt or no arguments')
+if (!process.argv.includes('--prebuilt')) run('pnpm', ['build:native'])
 run('pnpm', ['build:packages'])
-const binary = path.join(root, 'crates/typst-html/target/release/glyphweave-typst-html')
+const binary = path.join(
+  root,
+  `packages/glyphweave/native/${process.platform}-${process.arch}/glyphweave-typst-html`,
+)
 await rm(study, { recursive: true, force: true })
 await mkdir(study, { recursive: true })
 const fixture = path.join(root, 'tests/fixtures/native-math')

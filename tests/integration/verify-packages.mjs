@@ -2,6 +2,9 @@ import { mkdtemp, readdir, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 
 const root = process.cwd()
 const work = await mkdtemp(path.join(os.tmpdir(), 'glyphweave-packages-'))
@@ -16,15 +19,37 @@ execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', .
 })
 const binary = path.join(work, 'node_modules/.bin/glyphweave')
 execFileSync(binary, ['--version'], { cwd: work, stdio: 'inherit' })
+const packageRoot = path.join(work, 'node_modules/glyphweave')
+const inventory = JSON.parse(await readFile(path.join(packageRoot, 'native/manifest.json'), 'utf8'))
+for (const [platform, entry] of Object.entries(inventory.platforms)) {
+  const bytes = await readFile(path.join(packageRoot, 'native', platform, 'glyphweave-typst-html'))
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256)
+  assert.equal(bytes.length, entry.bytes)
+}
+// Exercise the installed npm launcher itself, not just the library resolver.
+const nativeFixture = path.join(root, 'tests/fixtures/native-math')
+execFileSync(
+  path.join(work, 'node_modules/.bin/glyphweave-typst-html'),
+  [
+    nativeFixture,
+    path.join(nativeFixture, 'main.typ'),
+    path.join(work, 'launcher.html'),
+    '1793145600',
+  ],
+  { cwd: work, stdio: 'inherit' },
+)
+assert.ok((await readFile(path.join(work, 'launcher.html.layout.json'), 'utf8')).includes('frames'))
 await writeFile(
   path.join(work, 'smoke.mjs'),
   `
 import { mkdir, writeFile } from 'node:fs/promises';
-import { buildAll, defaultConfig } from 'glyphweave';
+import { buildAll, defaultConfig, prepareNativeEngine } from 'glyphweave';
 import { readGlyphweaveContentIndex, openGlyphweaveSnapshot, exportGlyphweaveAssets } from 'glyphweave/artifacts';
 await mkdir('content/typst-posts/demo', {recursive:true});
 await writeFile('content/typst-posts/demo/post.yaml', 'title: Demo\\nslug: demo\\ndescription: Demo\\ndate: "2026-09-05"\\nstatus: published\\nvisibility: public\\npdf: true\\n');
 await writeFile('content/typst-posts/demo/index.typ', '= Demo\\nInline $x + y$.\\n');
+const native = await prepareNativeEngine('glyphweave-typst-html', process.cwd());
+if (!native.includes('/native/' + process.platform + '-' + process.arch + '/')) throw new Error('Must fingerprint actual native executable, not launcher');
 for (const strategy of ['mathml', 'svg-frame', 'html-frame']) {
   const config = defaultConfig(); config.math.strategy = strategy;
   await buildAll(process.cwd(), config);
